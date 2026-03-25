@@ -143,3 +143,13 @@ hdfs dfs -rm -r /user/root/hdfsdir
 ![](assets/HDFS%20Shell常用命令/file-20260325173152382.png)
 
 ![](assets/HDFS%20Shell常用命令/file-20260325173226420.png)
+
+==========================================================
+
+额外指令补充
+![](assets/HDFS%20Shell常用命令/file-20260325181001314.png)
+
+指令代码：
+```
+hdfs dfs -getmerge -nl /user/root/hdfsdir /opt/join.txt
+```
