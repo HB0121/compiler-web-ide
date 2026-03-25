@@ -86,3 +86,10 @@ cat /opt/file01.txt
 ![](assets/HDFS%20Shell常用命令/file-20260325172406550.png)
 
 
+合并本地文件系统（Linux）/opt目录下的文件flie01.txt、file02.txt、file03.txt，然后上传到HDFS的 /user/root/hdfsdir目录下，生成文件merge01.txt
+
+![](assets/HDFS%20Shell常用命令/file-20260325172729046.png)
+
+![](assets/HDFS%20Shell常用命令/file-20260325172820226.png)
+
+
