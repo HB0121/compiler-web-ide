@@ -34,3 +34,6 @@ hdfs dfs -mkdir -p /user/root/hdfsdir
 hdfs dfs -ls /
 ```
 
+![500](assets/HDFS%20Shell常用命令/file-20260325170242687.png)
+![500](assets/HDFS%20Shell常用命令/file-20260325170349091.png)
+
