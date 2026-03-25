@@ -61,3 +61,5 @@ ls -l /opt/file0*.txt
 
 cat /opt/file01.txt
 ```
+
+![](assets/HDFS%20Shell常用命令/file-20260325171436754.png)
