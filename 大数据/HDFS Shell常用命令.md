@@ -73,3 +73,16 @@ cat /opt/file01.txt
 
 ![](assets/HDFS%20Shell常用命令/file-20260325171830038.png)
 
+
+递归显示HDFS /user/root/hdfsdir目录下的所有内容
+
+![](assets/HDFS%20Shell常用命令/file-20260325172305223.png)
+
+![500](assets/HDFS%20Shell常用命令/file-20260325172508132.png)
+
+查看HDFS /user/root/hdfsdir目录下文件file02.txt中的内容
+
+
+![](assets/HDFS%20Shell常用命令/file-20260325172406550.png)
+
+
