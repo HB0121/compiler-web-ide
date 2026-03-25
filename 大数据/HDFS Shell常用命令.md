@@ -63,3 +63,13 @@ cat /opt/file01.txt
 ```
 
 ![](assets/HDFS%20Shell常用命令/file-20260325171436754.png)
+
+将本地（Linux）/opt目录下的文件file01.txt、file02.txt、file03.txt上传到HDFS的/user/root/hdfsdir目录下
+
+指令命令：
+```
+
+```
+
+![](assets/HDFS%20Shell常用命令/file-20260325171830038.png)
+
