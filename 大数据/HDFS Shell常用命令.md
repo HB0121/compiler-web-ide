@@ -22,6 +22,10 @@ hdfs dfs
 hdfs dfs -mkdir [-p] <path> ...
 ```
 
+```
+hdfs dfs -mkdir -p /user/root/hdfsdir
+```
+
 -p:实现多级创建目录(建立/user/root/txtdir 目录)
 
 使用指令：
