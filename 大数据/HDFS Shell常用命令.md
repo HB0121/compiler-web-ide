@@ -93,3 +93,11 @@ cat /opt/file01.txt
 ![](assets/HDFS%20Shell常用命令/file-20260325172820226.png)
 
 
+
+下载HDFS /user/root/hdfsdir目录下的文件merge01.txt到本地文件系统（Linux）的/opt目录下
+![](assets/HDFS%20Shell常用命令/file-20260325173056311.png)
+
+删除HDFS中的 /user/root/hdfsdir目录（包括目录下的文件）
+![](assets/HDFS%20Shell常用命令/file-20260325173152382.png)
+
+![](assets/HDFS%20Shell常用命令/file-20260325173226420.png)
