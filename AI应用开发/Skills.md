@@ -19,6 +19,6 @@ reference 和 script
 
 一个是偏向脚本文件 数据处理的管理调用
 
-## 渐进式纰漏
+## 渐进式披露
 
 ![](assets/Skills/file-20260405092158597.png)
