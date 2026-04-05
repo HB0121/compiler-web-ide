@@ -1,1 +1,1 @@
-2025年10月16日，Anthropic推出的Agentskill
+2025年10月16日，Anthropic推出的Agent Skill。
