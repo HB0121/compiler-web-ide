@@ -279,4 +279,9 @@ delete 'test:scores','Tom','course:english'
 deleteall 'test:scores','Tom'
 ```
 
+清空scores表中的内容（表结构没被删除）
+```
+truncate 'test:scores'
+```
+
 
