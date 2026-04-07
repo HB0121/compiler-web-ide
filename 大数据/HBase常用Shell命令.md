@@ -239,11 +239,21 @@ put 'test:scores','Jim','course:english','80'
 
 
 查看表scores中Jim的一行的数据
+```
+get 'test:scores','Jim'
+```
 
 查看Jim course列族的数据
+```
+get 'test:scores','Jim',{COLUM=>'course'}
+```
 
 查看表scores中的course:english列的数据
+```
+get 'test:scores','Jim',{COLUM=>'course:english'}
+```
 
 统计表scores的行数
+
 
 全表scores扫描
