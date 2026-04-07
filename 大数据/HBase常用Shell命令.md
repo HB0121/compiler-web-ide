@@ -142,3 +142,97 @@ exists 'test:student'
 create 'test:pratice','f1',SPLITS=>['10','20','30','40']
 ```
 
+修改表
+
+修改（添加）列族（列族存在就是修改，不存在就是添加）
+
+```
+   alter '命名空间:表名',{语法参数}
+```
+
+删除列族
+
+```
+   alter '命名空间:表名',{NAME => 'f1', METHOD => 'delete'}
+
+   alter '命名空间:表名', 'delete' => 'f1'
+```
+
+修改表属性
+
+```
+  alter ‘命名空间:表名’, MAX_FILESIZE => ‘134217728’（设置表属性）
+
+  alter ‘命名空间:表名’, METHOD => ‘table_att_unset’, NAME => ‘MAX_FILESIZE’（删除表属性）
+```
+
+```
+alter 'test:pratice',{NAME=>'f2'},{NAME=>'f3',VERSIONS=>20}
+```
+
+删除原先的列族f1
+
+```
+alter 'test:pratice',{NAME=>'f1',METHOD=>'delete'}
+```
+
+n为表加上一个属性MAX_FILESIZE=>‘134217728’，查看表
+
+```
+alter 'test:pratice',MAX_FILESIZE=>'134217728'
+```
+
+删除表
+
+disable '命名空间:表名‘
+
+    重点：表必须首先disabled（禁用），然后才能删除
+
+drop '命名空间:表名'
+
+```
+disable 'test:pratice'
+```
+
+```
+drop 'test:pratice'
+```
+
+
+
+在命名空间test中完成以下表数据添加任务。
+
+    创建一个表scores，分别有列族course，在表中添加scores数据如下：
+```
+    create 'test:scores','course'
+```
+
+    Tom course:math 97
+    
+```
+put 'test:scores','Tom','course:math','97'
+```
+
+    Tom course:art 87
+
+```
+put 'test:scores','Tom','course:art','87'
+```
+
+    Tom course:english 80
+
+```
+put 'test:scores','Tom','course:english','80'
+```
+
+    Jim course:chinese 89
+
+```
+put 'test:scores','Jim','course:chinese','89'
+```
+
+    Jim course:english 80
+
+```
+put 'test:scores','Jim','course:english','80'
+```
