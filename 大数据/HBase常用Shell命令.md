@@ -254,6 +254,22 @@ get 'test:scores','Jim',{COLUM=>'course:english'}
 ```
 
 统计表scores的行数
-
+```
+count 'test:scores'
+```
 
 全表scores扫描
+```
+scan 'test:scores'
+```
+
+
+删除scores表Jim的course:chinese的值（重点：如果该数据有多个版本—时间戳，则删除命令只能删除最近一个版本的值，其他版本的值还会保留并显示出来）
+```
+delete 'test:scores','Jim','course:chinese'
+```
+
+删除scores表Tom的course:english的值
+```
+delete 'test:scores','Tom','course:english'
+```
