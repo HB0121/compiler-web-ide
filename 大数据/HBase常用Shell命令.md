@@ -236,3 +236,14 @@ put 'test:scores','Jim','course:chinese','89'
 ```
 put 'test:scores','Jim','course:english','80'
 ```
+
+
+查看表scores中Jim的一行的数据
+
+查看Jim course列族的数据
+
+查看表scores中的course:english列的数据
+
+统计表scores的行数
+
+全表scores扫描
