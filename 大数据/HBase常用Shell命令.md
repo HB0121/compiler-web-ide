@@ -78,3 +78,67 @@ exit
 zk_cluster stop
 ```
 关闭ZooKeeper集群👆
+
+创建命名空间
+
+```
+create_namespace 'test'
+```
+
+预览所有命名空间
+```
+list_namespace
+```
+
+查看命名空间详情
+```
+describe_namespace 'test'
+```
+
+查看命名空间的表
+```
+list_namespace_tables 'test'
+```
+
+修改命名空间
+
+  alter_namespace 'test', {METHOD => 'set', 'hbase.namespace.quota.maxregion' => '10'}
+
+  alter_namespace 'test', {METHOD => 'set', 'hbase.namespace.quota.maxtables' => '10'}
+
+删除命名空间（被删除的命名空间必须为空，即里面没有建表，否则不能被删除）
+
+```
+ndrop_namespace
+```
+
+新建表1
+
+```
+create 'test:student',{NAME=>'info'},{NAME=>'course',VERSIONS=>5}
+```
+
+
+desc ‘命名空间:表名’：查看制定表的结构
+```
+desc 'test:student'
+```
+
+describe ‘命名空间:表名’：与desc命令相同
+
+
+list‘命名空间：正则表达式’：查看表名
+```
+list
+```
+
+exists ‘命名空间:表名’：判断制定表是否存在
+```
+exists 'test:student'
+```
+
+新建表2
+```
+create 'test:pratice','f1',SPLITS=>['10','20','30','40']
+```
+
