@@ -273,3 +273,10 @@ delete 'test:scores','Jim','course:chinese'
 ```
 delete 'test:scores','Tom','course:english'
 ```
+
+删除scores表Tom一行（HBase中删除某个行键一行的数据，不能使用delete，必须使用deleteall进行删除）
+```
+deleteall 'test:scores','Tom'
+```
+
+
