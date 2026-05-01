@@ -14,7 +14,7 @@ spring:
       base-url: http://localhost:11434 # 你的本地 Ollama 服务地址
       chat:
         options:
-          model: qwen:7b 
+          model: qwen:7b
           temperature: 0.1 # 调低温度，让模型输出更稳定、更符合 JSON 格式
 
 # MyBatis 配置
