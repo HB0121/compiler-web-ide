@@ -128,4 +128,16 @@
         </plugins>
     </build>
 
+    <!-- 告诉 Maven 去 Spring 官方的里程碑仓库下载 AI 框架 -->
+    <repositories>
+        <repository>
+            <id>spring-milestones</id>
+            <name>Spring Milestones</name>
+            <url>https://repo.spring.io/milestone</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
 </project>
