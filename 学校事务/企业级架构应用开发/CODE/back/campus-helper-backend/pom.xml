@@ -29,6 +29,20 @@
     <properties>
         <java.version>17</java.version>
     </properties>
+
+    <!-- 1. 统一管理 Spring AI 的版本 (放在 <dependencies> 标签的上面) -->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.ai</groupId>
+                <artifactId>spring-ai-bom</artifactId>
+                <version>1.0.0-M1</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -66,7 +80,6 @@
         <dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-ollama-spring-boot-starter</artifactId>
-            <version>1.0.0-M1</version> <!-- 请参考你使用的 SpringBoot 版本选择对应版本 -->
         </dependency>
         <!-- JSON 处理 -->
         <dependency>
