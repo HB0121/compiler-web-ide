@@ -2,6 +2,7 @@ package com.huangbin.campushelperbackend.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
+import com.huangbin.campushelperbackend.dto.AiParsedTaskDTO;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -23,15 +24,10 @@ public class Task {
 
     // 【核心亮点】：自动将 MySQL 的 JSON 转为 Java 的 Map 或自定义 DTO 对象
     @TableField(typeHandler = JacksonTypeHandler.class)
-    private Map<String, Object> aiParsedData;
+    private AiParsedTaskDTO aiParsedData;
 
-    private BigDecimal rewardAmount; // 对应 DECIMAL
-
-    private Integer status;
-
-    @TableField(fill = FieldFill.INSERT)
+    private BigDecimal rewardAmount;
+    private String status;
     private LocalDateTime createdAt;
-
-    @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updatedAt;
 }
