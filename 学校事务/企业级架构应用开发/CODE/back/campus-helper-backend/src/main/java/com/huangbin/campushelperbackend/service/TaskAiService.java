@@ -1,5 +1,6 @@
 package com.huangbin.campushelperbackend.service;
 
+import com.huangbin.campushelperbackend.dto.AiParsedTaskDTO;
 import tools.jackson.databind.ObjectMapper;
 
 public class TaskAiService {
