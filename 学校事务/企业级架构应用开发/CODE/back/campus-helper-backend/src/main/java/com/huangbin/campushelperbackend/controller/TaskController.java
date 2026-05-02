@@ -29,8 +29,10 @@ public class TaskController {
             return ResponseEntity.badRequest().body(Map.of("error", "输入内容不能为空"));
         }
         try {
-            var parsedData = taskAiService.parseUserIntent(request.getText());
-            return ResponseEntity.ok().body(Map.of("ai_parsed_data", parsedData));
+            if (request.getAiParsedData() == null) {
+                var parsedData = taskAiService.parseUserIntent(request.getText());
+                return ResponseEntity.ok().body(Map.of("ai_parsed_data", parsedData));
+            }
         } catch (Exception e) {
             log.error("阶段一 AI 解析失败", e); // 使用 log.error
             return ResponseEntity.internalServerError().body(Map.of("error", "AI 解析失败"));
