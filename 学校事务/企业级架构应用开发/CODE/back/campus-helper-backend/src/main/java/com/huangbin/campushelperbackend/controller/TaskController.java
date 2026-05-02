@@ -43,16 +43,31 @@ public class TaskController {
     // 阶段二：前端确认表单后，正式提交落库 (保持刚才写的代码即可)
     @PostMapping("/publish")
     public ResponseEntity<?> publishTask(@RequestBody TaskPublishRequest request) {
-        // ... (保持不变)
-        if (request.getRawContent() == null || request.getAiParsedData() == null) {
-            return ResponseEntity.badRequest().body("任务内容或解析数据不能为空");
+
+        // 1. 现在我们只要求前端必须传大白话文本
+        if (request.getRawContent() == null || request.getRawContent().trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "任务内容不能为空"));
         }
 
-        boolean success = taskService.createAndPublishTask(request);
-        if (success) {
-            return ResponseEntity.ok(Map.of("message", "任务发布成功！"));
-        } else {
-            return ResponseEntity.internalServerError().body("服务器开小差了，发布失败");
+        try {
+            // 2. 【核心黑科技】在存入数据库前，后端主动呼叫大模型进行解析！
+            var parsedData = taskAiService.parseUserIntent(request.getRawContent());
+
+            // 3. 把大模型辛苦提取出的 JSON 数据，悄悄塞进 request 对象里
+            request.setAiParsedData(parsedData);
+
+            // 4. 数据完整了，交给 Service 去保存进 MySQL
+            boolean success = taskService.createAndPublishTask(request);
+
+            if (success) {
+                return ResponseEntity.ok(Map.of("message", "任务发布成功！"));
+            } else {
+                return ResponseEntity.internalServerError().body(Map.of("error", "服务器开小差了，发布失败"));
+            }
+        } catch (Exception e) {
+            // 打印错误日志，方便排查
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body(Map.of("error", "AI 解析或落库失败：" + e.getMessage()));
         }
     }
 }
