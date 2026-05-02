@@ -99,9 +99,9 @@
 <script setup>
 import { ref, reactive } from 'vue'
 import { showToast, showSuccessToast, showFailToast } from 'vant'
-// import axios from 'axios' // 实际接入后端时取消注释
+import axios from 'axios' // 已经取消注释啦！
 
-// 路由返回逻辑模拟
+// 路由返回逻辑
 const onClickLeft = () => {
   showToast('返回上一页')
 }
@@ -121,7 +121,7 @@ const taskData = reactive({
   tags: ''
 })
 
-// 模拟调用 Spring Boot 后端大模型接口
+// 阶段一：真实调用 Spring Boot 后端的 /parse 接口
 const handleSmartParse = async () => {
   if (!rawContent.value.trim()) {
     showToast('请先输入您的需求描述');
@@ -131,54 +131,68 @@ const handleSmartParse = async () => {
   isParsing.value = true;
   showForm.value = false;
 
-  // 模拟网络延迟和 AI 模型处理时间 (1.5秒)
-  setTimeout(() => {
-    try {
-      // 在真实开发中，这里是： const res = await axios.post('/api/tasks/parse', { text: rawContent.value })
-      // 下面是模拟后端的伪返回数据，基于简单的正则做个假交互演示
-      const mockParsedResult = {
-        time: rawContent.value.includes('明天') ? '明天' : '尽快',
-        location: rawContent.value.includes('南区') ? '南区快递点' : '校内',
-        action: rawContent.value.includes('拿') ? '拿快递' : '其他互助',
-        reward: rawContent.value.match(/\d+/) ? rawContent.value.match(/\d+/)[0] : 0,
-        tags: '跑腿,帮办'
-      }
+  try {
+    // 调用真实的后端解析接口
+    const res = await axios.post('http://localhost:8080/api/tasks/parse', { 
+      text: rawContent.value 
+    });
+    
+    // 获取后端返回的 AI 解析数据
+    const parsedData = res.data.ai_parsed_data;
 
-      // 将解析结果映射到表单
-      taskData.time = mockParsedResult.time;
-      taskData.location = mockParsedResult.location;
-      taskData.action = mockParsedResult.action;
-      taskData.reward = mockParsedResult.reward;
-      taskData.tags = mockParsedResult.tags;
+    // 将 AI 提取的数据映射到表单中
+    taskData.time = parsedData.time || '';
+    taskData.location = parsedData.location || '';
+    taskData.action = parsedData.action || '';
+    taskData.reward = parsedData.reward || null;
+    
+    // 后端返回的 tags 是数组 ["跑腿", "急单"]，前端表单需要逗号拼接的字符串 "跑腿,急单"
+    taskData.tags = parsedData.tags ? parsedData.tags.join(',') : '';
 
-      showForm.value = true;
-      showSuccessToast('解析成功，请核对表单');
-    } catch (error) {
-      showFailToast('解析异常，请手动填写');
-      showForm.value = true; // 即使失败也让用户填
-    } finally {
-      isParsing.value = false;
-    }
-  }, 1500)
+    showForm.value = true;
+    showSuccessToast('解析成功，请核对表单');
+  } catch (error) {
+    console.error(error);
+    showFailToast('AI 开小差了，请手动填写表单');
+    showForm.value = true; // 即使失败也让用户手动填
+  } finally {
+    isParsing.value = false;
+  }
 }
 
-// 模拟提交至后端落库
-const onSubmit = (values) => {
+// 阶段二：真实调用 Spring Boot 后端的 /publish 接口落库
+const onSubmit = async (values) => {
   isSubmitting.value = true;
   
-  // 组装最终要发送给后端的数据 (包含了原始文本和AI解析后的JSON化数据)
+  // 组装最终要发送给后端的数据，必须严格匹配 Java 的 TaskPublishRequest DTO
   const finalPayload = {
-    raw_content: rawContent.value,
-    ai_parsed_data: values
+    publisherId: 1, // 模拟当前登录用户的 ID
+    rawContent: rawContent.value,
+    aiParsedData: {
+      time: values.time,
+      location: values.location,
+      action: values.action,
+      reward: Number(values.reward), // 确保转为数字
+      // 前端表单是字符串 "跑腿,急单"，传给后端要劈开成数组 ["跑腿", "急单"]
+      tags: values.tags ? values.tags.split(',').map(t => t.trim()) : [] 
+    }
   }
 
-  console.log('提交的数据：', finalPayload);
-
-  setTimeout(() => {
+  try {
+    const res = await axios.post('http://localhost:8080/api/tasks/publish', finalPayload);
+    if (res.status === 200) {
+      showSuccessToast('任务发布成功！');
+      // 发布成功后，重置页面状态
+      rawContent.value = '';
+      showForm.value = false;
+      // TODO: 真实业务中可以在这里 router.push('/tasks') 跳转到任务大厅
+    }
+  } catch (error) {
+    console.error(error);
+    showFailToast(error.response?.data?.error || '服务器异常，发布失败');
+  } finally {
     isSubmitting.value = false;
-    showSuccessToast('任务发布成功！');
-    // 真实业务中，发布成功后通常通过 router.push('/hall') 跳转回大厅
-  }, 1000)
+  }
 }
 </script>
 
