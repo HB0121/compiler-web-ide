@@ -62,9 +62,6 @@ public class TaskAiService {
 
     private String cleanMarkdown(String text) {
         if (text == null) return "";
-        return text.replaceAll("```json", "")
-                .replaceAll("
-                        ```", "")
-                                .trim();
+        return text.replaceAll("```json", "").replaceAll("```", "").trim();
     }
 }
