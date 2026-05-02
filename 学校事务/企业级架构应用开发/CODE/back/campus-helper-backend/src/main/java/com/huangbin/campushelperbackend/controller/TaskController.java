@@ -2,11 +2,14 @@ package com.huangbin.campushelperbackend.controller;
 
 import com.huangbin.campushelperbackend.dto.TaskParseRequest;
 import com.huangbin.campushelperbackend.dto.TaskPublishRequest;
+import com.huangbin.campushelperbackend.entity.Task;
 import com.huangbin.campushelperbackend.service.TaskAiService;
 import com.huangbin.campushelperbackend.service.TaskService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -66,6 +69,25 @@ public class TaskController {
         } catch (Exception e) {
             log.error("AI 解析或落库失败，原始输入内容: {}", request.getRawContent(), e);
             return ResponseEntity.internalServerError().body(Map.of("error", "业务处理失败：" + e.getMessage()));
+        }
+    }
+
+    // 阶段三：任务大厅列表查询接口
+    @GetMapping("/list")
+    public ResponseEntity<?> getTaskList() {
+        try {
+            // 去 Service 拿数据
+            List<Task> taskList = taskService.getAvailableTasks();
+
+            // 组装标准的企业级 JSON 响应结构返回给前端
+            return ResponseEntity.ok(Map.of(
+                    "code", 200,
+                    "message", "获取任务大厅数据成功",
+                    "data", taskList
+            ));
+        } catch (Exception e) {
+            log.error("查询任务列表失败", e);
+            return ResponseEntity.internalServerError().body(Map.of("error", "服务器开小差了，获取数据失败"));
         }
     }
 }

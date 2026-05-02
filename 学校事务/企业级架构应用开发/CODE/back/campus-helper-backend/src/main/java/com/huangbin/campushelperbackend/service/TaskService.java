@@ -1,5 +1,6 @@
 package com.huangbin.campushelperbackend.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.huangbin.campushelperbackend.dto.AiParsedTaskDTO; // 确保导入了你的强类型 DTO
 import com.huangbin.campushelperbackend.dto.TaskPublishRequest;
 import com.huangbin.campushelperbackend.entity.Task;
@@ -8,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Service
 public class TaskService {
@@ -47,5 +49,21 @@ public class TaskService {
         // 4. 执行插入
         int rows = taskMapper.insert(task);
         return rows > 0;
+    }
+
+    /**
+     * 获取任务大厅的可用任务列表
+     */
+    public List<Task> getAvailableTasks() {
+        // 使用 MyBatis-Plus 的 Lambda 构造器，极其优雅且能防止字段名拼写错误
+        LambdaQueryWrapper<Task> wrapper = new LambdaQueryWrapper<>();
+
+        // 核心查询条件：
+        // 1. 只查状态为 "0"（待接单）的任务
+        // 2. 按照 TaskId 倒序排列（最新的任务在最上面展示）
+        wrapper.eq(Task::getStatus, "0")
+                .orderByDesc(Task::getTaskId);
+
+        return taskMapper.selectList(wrapper);
     }
 }
