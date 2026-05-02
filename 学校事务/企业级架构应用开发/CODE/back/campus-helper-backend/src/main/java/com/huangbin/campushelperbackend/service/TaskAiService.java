@@ -1,9 +1,14 @@
 package com.huangbin.campushelperbackend.service;
 
 import com.huangbin.campushelperbackend.dto.AiParsedTaskDTO;
+import com.fasterxml.jackson.databind.ObjectMapper; // 注意：必须使用正确的 Jackson 包名
 import org.springframework.ai.chat.ChatClient;
+import org.springframework.ai.chat.messages.SystemMessage;
+import org.springframework.ai.chat.messages.UserMessage;
+import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.stereotype.Service;
-import tools.jackson.databind.ObjectMapper;
+
+import java.util.List;
 
 @Service
 public class TaskAiService {
@@ -11,13 +16,12 @@ public class TaskAiService {
     private final ChatClient chatClient;
     private final ObjectMapper objectMapper;
 
-    // 注入 Spring AI 的 ChatClient 和 Jackson 的 ObjectMapper
-    public TaskAiService(ChatClient.Builder chatClientBuilder, ObjectMapper objectMapper) {
-        this.chatClient = chatClientBuilder.build();
+    // 在 0.8.1 版本中，直接注入 ChatClient 即可，不需要 Builder
+    public TaskAiService(ChatClient chatClient, ObjectMapper objectMapper) {
+        this.chatClient = chatClient;
         this.objectMapper = objectMapper;
     }
 
-    // 将我们之前设计的 Few-Shot Prompt 定义为常量
     private static final String SYSTEM_PROMPT = """
         你是一个校园帮办平台的智能意图识别引擎。你的任务是从用户的自然语言输入中，精准提取关键任务实体，并严格输出为 JSON 格式。
         
@@ -38,30 +42,29 @@ public class TaskAiService {
 
     public AiParsedTaskDTO parseUserIntent(String userText) {
         try {
-            // 1. 调用大模型进行意图识别
-            String aiResponse = chatClient.prompt()
-                    .system(SYSTEM_PROMPT)
-                    .user(userText)
-                    .call()
-                    .content();
+            // 0.8.x 版本构建 Prompt 的方式
+            SystemMessage systemMessage = new SystemMessage(SYSTEM_PROMPT);
+            UserMessage userMessage = new UserMessage(userText);
 
-            // 2. 工程化鲁棒性处理：清理模型可能返回的 Markdown 标记
+            Prompt prompt = new Prompt(List.of(systemMessage, userMessage));
+
+            // 调用大模型
+            String aiResponse = chatClient.call(prompt).getResult().getOutput().getContent();
+
+            // 清洗结果并转为对象
             String cleanJson = cleanMarkdown(aiResponse);
-
-            // 3. 将 JSON 字符串反序列化为 Java 对象
             return objectMapper.readValue(cleanJson, AiParsedTaskDTO.class);
 
         } catch (Exception e) {
-            // 记录日志，抛出自定义异常交由全局异常处理器处理
             throw new RuntimeException("AI 解析任务需求失败", e);
         }
     }
 
-    // 辅助方法：去除 ```json 等无用字符
     private String cleanMarkdown(String text) {
         if (text == null) return "";
         return text.replaceAll("```json", "")
-                .replaceAll("```", "")
-                .trim();
+                .replaceAll("
+                        ```", "")
+                                .trim();
     }
 }
