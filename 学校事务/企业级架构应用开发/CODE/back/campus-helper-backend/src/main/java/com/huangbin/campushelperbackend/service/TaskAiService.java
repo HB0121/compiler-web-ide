@@ -1,6 +1,7 @@
 package com.huangbin.campushelperbackend.service;
 
 import com.huangbin.campushelperbackend.dto.AiParsedTaskDTO;
+import org.springframework.ai.chat.ChatClient;
 import tools.jackson.databind.ObjectMapper;
 
 public class TaskAiService {
