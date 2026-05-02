@@ -62,6 +62,17 @@
             <version>4.0.1</version>
             <scope>test</scope>
         </dependency>
+        <!-- Spring AI Ollama 支持 -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-ollama-spring-boot-starter</artifactId>
+            <version>1.0.0-M1</version> <!-- 请参考你使用的 SpringBoot 版本选择对应版本 -->
+        </dependency>
+        <!-- JSON 处理 -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
     </dependencies>
 
     <build>

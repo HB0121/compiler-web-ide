@@ -1,5 +1,6 @@
 package com.huangbin.campushelperbackend.controller;
 
+import com.huangbin.campushelperbackend.dto.AiParsedTaskDTO;
 import com.huangbin.campushelperbackend.dto.TaskPublishRequest;
 import com.huangbin.campushelperbackend.service.TaskAiService;
 import com.huangbin.campushelperbackend.service.TaskService;
@@ -19,10 +20,18 @@ public class TaskController {
         this.taskService = taskService;
     }
 
-    // 阶段一：仅做 AI 解析 (之前写好的)
+    // 阶段一：仅做 AI 解析
     @PostMapping("/parse")
     public ResponseEntity<?> parseTask(@RequestBody Map<String, String> request) {
-        // ... (之前调用 taskAiService 的代码保持不变)
+        if (request.getText() == null || request.getText().trim().isEmpty()) {
+            return ResponseEntity.badRequest().body("输入内容不能为空");
+        }
+
+        // 调用 AI 服务提取结构化数据
+        AiParsedTaskDTO parsedData = taskAiService.parseUserIntent(request.getText());
+
+        // 组装返回给前端的数据结构 (与前端 Vue 里的 response.data.ai_parsed_data 对应)
+        return ResponseEntity.ok().body(Map.of("ai_parsed_data", parsedData));
     }
 
     // 阶段二：前端确认表单后，正式提交落库
