@@ -13,5 +13,5 @@ public class TaskPublishRequest {
     private String rawContent;
 
     // 前端表单确认后的结构化数据 (时间、地点、动作、报酬等)
-    private Map<String, Object> aiParsedData;
+    private AiParsedTaskDTO aiParsedData;
 }
