@@ -1,5 +1,6 @@
 package com.huangbin.campushelperbackend.service;
 
+import com.huangbin.campushelperbackend.dto.AiParsedTaskDTO; // 确保导入了你的强类型 DTO
 import com.huangbin.campushelperbackend.dto.TaskPublishRequest;
 import com.huangbin.campushelperbackend.entity.Task;
 import com.huangbin.campushelperbackend.mapper.TaskMapper;
@@ -26,19 +27,22 @@ public class TaskService {
         task.setPublisherId(request.getPublisherId() != null ? request.getPublisherId() : 1L);
         task.setRawContent(request.getRawContent());
 
-        // 核心：直接将 Map 赋值给实体，MyBatis-Plus 的 JacksonTypeHandler 会自动把它转成 JSON 存入 MySQL
-        task.setAiParsedData(request.getAiParsedData());
+        // 获取我们已经变成强类型 DTO 的解析数据
+        AiParsedTaskDTO parsedData = request.getAiParsedData();
 
-        // 2. 提取报酬金额 (从 AI 解析的 Map 中安全提取)
-        Object rewardObj = request.getAiParsedData().get("reward");
+        // 核心：将强类型对象赋值给实体
+        task.setAiParsedData(parsedData);
+
+        // 2. 提取报酬金额 【核心修改：用 getter 方法代替 .get("reward")】
         BigDecimal reward = BigDecimal.ZERO;
-        if (rewardObj != null) {
-            reward = new BigDecimal(rewardObj.toString());
+        if (parsedData != null && parsedData.getReward() != null) {
+            // 安全转换：无论 DTO 里 reward 是 Double 还是 Integer，先转成 String 再给 BigDecimal，不会丢精度
+            reward = new BigDecimal(parsedData.getReward().toString());
         }
         task.setRewardAmount(reward);
 
-        // 3. 设置初始状态：0-待接单
-        task.setStatus(0);
+        // 3. 设置初始状态 【修正类型隐患：因为实体类里 status 是 String，这里加上双引号】
+        task.setStatus("0"); // "0" 代表待接单
 
         // 4. 执行插入
         int rows = taskMapper.insert(task);
