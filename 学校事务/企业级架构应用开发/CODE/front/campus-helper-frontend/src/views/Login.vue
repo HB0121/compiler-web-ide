@@ -11,19 +11,20 @@
     <!-- 登录表单 -->
     <van-form @submit="onSubmit" class="login-form">
       <van-cell-group inset>
+        <!-- 【升级1】标签和占位符改为“学号” -->
         <van-field
-          v-model="username"
-          name="username"
-          label="账号"
-          placeholder="测试用例: zhangsan 或 lisi"
-          :rules="[{ required: true, message: '请填写账号' }]"
+          v-model="studentId"
+          name="studentId"
+          label="学号"
+          placeholder="请输入学号 (如: 20260001)"
+          :rules="[{ required: true, message: '请填写学号' }]"
         />
         <van-field
           v-model="password"
           type="password"
           name="password"
           label="密码"
-          placeholder="测试用例: 123456"
+          placeholder="请输入密码"
           :rules="[{ required: true, message: '请填写密码' }]"
         />
       </van-cell-group>
@@ -32,14 +33,10 @@
         <van-button round block type="primary" native-type="submit" :loading="loading">
           立即登录
         </van-button>
-      </div>
-      <div style="margin: 32px 16px;">
-        <van-button round block type="primary" native-type="submit" :loading="loading">
-          立即登录
-        </van-button>
-        <!-- 新增这行跳转提示 -->
-        <div style="text-align: center; margin-top: 16px; font-size: 14px; color: #1989fa;" @click="$router.push('/register')">
-          还没有账号？点击这里去注册
+        
+        <!-- 【升级2】美化后的注册跳转链接 -->
+        <div class="register-link" @click="$router.push('/register')">
+          还没有账号？点击这里去注册新同学
         </div>
       </div>
     </van-form>
@@ -53,26 +50,27 @@ import { showToast, showSuccessToast, showFailToast } from 'vant'
 import axios from 'axios'
 
 const router = useRouter()
-const username = ref('')
+const studentId = ref('') // 绑定学号
 const password = ref('')
 const loading = ref(false)
 
 const onSubmit = async (values) => {
   loading.value = true
   try {
-    // 1. 发送账号密码给后端，请求换取门票
+    // 【升级3】为了不改动后端 Controller，这里把 key 依然写成 username，但传的是真实的学号
     const res = await axios.post('http://localhost:8080/api/user/login', {
-      username: values.username,
+      username: values.studentId,
       password: values.password
     })
 
     if (res.data && res.data.code === 200) {
       showSuccessToast('登录成功')
       
-      // 2. 【核心动作：存门票】将后端返回的 token 永久存入浏览器的 localStorage
+      // 1. 将后端返回的 token 永久存入浏览器的 localStorage
       localStorage.setItem('token', res.data.data.token)
       
-      // 顺便把用户名和用户ID也存下来，方便其他页面（如“我的”页面）展示
+      // 2. 存下后端的 nickname (后端放在了 username 字段里返回) 和 userId
+      // Mine.vue 页面会自动去 localStorage 拿这两个值展示
       localStorage.setItem('username', res.data.data.username)
       localStorage.setItem('userId', res.data.data.userId)
 
@@ -81,7 +79,7 @@ const onSubmit = async (values) => {
     }
   } catch (error) {
     console.error('登录失败:', error)
-    showFailToast(error.response?.data?.error || '账号或密码错误')
+    showFailToast(error.response?.data?.error || '学号或密码错误')
   } finally {
     loading.value = false
   }
@@ -108,5 +106,13 @@ const onSubmit = async (values) => {
 }
 .login-form {
   margin-top: 20px;
+}
+.register-link {
+  text-align: center;
+  margin-top: 24px;
+  font-size: 14px;
+  color: #1989fa;
+  cursor: pointer;
+  letter-spacing: 1px;
 }
 </style>
