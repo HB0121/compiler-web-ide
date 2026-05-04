@@ -11,7 +11,6 @@
     <!-- 登录表单 -->
     <van-form @submit="onSubmit" class="login-form">
       <van-cell-group inset>
-        <!-- 【升级1】标签和占位符改为“学号” -->
         <van-field
           v-model="studentId"
           name="studentId"
@@ -34,8 +33,8 @@
           立即登录
         </van-button>
         
-        <!-- 【升级2】美化后的注册跳转链接 -->
-        <div class="register-link" @click="$router.push('/register')">
+        <!-- 使用自定义函数进行跳转，最稳妥的写法 -->
+        <div class="register-link" @click="goToRegister">
           还没有账号？点击这里去注册新同学
         </div>
       </div>
@@ -54,10 +53,17 @@ const studentId = ref('') // 绑定学号
 const password = ref('')
 const loading = ref(false)
 
+// 【新增】：跳转到注册页的函数
+const goToRegister = () => {
+  console.log('准备跳转到注册页...') // 如果点下去没反应，按 F12 看看控制台有没有打印这句话
+  router.push('/register')
+}
+
+// 提交登录逻辑
 const onSubmit = async (values) => {
   loading.value = true
   try {
-    // 【升级3】为了不改动后端 Controller，这里把 key 依然写成 username，但传的是真实的学号
+    // 传给后端的 key 依然是 username，但值是真实的学号
     const res = await axios.post('http://localhost:8080/api/user/login', {
       username: values.studentId,
       password: values.password
@@ -70,7 +76,6 @@ const onSubmit = async (values) => {
       localStorage.setItem('token', res.data.data.token)
       
       // 2. 存下后端的 nickname (后端放在了 username 字段里返回) 和 userId
-      // Mine.vue 页面会自动去 localStorage 拿这两个值展示
       localStorage.setItem('username', res.data.data.username)
       localStorage.setItem('userId', res.data.data.userId)
 
