@@ -4,8 +4,13 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.huangbin.campushelperbackend.dto.AiParsedTaskDTO; // 确保导入了你的强类型 DTO
 import com.huangbin.campushelperbackend.dto.TaskPublishRequest;
+import com.huangbin.campushelperbackend.entity.Review;
 import com.huangbin.campushelperbackend.entity.Task;
+import com.huangbin.campushelperbackend.entity.User;
+import com.huangbin.campushelperbackend.mapper.ReviewMapper;
 import com.huangbin.campushelperbackend.mapper.TaskMapper;
+import com.huangbin.campushelperbackend.mapper.UserMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +21,11 @@ import java.util.List;
 public class TaskService {
 
     private final TaskMapper taskMapper;
+
+    @Autowired
+    private ReviewMapper reviewMapper;
+    @Autowired
+    private UserMapper userMapper;
 
     public TaskService(TaskMapper taskMapper) {
         this.taskMapper = taskMapper;
@@ -84,14 +94,46 @@ public class TaskService {
     /**
      * 确认完成逻辑：状态从 1 改为 2 (已完成)
      */
-    public boolean completeTask(Long taskId, Long publisherId) {
-        LambdaUpdateWrapper<Task> updateWrapper = new LambdaUpdateWrapper<>();
-        updateWrapper.eq(Task::getTaskId, taskId)
-                .eq(Task::getPublisherId, publisherId) // 核心防范：确保只有发单人能确认
-                .eq(Task::getStatus, "1") // 只有“进行中”的任务才能确认
-                .set(Task::getStatus, "2"); // "2" 代表已完成
+    @org.springframework.transaction.annotation.Transactional // 开启事务控制，保证数据一致性
+    public boolean completeTaskWithReview(Long taskId, Long publisherId, Integer rating, String comment) {
+        // 1. 查出任务，确认是不是这个发单人的，且状态必须是 "1"（进行中）
+        Task task = taskMapper.selectById(taskId);
+        if (task == null || !task.getPublisherId().equals(publisherId) || !"1".equals(task.getStatus())) {
+            return false;
+        }
 
-        return taskMapper.update(null, updateWrapper) > 0;
+        // 2. 更新任务状态为 "2" (已完成)
+        task.setStatus("2");
+        taskMapper.updateById(task);
+
+        // 3. 写入评价表 (reviews)
+        Review review = new Review();
+        review.setTaskId(taskId);
+        review.setReviewerId(publisherId); // 发单人
+        // 注意：如果你实体类里接单人字段叫 accepterId，这里就改成 getAccepterId()
+        review.setRevieweeId(task.getReceiverId());
+        review.setRating(rating);
+        review.setComment(comment);
+        reviewMapper.insert(review);
+
+        // 4. 动态计算并更新接单人的信用分 (credit_score)
+        User reviewee = userMapper.selectById(task.getReceiverId());
+        if (reviewee != null) {
+            int scoreChange = 0;
+            // 奖惩分明：5星加2分，4星加1分，3星不加不减，2星扣2分，1星扣5分
+            switch (rating) {
+                case 5: scoreChange = 2; break;
+                case 4: scoreChange = 1; break;
+                case 3: scoreChange = 0; break;
+                case 2: scoreChange = -2; break;
+                case 1: scoreChange = -5; break;
+                default: scoreChange = 0;
+            }
+            reviewee.setCreditScore(reviewee.getCreditScore() + scoreChange);
+            userMapper.updateById(reviewee);
+        }
+
+        return true;
     }
 
     /**

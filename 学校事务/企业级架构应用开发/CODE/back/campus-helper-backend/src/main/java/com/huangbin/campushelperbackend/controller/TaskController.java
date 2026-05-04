@@ -116,25 +116,31 @@ public class TaskController {
             return ResponseEntity.internalServerError().body(Map.of("error", "查询失败"));
         }
     }
-
+    
     // ==========================================
-    // 6. 确认完成任务 (结算)
+    // 6. 确认完成任务 (带评价与信用分结算)
     // ==========================================
     @PostMapping("/complete/{taskId}")
-    public ResponseEntity<?> completeTask(@PathVariable Long taskId, HttpServletRequest request) {
+    public ResponseEntity<?> completeTask(
+            @PathVariable Long taskId,
+            @RequestBody Map<String, Object> payload,
+            HttpServletRequest request) {
         try {
-            // 取出发单人身份（只有发单人才能确认完成）
             Long currentUserId = (Long) request.getAttribute("userId");
 
-            boolean success = taskService.completeTask(taskId, currentUserId);
+            // 从前端传来的 payload 中提取星星数和评价文字，做一下防空处理
+            Integer rating = (Integer) payload.getOrDefault("rating", 5);
+            String comment = (String) payload.getOrDefault("comment", "默认好评！");
+
+            boolean success = taskService.completeTaskWithReview(taskId, currentUserId, rating, comment);
 
             if (success) {
-                return ResponseEntity.ok(Map.of("code", 200, "message", "任务已确认完成，赏金已结算！"));
+                return ResponseEntity.ok(Map.of("code", 200, "message", "任务已确认完成，评价已提交！"));
             } else {
-                return ResponseEntity.badRequest().body(Map.of("error", "操作失败：可能任务状态不对或您无权操作"));
+                return ResponseEntity.badRequest().body(Map.of("error", "操作失败：任务状态异常或您无权操作"));
             }
         } catch (Exception e) {
-            log.error("确认完成异常，任务ID: {}", taskId, e);
+            log.error("确认完成异常", e);
             return ResponseEntity.internalServerError().body(Map.of("error", "服务器开小差了"));
         }
     }
