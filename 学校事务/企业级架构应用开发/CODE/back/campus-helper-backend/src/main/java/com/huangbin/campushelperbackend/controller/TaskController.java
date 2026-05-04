@@ -90,4 +90,69 @@ public class TaskController {
             return ResponseEntity.internalServerError().body(Map.of("error", "服务器开小差了，获取数据失败"));
         }
     }
+
+    // 【修改】阶段四：接单/抢单接口 (增加了模拟用户ID)
+    @PostMapping("/grab/{taskId}")
+    public ResponseEntity<?> grabTask(@PathVariable Long taskId) {
+        try {
+            Long currentUserId = 2L; // 模拟当前登录的用户是 2 号同学（接单方）
+            boolean success = taskService.grabTask(taskId, currentUserId);
+
+            if (success) {
+                return ResponseEntity.ok(Map.of("message", "抢单成功！快去联系发布者吧！"));
+            } else {
+                return ResponseEntity.badRequest().body(Map.of("error", "手慢了，该任务已被抢走或不存在！"));
+            }
+        } catch (Exception e) {
+            log.error("抢单异常，任务ID: {}", taskId, e);
+            return ResponseEntity.internalServerError().body(Map.of("error", "服务器开小差了，抢单失败"));
+        }
+    }
+
+    // ================= 新增：个人订单管理接口 =================
+
+    // 1. 获取我发出的任务列表
+    @GetMapping("/my-published")
+    public ResponseEntity<?> getMyPublished() {
+        try {
+            Long currentUserId = 1L; // 模拟当前登录的用户是 1 号同学（发单方）
+            List<Task> list = taskService.getMyPublishedTasks(currentUserId);
+            return ResponseEntity.ok(Map.of("code", 200, "data", list));
+        } catch (Exception e) {
+            log.error("查询我发布的任务失败", e);
+            return ResponseEntity.internalServerError().body(Map.of("error", "查询失败"));
+        }
+    }
+
+    // 2. 获取我接到的任务列表
+    @GetMapping("/my-grabbed")
+    public ResponseEntity<?> getMyGrabbed() {
+        try {
+            Long currentUserId = 2L; // 模拟当前登录的用户是 2 号同学（接单方）
+            List<Task> list = taskService.getMyGrabbedTasks(currentUserId);
+            return ResponseEntity.ok(Map.of("code", 200, "data", list));
+        } catch (Exception e) {
+            log.error("查询我接到的任务失败", e);
+            return ResponseEntity.internalServerError().body(Map.of("error", "查询失败"));
+        }
+    }
+
+    // 阶段五：确认完成任务（结算）
+    @PostMapping("/complete/{taskId}")
+    public ResponseEntity<?> completeTask(@PathVariable Long taskId) {
+        try {
+            Long currentUserId = 1L; // 模拟当前登录的是 1 号同学（发单方）
+            boolean success = taskService.completeTask(taskId, currentUserId);
+
+            if (success) {
+                return ResponseEntity.ok(Map.of("message", "任务已确认完成，赏金已结算！"));
+            } else {
+                return ResponseEntity.badRequest().body(Map.of("error", "操作失败：可能任务状态不对或您无权操作"));
+            }
+        } catch (Exception e) {
+            log.error("确认完成异常，任务ID: {}", taskId, e);
+            return ResponseEntity.internalServerError().body(Map.of("error", "服务器开小差了"));
+        }
+    }
+
 }

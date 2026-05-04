@@ -1,6 +1,7 @@
 package com.huangbin.campushelperbackend.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.huangbin.campushelperbackend.dto.AiParsedTaskDTO; // 确保导入了你的强类型 DTO
 import com.huangbin.campushelperbackend.dto.TaskPublishRequest;
 import com.huangbin.campushelperbackend.entity.Task;
@@ -66,4 +67,52 @@ public class TaskService {
 
         return taskMapper.selectList(wrapper);
     }
+
+    /**
+     * 【升级版】抢单逻辑：不仅改状态，还要记录是谁接的单
+     */
+    public boolean grabTask(Long taskId, Long receiverId) {
+        LambdaUpdateWrapper<Task> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(Task::getTaskId, taskId)
+                .eq(Task::getStatus, "0")
+                .set(Task::getStatus, "1")
+                .set(Task::getReceiverId, receiverId); // 核心：记录下接单人的 ID
+
+        return taskMapper.update(null, updateWrapper) > 0;
+    }
+
+    /**
+     * 确认完成逻辑：状态从 1 改为 2 (已完成)
+     */
+    public boolean completeTask(Long taskId, Long publisherId) {
+        LambdaUpdateWrapper<Task> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(Task::getTaskId, taskId)
+                .eq(Task::getPublisherId, publisherId) // 核心防范：确保只有发单人能确认
+                .eq(Task::getStatus, "1") // 只有“进行中”的任务才能确认
+                .set(Task::getStatus, "2"); // "2" 代表已完成
+
+        return taskMapper.update(null, updateWrapper) > 0;
+    }
+
+    /**
+     * 查询：我发布的任务
+     */
+    public List<Task> getMyPublishedTasks(Long publisherId) {
+        LambdaQueryWrapper<Task> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Task::getPublisherId, publisherId)
+                .orderByDesc(Task::getTaskId); // 依然是最新的在最前面
+        return taskMapper.selectList(wrapper);
+    }
+
+    /**
+     * 查询：我接到的任务
+     */
+    public List<Task> getMyGrabbedTasks(Long receiverId) {
+        LambdaQueryWrapper<Task> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Task::getReceiverId, receiverId)
+                .orderByDesc(Task::getTaskId);
+        return taskMapper.selectList(wrapper);
+    }
+
+
 }

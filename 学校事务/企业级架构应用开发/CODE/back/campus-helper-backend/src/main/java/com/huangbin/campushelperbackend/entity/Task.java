@@ -30,4 +30,9 @@ public class Task {
     private String status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    /**
+     * 接单人 ID
+     */
+    private Long receiverId;
 }
