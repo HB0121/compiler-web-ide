@@ -4,7 +4,7 @@
     <router-view class="main-content" />
 
     
-    <van-tabbar v-show="$route.path !== '/login'" route placeholder active-color="#ee0a24" inactive-color="#000">
+    <van-tabbar v-show="!['/login', '/register'].includes($route.path)" route placeholder active-color="#ee0a24" inactive-color="#000">
       <van-tabbar-item replace to="/hall" icon="home-o">大厅</van-tabbar-item>
       <van-tabbar-item replace to="/publish" icon="plus">发单</van-tabbar-item>
       <van-tabbar-item replace to="/mine" icon="user-o">我的</van-tabbar-item>

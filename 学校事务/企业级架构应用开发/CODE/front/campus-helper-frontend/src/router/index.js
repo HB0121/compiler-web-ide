@@ -5,6 +5,7 @@ import TaskHall from '../views/TaskHall.vue'
 import Mine from '../views/Mine.vue'
 import MyTasks from '../views/MyTasks.vue'
 import Login from '../views/Login.vue'
+import Register from '../views/Register.vue'
 
 const routes = [
   {
@@ -15,6 +16,11 @@ const routes = [
     path: '/login',
     name: 'Login',
     component: Login
+  },
+  {
+    path: '/register',
+    name: 'Register',
+    component: Register
   },
   {
     path: '/hall',
@@ -51,7 +57,12 @@ router.beforeEach((to, from, next) => {
   if (to.path !== '/login' && !token) {
     next('/login')
   } else {
-    // 3. 其他情况（比如有 token，或者他本来就在登录页），直接放行
+    // 3. 修改这里：如果去的不是登录页，也不是注册页，且没有门票，才踢回登录页
+    if (to.path !== '/login' && to.path !== '/register' && !token) {
+      next('/login')
+    } else {
+      next() // 否则放行
+    }
     next()
   }
 })

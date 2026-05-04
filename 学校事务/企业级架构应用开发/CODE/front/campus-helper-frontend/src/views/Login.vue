@@ -33,6 +33,15 @@
           立即登录
         </van-button>
       </div>
+      <div style="margin: 32px 16px;">
+        <van-button round block type="primary" native-type="submit" :loading="loading">
+          立即登录
+        </van-button>
+        <!-- 新增这行跳转提示 -->
+        <div style="text-align: center; margin-top: 16px; font-size: 14px; color: #1989fa;" @click="$router.push('/register')">
+          还没有账号？点击这里去注册
+        </div>
+      </div>
     </van-form>
   </div>
 </template>
