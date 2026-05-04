@@ -3,21 +3,11 @@
     <!-- 路由视图（画框）：这里会根据网址动态显示 TaskHall 或 PublishPage -->
     <router-view class="main-content" />
 
-    <!-- 底部导航栏 -->
-    <!-- route 属性开启后，点击图标会自动进行路由跳转，高亮也会自动跟随网址 -->
-    <van-tabbar route placeholder active-color="#ee0a24" inactive-color="#000">
-      <van-tabbar-item replace to="/hall" icon="home-o">
-        大厅
-      </van-tabbar-item>
-      
-      <!-- 发单按钮我们给它一个特殊的图标，突显核心业务 -->
-      <van-tabbar-item replace to="/publish" icon="plus">
-        发单
-      </van-tabbar-item>
-      
-      <van-tabbar-item replace to="/mine" icon="user-o">
-        我的
-      </van-tabbar-item>
+    
+    <van-tabbar v-show="$route.path !== '/login'" route placeholder active-color="#ee0a24" inactive-color="#000">
+      <van-tabbar-item replace to="/hall" icon="home-o">大厅</van-tabbar-item>
+      <van-tabbar-item replace to="/publish" icon="plus">发单</van-tabbar-item>
+      <van-tabbar-item replace to="/mine" icon="user-o">我的</van-tabbar-item>
     </van-tabbar>
   </div>
 </template>
