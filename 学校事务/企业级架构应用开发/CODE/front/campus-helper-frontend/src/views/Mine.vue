@@ -1,32 +1,21 @@
 <template>
   <div class="mine-container">
-    <!-- 顶部导航 -->
     <van-nav-bar title="个人中心" fixed placeholder />
 
-    <!-- 用户信息卡片 -->
-    <div class="user-profile">
-      <div class="avatar-wrap">
-        <!-- Vant 的默认头像图标 -->
-        <van-icon name="user-circle-o" size="64" color="#ebedf0" />
-      </div>
+    <!-- 头部用户信息 -->
+    <div class="user-header">
+      <van-image
+        round
+        width="80px"
+        height="80px"
+        src="https://fastly.jsdelivr.net/npm/@vant/assets/cat.jpeg"
+      />
       <div class="user-info">
-        <div class="username">同学_89757</div>
-        <div class="student-id">学号认证：已认证</div>
+        <!-- 动态显示当前登录的用户名 -->
+        <div class="user-name">{{ currentUsername || '未登录' }}</div>
+        <div class="user-id">ID: {{ currentUserId || '--' }}</div>
       </div>
     </div>
-
-    <!-- 数据统计区域 -->
-    <van-grid :column-num="3" class="stats-grid">
-      <van-grid-item text="发出的任务">
-        <template #icon><span class="stats-num">12</span></template>
-      </van-grid-item>
-      <van-grid-item text="接取的任务">
-        <template #icon><span class="stats-num">5</span></template>
-      </van-grid-item>
-      <van-grid-item text="累计收益">
-        <template #icon><span class="stats-num price">￥68</span></template>
-      </van-grid-item>
-    </van-grid>
 
     <!-- 功能列表 -->
     <van-cell-group inset class="action-list">
@@ -35,15 +24,41 @@
       <van-cell title="钱包余额" icon="balance-o" is-link value="￥68.00" />
     </van-cell-group>
 
-    <van-cell-group inset class="action-list">
-      <van-cell title="联系客服" icon="service-o" is-link />
-      <van-cell title="设置" icon="setting-o" is-link />
-    </van-cell-group>
+    <!-- 退出登录按钮 -->
+    <div class="logout-wrap">
+      <van-button type="danger" block round @click="handleLogout">退出登录</van-button>
+    </div>
   </div>
 </template>
 
 <script setup>
-// 目前主要是静态展示，后续可以接入后端的个人信息查询接口
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { showToast } from 'vant'
+
+const router = useRouter()
+
+// 响应式变量，用来存从本地拿出来的用户信息
+const currentUsername = ref('')
+const currentUserId = ref('')
+
+// 页面加载时，去保险柜里拿名字和ID
+onMounted(() => {
+  currentUsername.value = localStorage.getItem('username')
+  currentUserId.value = localStorage.getItem('userId')
+})
+
+// 退出登录逻辑
+const handleLogout = () => {
+  // 1. 清空保险柜里的门票和用户信息
+  localStorage.removeItem('token')
+  localStorage.removeItem('username')
+  localStorage.removeItem('userId')
+  
+  // 2. 提示并跳转回登录页
+  showToast('已退出登录')
+  router.push('/login')
+}
 </script>
 
 <style scoped>
@@ -51,53 +66,29 @@
   min-height: 100vh;
   background-color: #f7f8fa;
 }
-
-.user-profile {
+.user-header {
   display: flex;
   align-items: center;
-  padding: 24px 20px;
-  background: linear-gradient(to right, #1989fa, #5fb8fb); /* 漂亮的渐变蓝背景 */
+  padding: 30px 20px;
+  background: linear-gradient(to right, #1989fa, #5cadff);
   color: white;
 }
-
-.avatar-wrap {
-  margin-right: 16px;
-  background-color: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  padding: 4px;
-}
-
 .user-info {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  margin-left: 20px;
 }
-
-.username {
+.user-name {
   font-size: 20px;
   font-weight: bold;
+  margin-bottom: 8px;
 }
-
-.student-id {
-  font-size: 13px;
+.user-id {
+  font-size: 14px;
   opacity: 0.8;
 }
-
-.stats-grid {
-  margin-bottom: 12px;
-}
-
-.stats-num {
-  font-size: 20px;
-  font-weight: bold;
-  color: #323233;
-}
-
-.price {
-  color: #ee0a24;
-}
-
 .action-list {
-  margin-bottom: 12px;
+  margin-top: 20px;
+}
+.logout-wrap {
+  margin: 40px 16px 20px;
 }
 </style>
