@@ -34,5 +34,6 @@ public class Task {
     /**
      * 接单人 ID
      */
+    @TableField("accepter_id")
     private Long receiverId;
 }
