@@ -43,4 +43,17 @@ const router = createRouter({
   routes
 })
 
+router.beforeEach((to, from, next) => {
+  // 1. 去保险柜（localStorage）里看看有没有 token
+  const token = localStorage.getItem('token')
+  
+  // 2. 如果他想去的页面不是登录页，而且他又没有 token，就强制踢回登录页
+  if (to.path !== '/login' && !token) {
+    next('/login')
+  } else {
+    // 3. 其他情况（比如有 token，或者他本来就在登录页），直接放行
+    next()
+  }
+})
+
 export default router
