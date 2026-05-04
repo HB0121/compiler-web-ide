@@ -114,5 +114,13 @@ public class TaskService {
         return taskMapper.selectList(wrapper);
     }
 
+    /**
+     * 新增：保存发布的新任务
+     */
+    public boolean saveTask(Task task) {
+        // 调用 MyBatis-Plus 的 baseMapper 插入数据
+        return taskMapper.insert(task) > 0;
+    }
+
 
 }

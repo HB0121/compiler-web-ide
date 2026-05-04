@@ -32,7 +32,7 @@ public class TaskController {
             task.setStatus("0"); // 初始状态为 0 (待接单)
 
             // 调用 MyBatis-Plus 默认的 save 方法保存到数据库
-            boolean success = taskService.save(task);
+            boolean success = taskService.saveTask(task);
 
             if (success) {
                 return ResponseEntity.ok(Map.of("code", 200, "message", "任务发布成功！"));
