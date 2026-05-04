@@ -50,19 +50,13 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  // 1. 去保险柜（localStorage）里看看有没有 token
   const token = localStorage.getItem('token')
   
-  // 2. 如果他想去的页面不是登录页，而且他又没有 token，就强制踢回登录页
-  if (to.path !== '/login' && !token) {
+  // 核心逻辑：如果他去的既不是登录页，也不是注册页，而且又没带门票，就踢回登录页
+  if (to.path !== '/login' && to.path !== '/register' && !token) {
     next('/login')
   } else {
-    // 3. 修改这里：如果去的不是登录页，也不是注册页，且没有门票，才踢回登录页
-    if (to.path !== '/login' && to.path !== '/register' && !token) {
-      next('/login')
-    } else {
-      next() // 否则放行
-    }
+    // 其他所有情况（有门票，或者是去登录/注册页）全部放行
     next()
   }
 })
