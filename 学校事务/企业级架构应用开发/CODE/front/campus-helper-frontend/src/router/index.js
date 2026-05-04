@@ -4,11 +4,17 @@ import PublishPage from '../views/PublishPage.vue'
 import TaskHall from '../views/TaskHall.vue'
 import Mine from '../views/Mine.vue'
 import MyTasks from '../views/MyTasks.vue'
+import Login from '../views/Login.vue'
 
 const routes = [
   {
     path: '/',
-    redirect: '/hall' // 默认一打开网址，就跳转到大厅
+    redirect: '/login' // 默认一打开网址，就跳转到大厅
+  },
+  {
+    path: '/login',
+    name: 'Login',
+    component: Login
   },
   {
     path: '/hall',
