@@ -36,7 +36,7 @@ public class TaskController {
         try {
             var parsedData = taskAiService.parseUserIntent(request.getText());
             // 注意：Vite前端如果要求 code 状态码，可以像下面这样包一层，更加规范
-            return ResponseEntity.ok().body(Map.of("code", 200, "data", Map.of("ai_parsed_data", parsedData)));
+            return ResponseEntity.ok().body(Map.of("ai_parsed_data", parsedData));
         } catch (Exception e) {
             log.error("阶段一 AI 解析失败", e);
             return ResponseEntity.internalServerError().body(Map.of("error", "AI 解析失败"));
