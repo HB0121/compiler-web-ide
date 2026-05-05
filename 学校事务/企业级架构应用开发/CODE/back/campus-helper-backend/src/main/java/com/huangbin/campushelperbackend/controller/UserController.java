@@ -1,8 +1,10 @@
 package com.huangbin.campushelperbackend.controller;
 
 import com.huangbin.campushelperbackend.entity.User;
+import com.huangbin.campushelperbackend.mapper.UserMapper;
 import com.huangbin.campushelperbackend.service.UserService;
 import com.huangbin.campushelperbackend.utils.JwtUtils;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,6 +13,9 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/user")
 public class UserController {
+
+    @Autowired
+    private UserMapper userMapper;
 
     @Autowired
     private UserService userService;
@@ -57,6 +62,26 @@ public class UserController {
             return ResponseEntity.ok(Map.of("code", 200, "message", "注册成功！快去登录吧"));
         } else {
             return ResponseEntity.badRequest().body(Map.of("error", "该学号已被注册"));
+        }
+    }
+
+    // ==========================================
+    // 获取当前登录用户信息的接口
+    // ==========================================
+    @GetMapping("/info")
+    public ResponseEntity<?> getUserInfo(HttpServletRequest request) {
+        Long currentUserId = (Long) request.getAttribute("userId");
+
+        // 1. 使用 UserMapper 的 selectById，稳如泰山
+        // 2. 变量名改为 userInfo，解决“作用域中已定义变量”的报错
+        User userInfo = userMapper.selectById(currentUserId);
+
+        if (userInfo != null) {
+            // 安全起见，千万别把密码哈希返回给前端
+            userInfo.setPasswordHash(null);
+            return ResponseEntity.ok(Map.of("code", 200, "data", userInfo));
+        } else {
+            return ResponseEntity.badRequest().body(Map.of("error", "找不到用户信息"));
         }
     }
 }

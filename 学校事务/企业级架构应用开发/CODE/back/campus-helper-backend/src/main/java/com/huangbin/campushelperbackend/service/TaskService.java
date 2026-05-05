@@ -31,33 +31,55 @@ public class TaskService {
         this.taskMapper = taskMapper;
     }
 
+    // ==========================================
+    // 1. 发单方法 (带扣款验证)
+    // ==========================================
     @Transactional(rollbackFor = Exception.class)
     public boolean createAndPublishTask(TaskPublishRequest request) {
         // 1. 组装数据库实体
         Task task = new Task();
 
-        // 实际开发中，发布者ID应该从登录态(如JWT Token)中获取，这里为了跑通流程先用前端传的或写死测试
+        // 实际开发中，发布者ID应该从登录态获取
         task.setPublisherId(request.getPublisherId() != null ? request.getPublisherId() : 1L);
         task.setRawContent(request.getRawContent());
 
-        // 获取我们已经变成强类型 DTO 的解析数据
+        // 获取解析数据并赋值
         AiParsedTaskDTO parsedData = request.getAiParsedData();
-
-        // 核心：将强类型对象赋值给实体
         task.setAiParsedData(parsedData);
 
-        // 2. 提取报酬金额 【核心修改：用 getter 方法代替 .get("reward")】
+        // 2. 提取报酬金额
         BigDecimal reward = BigDecimal.ZERO;
         if (parsedData != null && parsedData.getReward() != null) {
-            // 安全转换：无论 DTO 里 reward 是 Double 还是 Integer，先转成 String 再给 BigDecimal，不会丢精度
             reward = new BigDecimal(parsedData.getReward().toString());
         }
         task.setRewardAmount(reward);
 
-        // 3. 设置初始状态 【修正类型隐患：因为实体类里 status 是 String，这里加上双引号】
+        // 3. 设置初始状态
         task.setStatus("0"); // "0" 代表待接单
 
-        // 4. 执行插入
+        // ================= 核心修改：资金扣减逻辑 =================
+        // 3.1 查出发单人的钱包 (调用 userMapper)
+        User publisher = userMapper.selectById(task.getPublisherId());
+        if (publisher == null) {
+            throw new RuntimeException("找不到发单用户信息！");
+        }
+
+        // 防御性编程：如果历史数据余额为空，给个0
+        if (publisher.getBalance() == null) {
+            publisher.setBalance(BigDecimal.ZERO);
+        }
+
+        // 3.2 检查余额够不够 (compareTo: -1表示小于)
+        if (publisher.getBalance().compareTo(reward) < 0) {
+            throw new RuntimeException("钱包余额不足啦！你的余额只剩: ￥" + publisher.getBalance());
+        }
+
+        // 3.3 扣除赏金并更新到数据库
+        publisher.setBalance(publisher.getBalance().subtract(reward));
+        userMapper.updateById(publisher);
+        // ==========================================================
+
+        // 4. 执行插入任务
         int rows = taskMapper.insert(task);
         return rows > 0;
     }
@@ -91,10 +113,10 @@ public class TaskService {
         return taskMapper.update(null, updateWrapper) > 0;
     }
 
-    /**
-     * 确认完成逻辑：状态从 1 改为 2 (已完成)
-     */
-    @org.springframework.transaction.annotation.Transactional // 开启事务控制，保证数据一致性
+    // ==========================================
+    // 2. 结算方法 (带评价与打款)
+    // ==========================================
+    @org.springframework.transaction.annotation.Transactional(rollbackFor = Exception.class) // 开启事务控制，保证数据一致性
     public boolean completeTaskWithReview(Long taskId, Long publisherId, Integer rating, String comment) {
         // 1. 查出任务，确认是不是这个发单人的，且状态必须是 "1"（进行中）
         Task task = taskMapper.selectById(taskId);
@@ -110,13 +132,12 @@ public class TaskService {
         Review review = new Review();
         review.setTaskId(taskId);
         review.setReviewerId(publisherId); // 发单人
-        // 注意：如果你实体类里接单人字段叫 accepterId，这里就改成 getAccepterId()
         review.setRevieweeId(task.getReceiverId());
         review.setRating(rating);
         review.setComment(comment);
         reviewMapper.insert(review);
 
-        // 4. 动态计算并更新接单人的信用分 (credit_score)
+        // 4. 动态计算并更新接单人的信用分和钱包
         User reviewee = userMapper.selectById(task.getReceiverId());
         if (reviewee != null) {
             int scoreChange = 0;
@@ -130,6 +151,18 @@ public class TaskService {
                 default: scoreChange = 0;
             }
             reviewee.setCreditScore(reviewee.getCreditScore() + scoreChange);
+
+            // ================= 核心修改：资金结算打款 =================
+            // 防御性编程：如果接单人钱包是空的，给个0
+            if (reviewee.getBalance() == null) {
+                reviewee.setBalance(BigDecimal.ZERO);
+            }
+            // 将这笔任务的赏金，打入接单人的余额中
+            if (task.getRewardAmount() != null) {
+                reviewee.setBalance(reviewee.getBalance().add(task.getRewardAmount()));
+            }
+            // ==========================================================
+
             userMapper.updateById(reviewee);
         }
 

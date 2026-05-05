@@ -6,6 +6,8 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
+import java.math.BigDecimal;
+
 @Data
 @TableName("users")
 public class User {
@@ -19,4 +21,6 @@ public class User {
     private String passwordHash; // 对应 password_hash
 
     private Integer creditScore; // 对应 credit_score
+
+    private BigDecimal balance;
 }
