@@ -7,7 +7,7 @@ from docx.oxml.ns import qn
 from docx.shared import Cm, Pt, RGBColor
 
 
-OUTPUT = "毕昇编译器SSA形式IR拓展阅读.docx"
+OUTPUT = "毕昇编译器SSA形式IR拓展阅读-浅灰版.docx"
 
 
 def set_cell_shading(cell, fill):
@@ -51,7 +51,7 @@ def add_heading(doc, text, level=1):
     r._element.rPr.rFonts.set(qn("w:eastAsia"), "黑体")
     r.font.size = Pt(15 if level == 1 else 13)
     r.font.bold = True
-    r.font.color.rgb = RGBColor(31, 78, 121)
+    r.font.color.rgb = RGBColor(0, 0, 0)
     return p
 
 
@@ -94,7 +94,7 @@ run.font.name = "黑体"
 run._element.rPr.rFonts.set(qn("w:eastAsia"), "黑体")
 run.font.size = Pt(22)
 run.font.bold = True
-run.font.color.rgb = RGBColor(31, 78, 121)
+run.font.color.rgb = RGBColor(0, 0, 0)
 
 subtitle = doc.add_paragraph()
 subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -112,7 +112,7 @@ labels = ["课程名称", "学生姓名", "班级/学号", "提交日期"]
 values = ["编译原理", "（请填写）", "（请填写）", "2026 年 5 月"]
 for i, (label, value) in enumerate(zip(labels, values)):
     set_cell_text(info_table.cell(i, 0), label, bold=True)
-    set_cell_shading(info_table.cell(i, 0), "D9EAF7")
+    set_cell_shading(info_table.cell(i, 0), "F2F2F2")
     set_cell_text(info_table.cell(i, 1), value)
 
 doc.add_section(WD_SECTION.NEW_PAGE)
@@ -160,7 +160,7 @@ table.style = "Table Grid"
 headers = ["比较维度", "传统三地址码", "SSA 形式 IR"]
 for j, header in enumerate(headers):
     set_cell_text(table.cell(0, j), header, bold=True)
-    set_cell_shading(table.cell(0, j), "D9EAF7")
+    set_cell_shading(table.cell(0, j), "F2F2F2")
 rows = [
     ("变量定义", "同一变量可多次赋值", "每个变量版本只定义一次"),
     ("数据依赖", "需要额外构建 def-use/use-def 信息", "定义与使用关系更直接"),
