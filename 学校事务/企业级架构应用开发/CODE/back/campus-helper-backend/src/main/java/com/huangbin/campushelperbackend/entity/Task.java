@@ -36,4 +36,6 @@ public class Task {
      */
     @TableField("accepter_id")
     private Long receiverId;
+
+    private String imageUrl;
 }
