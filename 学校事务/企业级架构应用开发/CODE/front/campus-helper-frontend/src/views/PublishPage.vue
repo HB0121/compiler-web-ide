@@ -84,6 +84,20 @@
             label="任务标签"
             placeholder="多个标签用逗号隔开"
           />
+          
+          <!-- ================= 新增：任务附图上传 ================= -->
+          <van-field name="uploader" label="添加附图">
+            <template #input>
+              <van-uploader 
+                v-model="fileList" 
+                :max-count="1" 
+                :after-read="afterRead"
+                upload-text="上传截图"
+              />
+            </template>
+          </van-field>
+          <!-- ====================================================== -->
+          
         </van-cell-group>
 
         <div class="submit-btn-wrap">
@@ -98,12 +112,15 @@
 
 <script setup>
 import { ref, reactive } from 'vue'
+import { useRouter } from 'vue-router'
 import { showToast, showSuccessToast, showFailToast } from 'vant'
-import axios from 'axios' // 已经取消注释啦！
+import axios from 'axios'
+
+const router = useRouter()
 
 // 路由返回逻辑
 const onClickLeft = () => {
-  showToast('返回上一页')
+  router.back()
 }
 
 // 核心状态控制
@@ -111,6 +128,10 @@ const rawContent = ref('')
 const isParsing = ref(false)
 const showForm = ref(false)
 const isSubmitting = ref(false)
+
+// ======== 新增：图片上传相关变量 ========
+const fileList = ref([])
+const uploadedImageUrl = ref('')
 
 // 结构化表单数据
 const taskData = reactive({
@@ -121,77 +142,122 @@ const taskData = reactive({
   tags: ''
 })
 
+// 获取 Token 的通用方法
+const getTokenHeaders = () => {
+  return {
+    Authorization: `Bearer ${localStorage.getItem('token')}`
+  }
+}
+
+// ================= 新增：处理图片上传逻辑 =================
+const afterRead = async (file) => {
+  file.status = 'uploading'
+  file.message = '上传中...'
+
+  // 构建 FormData
+  const formData = new FormData()
+  formData.append('file', file.file)
+
+  try {
+    const res = await axios.post('http://localhost:8080/api/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        ...getTokenHeaders() // 带上 JWT 门票
+      }
+    })
+
+    if (res.data.code === 200) {
+      file.status = 'done'
+      uploadedImageUrl.value = res.data.data.url // 保存后端返回的真实图片地址
+    } else {
+      throw new Error('上传失败')
+    }
+  } catch (error) {
+    file.status = 'failed'
+    file.message = '上传出错'
+    console.error('上传异常', error)
+  }
+}
+// ==========================================================
+
 // 阶段一：真实调用 Spring Boot 后端的 /parse 接口
 const handleSmartParse = async () => {
   if (!rawContent.value.trim()) {
-    showToast('请先输入您的需求描述');
-    return;
+    showToast('请先输入您的需求描述')
+    return
   }
 
-  isParsing.value = true;
-  showForm.value = false;
+  isParsing.value = true
+  showForm.value = false
 
   try {
-    // 调用真实的后端解析接口
-    const res = await axios.post('http://localhost:8080/api/tasks/parse', { 
-      text: rawContent.value 
-    });
+    // 增加 headers 携带 token，防止被安检门拦住
+    const res = await axios.post('http://localhost:8080/api/tasks/parse', 
+      { text: rawContent.value },
+      { headers: getTokenHeaders() }
+    )
     
-    // 获取后端返回的 AI 解析数据
-    const parsedData = res.data.ai_parsed_data;
+    const parsedData = res.data.ai_parsed_data
 
-    // 将 AI 提取的数据映射到表单中
-    taskData.time = parsedData.time || '';
-    taskData.location = parsedData.location || '';
-    taskData.action = parsedData.action || '';
-    taskData.reward = parsedData.reward || null;
-    
-    // 后端返回的 tags 是数组 ["跑腿", "急单"]，前端表单需要逗号拼接的字符串 "跑腿,急单"
-    taskData.tags = parsedData.tags ? parsedData.tags.join(',') : '';
+    taskData.time = parsedData.time || ''
+    taskData.location = parsedData.location || ''
+    taskData.action = parsedData.action || ''
+    taskData.reward = parsedData.reward || null
+    taskData.tags = parsedData.tags ? parsedData.tags.join(',') : ''
 
-    showForm.value = true;
-    showSuccessToast('解析成功，请核对表单');
+    showForm.value = true
+    showSuccessToast('解析成功，请核对表单')
   } catch (error) {
-    console.error(error);
-    showFailToast('AI 开小差了，请手动填写表单');
-    showForm.value = true; // 即使失败也让用户手动填
+    console.error(error)
+    showFailToast('AI 开小差了，请手动填写表单')
+    showForm.value = true
   } finally {
-    isParsing.value = false;
+    isParsing.value = false
   }
 }
 
 // 阶段二：真实调用 Spring Boot 后端的 /publish 接口落库
 const onSubmit = async (values) => {
-  isSubmitting.value = true;
+  isSubmitting.value = true
   
-  // 组装最终要发送给后端的数据，必须严格匹配 Java 的 TaskPublishRequest DTO
+  // 组装最终要发送给后端的数据
   const finalPayload = {
-    publisherId: 1, // 模拟当前登录用户的 ID
+    // publisherId 已经删掉，后端直接从 token 里解析
     rawContent: rawContent.value,
+    imageUrl: uploadedImageUrl.value, // 新增：把上传成功拿到的图片URL塞进去
     aiParsedData: {
       time: values.time,
       location: values.location,
       action: values.action,
-      reward: Number(values.reward), // 确保转为数字
-      // 前端表单是字符串 "跑腿,急单"，传给后端要劈开成数组 ["跑腿", "急单"]
+      reward: Number(values.reward),
       tags: values.tags ? values.tags.split(',').map(t => t.trim()) : [] 
     }
   }
 
   try {
-    const res = await axios.post('http://localhost:8080/api/tasks/publish', finalPayload);
+    const res = await axios.post('http://localhost:8080/api/tasks/publish', finalPayload, {
+      headers: getTokenHeaders() // 带上门票
+    })
+    
     if (res.status === 200) {
-      showSuccessToast('任务发布成功！');
-      // 发布成功后，重置页面状态
-      rawContent.value = '';
-      showForm.value = false;
-      // TODO: 真实业务中可以在这里 router.push('/tasks') 跳转到任务大厅
+      showSuccessToast('任务发布成功！')
+      
+      // 重置状态
+      rawContent.value = ''
+      fileList.value = []
+      uploadedImageUrl.value = ''
+      showForm.value = false
+      
+      // 成功后自动跳回大厅
+      setTimeout(() => {
+        router.push('/hall')
+      }, 1000)
     }
   } catch (error) {
-    console.error(error);
-    showFailToast(error.response?.data?.error || '服务器异常，发布失败');
+    console.error(error)
+    showFailToast(error.response?.data?.error || '服务器异常，发布失败')
   } finally {
-    isSubmitting.value = false;
+    isSubmitting.value = false
   }
 }
 </script>
