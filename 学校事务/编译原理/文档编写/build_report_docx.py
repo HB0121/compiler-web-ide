@@ -38,7 +38,7 @@ def set_cell_width(cell, width_cm):
     tc_w.set(qn("w:type"), "dxa")
 
 
-def set_cell_text(cell, text, bold=False, size=9.2, align=WD_ALIGN_PARAGRAPH.LEFT):
+def set_cell_text(cell, text, bold=False, size=10.5, align=WD_ALIGN_PARAGRAPH.LEFT):
     cell.text = ""
     cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
     p = cell.paragraphs[0]
@@ -66,7 +66,7 @@ def add_page_number(section):
     set_font(run, size=9)
 
 
-def add_center(doc, text, font="黑体", size=16, bold=True, before=0, after=8, color=None):
+def add_center(doc, text, font="宋体", size=14, bold=True, before=0, after=8, color=None):
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p.paragraph_format.space_before = Pt(before)
@@ -81,7 +81,7 @@ def add_heading(doc, text, level=1):
     p.paragraph_format.space_before = Pt(8 if level == 1 else 5)
     p.paragraph_format.space_after = Pt(5)
     run = p.add_run(text)
-    set_font(run, "黑体", 12.5 if level == 1 else 11, True)
+    set_font(run, "宋体", 14, True)
 
 
 def add_body(doc, text):
@@ -103,14 +103,14 @@ def add_table(doc, headers, rows, widths):
         cell = table.rows[0].cells[i]
         shade_cell(cell, "D9EAF7")
         set_cell_width(cell, widths[i])
-        set_cell_text(cell, header, bold=True, size=9.2, align=WD_ALIGN_PARAGRAPH.CENTER)
+        set_cell_text(cell, header, bold=True, size=10.5, align=WD_ALIGN_PARAGRAPH.CENTER)
 
     for row in rows:
         cells = table.add_row().cells
         for i, text in enumerate(row):
             set_cell_width(cells[i], widths[i])
             align = WD_ALIGN_PARAGRAPH.CENTER if i == 0 or i == len(row) - 1 else WD_ALIGN_PARAGRAPH.LEFT
-            set_cell_text(cells[i], text, size=8.8, align=align)
+            set_cell_text(cells[i], text, size=10.5, align=align)
 
     doc.add_paragraph().paragraph_format.space_after = Pt(4)
     return table
@@ -132,13 +132,13 @@ def build():
     styles["Normal"]._element.rPr.rFonts.set(qn("w:eastAsia"), "宋体")
     styles["Normal"].font.size = Pt(10.5)
 
-    add_center(doc, "《编译原理》实验报告", size=24, before=120, after=20)
-    add_center(doc, "语义分析与中间代码生成", font="宋体", size=16, bold=False, after=80)
+    add_center(doc, "《编译原理》实验报告", size=14, before=120, after=20)
+    add_center(doc, "语义分析与中间代码生成", font="宋体", size=14, bold=True, after=80)
     add_center(doc, "学号：12303070250    姓名：黄彬    时间：2026年5月", font="宋体", size=12, bold=False)
     doc.add_page_break()
 
-    add_center(doc, "第一部分：语义", size=20, after=12, color=(31, 78, 121))
-    add_center(doc, "《编译原理》实验报告（语义分析）", size=16)
+    add_center(doc, "第一部分：语义", size=14, after=12, color=(31, 78, 121))
+    add_center(doc, "《编译原理》实验报告（语义分析）", size=14)
     add_center(doc, "学号：12303070250    姓名：黄彬    时间：2026年5月", font="宋体", size=10.5, bold=False, after=12)
 
     add_heading(doc, "1 实验目的")
@@ -168,8 +168,8 @@ def build():
     add_body(doc, "实验证明，语义分析的精确性源于对上下文的深度建模。通过“符号表栈”与“路径状态下传”技术，系统表现出了极高的确定性，能够严谨地处理 C 风格语言中复杂的控制流与类型约束任务。")
 
     doc.add_page_break()
-    add_center(doc, "第二部分：中间代码生成", size=20, after=12, color=(31, 78, 121))
-    add_center(doc, "《编译原理》实验报告（中间代码生成）", size=16)
+    add_center(doc, "第二部分：中间代码生成", size=14, after=12, color=(31, 78, 121))
+    add_center(doc, "《编译原理》实验报告（中间代码生成）", size=14)
     add_center(doc, "学号：12303070250    姓名：黄彬    时间：2026年5月8日", font="宋体", size=10.5, bold=False, after=12)
 
     add_heading(doc, "1 实验目的")
