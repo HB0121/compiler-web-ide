@@ -266,7 +266,11 @@ class SemanticAnalyzer:
         if node.name == "=":
             return self.evaluate_assignment(node)
 
-        if node.name in {"-", "!"} and len(node.children) == 1:
+        if node.name == "!" and len(node.children) == 1:
+            self.evaluate_expression(node.children[0])
+            return "int"
+
+        if node.name == "-" and len(node.children) == 1:
             return self.evaluate_expression(node.children[0])
 
         if node.name in ARITHMETIC_OPERATORS:

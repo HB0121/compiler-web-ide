@@ -188,6 +188,13 @@ class SemanticTests(unittest.TestCase):
         self.assertNotIn("307", int_codes)
         self.assertIn("307", [diagnostic.code for diagnostic in float_analyzer.diagnostics])
 
+    def test_unary_not_returns_int_type(self):
+        int_analyzer = self.analyze_source("int main(){int x=!1.0; return x;}")
+        float_analyzer = self.analyze_source("float main(){return !1.0;}")
+
+        self.assertNotIn("310", [diagnostic.code for diagnostic in int_analyzer.diagnostics])
+        self.assertIn("307", [diagnostic.code for diagnostic in float_analyzer.diagnostics])
+
 
 if __name__ == "__main__":
     unittest.main()
