@@ -47,6 +47,9 @@ class PipelineSmokeTests(unittest.TestCase):
             self.assertTrue((out_dir / "ast.txt").exists())
             self.assertTrue((out_dir / "semantic_errors.txt").exists())
             self.assertTrue((out_dir / "quads.txt").exists())
+            self.assertIn("main", (out_dir / "tokens.txt").read_text(encoding="utf-8"))
+            self.assertIn("FunctionDef(int main)", (out_dir / "ast.txt").read_text(encoding="utf-8"))
+            self.assertIn("sys", (out_dir / "quads.txt").read_text(encoding="utf-8"))
 
 
 class LexerTests(unittest.TestCase):
