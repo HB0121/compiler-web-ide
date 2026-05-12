@@ -23,7 +23,7 @@ public class Interpreter {
         try {
             return Integer.parseInt(arg); // 如果是纯数字，直接返回
         } catch (NumberFormatException e) {
-            return memory.getOrDefault(arg, 0); // 如果是变量，去内存里找
+            return memory.getOrDefault(arg, 0); // 如果是变量，去内存里找，找不到默认返回 0
         }
     }
 
@@ -38,12 +38,37 @@ public class Interpreter {
                 case "=":
                     int val = getValue(q.arg1);
                     memory.put(q.result, val);
-                    outputLogs.add(String.format("👉 执行赋值: 变量 %s 的值变为 %d", q.result, val));
+                    outputLogs.add(String.format("👉 赋值: 变量 %s = %d", q.result, val));
                     break;
+
                 case "+":
-                    memory.put(q.result, getValue(q.arg1) + getValue(q.arg2));
+                    int sum = getValue(q.arg1) + getValue(q.arg2);
+                    memory.put(q.result, sum);
+                    outputLogs.add(String.format("🧮 计算: %s = %d + %d = %d", q.result, getValue(q.arg1), getValue(q.arg2), sum));
                     break;
-                // 以后如果你加了 JUMP 指令，这里可以直接修改 i 的值来实现循环和分支！
+
+                case "-":
+                    int diff = getValue(q.arg1) - getValue(q.arg2);
+                    memory.put(q.result, diff);
+                    outputLogs.add(String.format("🧮 计算: %s = %d - %d = %d", q.result, getValue(q.arg1), getValue(q.arg2), diff));
+                    break;
+
+                case "*":
+                    int prod = getValue(q.arg1) * getValue(q.arg2);
+                    memory.put(q.result, prod);
+                    outputLogs.add(String.format("🧮 计算: %s = %d * %d = %d", q.result, getValue(q.arg1), getValue(q.arg2), prod));
+                    break;
+
+                case "/":
+                    int divisor = getValue(q.arg2);
+                    if (divisor != 0) {
+                        int quotient = getValue(q.arg1) / divisor;
+                        memory.put(q.result, quotient);
+                        outputLogs.add(String.format("🧮 计算: %s = %d / %d = %d", q.result, getValue(q.arg1), divisor, quotient));
+                    } else {
+                        outputLogs.add("❌ 运行时错误: 除数不能为 0");
+                    }
+                    break;
             }
         }
 

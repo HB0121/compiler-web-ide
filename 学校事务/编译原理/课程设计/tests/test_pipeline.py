@@ -164,6 +164,30 @@ class SemanticTests(unittest.TestCase):
         self.assertNotIn("308", codes)
         self.assertIn("i", var_names)
 
+    def test_mismatched_prototype_definition_reports_duplicate_function(self):
+        analyzer = self.analyze_source("int f(int a); float f(float b){return b;} int main(){return 0;}")
+
+        self.assertIn("303", [diagnostic.code for diagnostic in analyzer.diagnostics])
+
+    def test_declared_only_function_call_reports_undefined_function(self):
+        analyzer = self.analyze_source("int f(); int main(){return f();}")
+
+        self.assertIn("304", [diagnostic.code for diagnostic in analyzer.diagnostics])
+
+    def test_mixed_relational_operands_report_expression_type_mismatch(self):
+        analyzer = self.analyze_source("int main(){int a; char c; if(a<c){return 1;} return 0;}")
+
+        self.assertIn("310", [diagnostic.code for diagnostic in analyzer.diagnostics])
+
+    def test_unary_minus_preserves_literal_type_for_initializers_and_returns(self):
+        int_analyzer = self.analyze_source("int main(){int x=-1; return x;}")
+        int_codes = [diagnostic.code for diagnostic in int_analyzer.diagnostics]
+        float_analyzer = self.analyze_source("float main(){return -1;}")
+
+        self.assertNotIn("310", int_codes)
+        self.assertNotIn("307", int_codes)
+        self.assertIn("307", [diagnostic.code for diagnostic in float_analyzer.diagnostics])
+
 
 if __name__ == "__main__":
     unittest.main()

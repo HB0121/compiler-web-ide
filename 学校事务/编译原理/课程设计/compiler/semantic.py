@@ -89,7 +89,10 @@ class SemanticAnalyzer:
 
         if existing:
             if kind == "func" and existing.get("kind") == "func":
-                if existing.get("is_defined") and is_def:
+                same_signature = existing.get("type") == sym_type and existing.get("params", []) == params
+                if not same_signature:
+                    self.report_error(line, 303)
+                elif existing.get("is_defined") and is_def:
                     self.report_error(line, 303)
                 elif not is_def:
                     self.report_error(line, 303)
@@ -263,15 +266,15 @@ class SemanticAnalyzer:
         if node.name == "=":
             return self.evaluate_assignment(node)
 
+        if node.name in {"-", "!"} and len(node.children) == 1:
+            return self.evaluate_expression(node.children[0])
+
         if node.name in ARITHMETIC_OPERATORS:
             return self.evaluate_binary_expression(node, require_same_type=True)
 
         if node.name in RELATIONAL_OPERATORS or node.name in LOGICAL_OPERATORS:
-            self.evaluate_binary_expression(node, require_same_type=False)
+            self.evaluate_binary_expression(node, require_same_type=True)
             return "int"
-
-        if node.name in {"-", "!"} and len(node.children) == 1:
-            return self.evaluate_expression(node.children[0])
 
         if node.name == "Call":
             return self.evaluate_call(node)
@@ -325,7 +328,7 @@ class SemanticAnalyzer:
         symbol = self.lookup_symbol(func_name)
         actual_params = node.children
 
-        if not symbol or symbol.get("kind") != "func":
+        if not symbol or symbol.get("kind") != "func" or not symbol.get("is_defined"):
             self.report_error(node.line, 304)
             for param in actual_params:
                 self.evaluate_expression(param)
