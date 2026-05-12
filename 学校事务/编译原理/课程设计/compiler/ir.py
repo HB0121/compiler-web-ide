@@ -340,6 +340,9 @@ def convert_ast(node: Optional[SharedASTNode]):
     if node is None:
         return None
 
+    if node.name == "Empty":
+        return None
+
     if node.name == "Program":
         return Program([converted for child in node.children if (converted := convert_ast(child)) is not None])
 
@@ -379,9 +382,13 @@ def convert_ast(node: Optional[SharedASTNode]):
         return RelOp(node.name, left, right)
 
     if node.name == "&&":
+        if len(node.children) < 2:
+            return convert_ast(node.children[0]) if node.children else None
         return LogicalAnd(convert_ast(node.children[0]), convert_ast(node.children[1]))
 
     if node.name == "||":
+        if len(node.children) < 2:
+            return convert_ast(node.children[0]) if node.children else None
         return LogicalOr(convert_ast(node.children[0]), convert_ast(node.children[1]))
 
     if node.name == "!":

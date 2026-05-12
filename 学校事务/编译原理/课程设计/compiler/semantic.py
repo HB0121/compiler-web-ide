@@ -38,9 +38,11 @@ class SemanticAnalyzer:
         self.current_func_ret_type: Optional[str] = None
         self.current_func_has_return = False
         self.current_func_has_mismatch_return = False
+        self.pending_function_calls: List[Tuple[int, str]] = []
 
     def analyze_program(self, node: ASTNode):
         self.analyze(node, in_loop=False)
+        self.resolve_pending_function_calls()
         self.errors.sort(key=lambda item: (item[0], item[1]))
         self.diagnostics = [
             Diagnostic("semantic", line, str(code), self.message_for_code(code))
@@ -156,13 +158,15 @@ class SemanticAnalyzer:
             children = list(node.children)
             if children:
                 init = children[0]
-                if init.name in {"VarDecl", "ConstDecl"}:
+                if init.name == "Empty":
+                    pass
+                elif init.name in {"VarDecl", "ConstDecl"}:
                     self.analyze_declaration(init)
                 else:
                     self.evaluate_expression(init)
-            if len(children) > 1:
+            if len(children) > 1 and children[1].name != "Empty":
                 self.evaluate_expression(children[1])
-            if len(children) > 2:
+            if len(children) > 2 and children[2].name != "Empty":
                 self.evaluate_expression(children[2])
             for child in children[3:]:
                 self.analyze(child, in_loop=True)
@@ -354,11 +358,14 @@ class SemanticAnalyzer:
         symbol = self.lookup_symbol(func_name)
         actual_params = node.children
 
-        if not symbol or symbol.get("kind") != "func" or not symbol.get("is_defined"):
+        if not symbol or symbol.get("kind") != "func":
             self.report_error(node.line, 304)
             for param in actual_params:
                 self.evaluate_expression(param)
             return "unknown"
+
+        if not symbol.get("is_defined"):
+            self.pending_function_calls.append((node.line or 0, func_name))
 
         expected_params = symbol.get("params", [])
         if len(expected_params) != len(actual_params):
@@ -372,6 +379,12 @@ class SemanticAnalyzer:
             if param_type != "unknown" and param_type != expected_params[index]:
                 self.report_error(node.line, 306)
         return symbol.get("type", "unknown")
+
+    def resolve_pending_function_calls(self) -> None:
+        for line, func_name in self.pending_function_calls:
+            symbol = self.lookup_symbol(func_name)
+            if not symbol or symbol.get("kind") != "func" or not symbol.get("is_defined"):
+                self.report_error(line, 304)
 
     def evaluate_leaf(self, node: ASTNode) -> str:
         text = self.node_text(node).replace(",", "")

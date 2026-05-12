@@ -47,6 +47,19 @@ class Parser:
         self.diagnostics.append(Diagnostic("parser", line, "P001", f"expected {text!r}"))
         return None
 
+    def report_missing_rhs(self, token: Token) -> None:
+        self.diagnostics.append(Diagnostic("parser", token.line, "P002", f"missing expression after {token.text!r}"))
+
+    def build_binary_node(self, left: Optional[ASTNode], op_token: Token, right: Optional[ASTNode]) -> Optional[ASTNode]:
+        if left is None or right is None:
+            self.report_missing_rhs(op_token)
+            return left
+
+        parent_node = ASTNode(op_token.text, line=op_token.line)
+        parent_node.add_child(left)
+        parent_node.add_child(right)
+        return parent_node
+
     def parse(self) -> tuple[ASTNode, List[Diagnostic]]:
         return self.parse_program(), self.diagnostics
 
@@ -269,20 +282,29 @@ class Parser:
         self.match_text("(")
 
         node = ASTNode("ForStmt")
-        if self.current_token() and self.current_token().text in TYPE_NAMES:
+        if self.current_token() and self.current_token().text == ";":
+            node.add_child(ASTNode("Empty"))
+            self.expect_text(";")
+        elif self.current_token() and self.current_token().text in TYPE_NAMES:
             for decl in self.parse_var_decl():
                 node.add_child(decl)
         else:
             init_node = self.parse_assignment_or_expr()
-            node.add_child(init_node)
+            node.add_child(init_node or ASTNode("Empty"))
             self.expect_text(";")
 
-        cond_node = self.parse_assignment_or_expr()
-        node.add_child(cond_node)
+        if self.current_token() and self.current_token().text == ";":
+            node.add_child(ASTNode("Empty"))
+        else:
+            cond_node = self.parse_assignment_or_expr()
+            node.add_child(cond_node or ASTNode("Empty"))
         self.expect_text(";")
 
-        step_node = self.parse_assignment_or_expr()
-        node.add_child(step_node)
+        if self.current_token() and self.current_token().text == ")":
+            node.add_child(ASTNode("Empty"))
+        else:
+            step_node = self.parse_assignment_or_expr()
+            node.add_child(step_node or ASTNode("Empty"))
         self.expect_text(")")
 
         stmt = self.parse_statement()
@@ -345,28 +367,22 @@ class Parser:
     def parse_logical_expression(self) -> Optional[ASTNode]:
         node = self.parse_logical_term()
         token = self.current_token()
-        while token and token.text == "||":
+        while node is not None and token and token.text == "||":
             op_token = token
             self.pos += 1
             right_node = self.parse_logical_term()
-            parent_node = ASTNode("||", line=op_token.line)
-            parent_node.add_child(node)
-            parent_node.add_child(right_node)
-            node = parent_node
+            node = self.build_binary_node(node, op_token, right_node)
             token = self.current_token()
         return node
 
     def parse_logical_term(self) -> Optional[ASTNode]:
         node = self.parse_logical_factor()
         token = self.current_token()
-        while token and token.text == "&&":
+        while node is not None and token and token.text == "&&":
             op_token = token
             self.pos += 1
             right_node = self.parse_logical_factor()
-            parent_node = ASTNode("&&", line=op_token.line)
-            parent_node.add_child(node)
-            parent_node.add_child(right_node)
-            node = parent_node
+            node = self.build_binary_node(node, op_token, right_node)
             token = self.current_token()
         return node
 
@@ -376,56 +392,44 @@ class Parser:
     def parse_equality_expression(self) -> Optional[ASTNode]:
         node = self.parse_relational_expression()
         token = self.current_token()
-        while token and token.text in {"==", "!="}:
+        while node is not None and token and token.text in {"==", "!="}:
             op_token = token
             self.pos += 1
             right_node = self.parse_relational_expression()
-            parent_node = ASTNode(op_token.text, line=op_token.line)
-            parent_node.add_child(node)
-            parent_node.add_child(right_node)
-            node = parent_node
+            node = self.build_binary_node(node, op_token, right_node)
             token = self.current_token()
         return node
 
     def parse_relational_expression(self) -> Optional[ASTNode]:
         node = self.parse_arithmetic_expression()
         token = self.current_token()
-        while token and token.text in {">", "<", ">=", "<="}:
+        while node is not None and token and token.text in {">", "<", ">=", "<="}:
             op_token = token
             self.pos += 1
             right_node = self.parse_arithmetic_expression()
-            parent_node = ASTNode(op_token.text, line=op_token.line)
-            parent_node.add_child(node)
-            parent_node.add_child(right_node)
-            node = parent_node
+            node = self.build_binary_node(node, op_token, right_node)
             token = self.current_token()
         return node
 
     def parse_arithmetic_expression(self) -> Optional[ASTNode]:
         node = self.parse_term()
         token = self.current_token()
-        while token and token.text in {"+", "-"}:
+        while node is not None and token and token.text in {"+", "-"}:
             op_token = token
             self.pos += 1
             right_node = self.parse_term()
-            parent_node = ASTNode(op_token.text, line=op_token.line)
-            parent_node.add_child(node)
-            parent_node.add_child(right_node)
-            node = parent_node
+            node = self.build_binary_node(node, op_token, right_node)
             token = self.current_token()
         return node
 
     def parse_term(self) -> Optional[ASTNode]:
         node = self.parse_factor()
         token = self.current_token()
-        while token and token.text in {"*", "/"}:
+        while node is not None and token and token.text in {"*", "/"}:
             op_token = token
             self.pos += 1
             right_node = self.parse_factor()
-            parent_node = ASTNode(op_token.text, line=op_token.line)
-            parent_node.add_child(node)
-            parent_node.add_child(right_node)
-            node = parent_node
+            node = self.build_binary_node(node, op_token, right_node)
             token = self.current_token()
         return node
 
