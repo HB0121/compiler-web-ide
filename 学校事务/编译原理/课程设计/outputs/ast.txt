@@ -1,0 +1,7 @@
+Program
+  FunctionDef(int main)[1]
+    Compound
+      VarDecl(int x)[1]
+        1[1]
+      ReturnStmt[1]
+        x[1]
