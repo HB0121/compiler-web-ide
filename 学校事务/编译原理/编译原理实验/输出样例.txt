@@ -1,0 +1,162 @@
+Program
+  ConstDecl(int max [1])
+    100 [1]
+  FunctionDecl(int check_guess [3])
+    Param(int guess [3])
+  VarDecl(int b [4])
+    20 [4]
+  FunctionDef(int main [5])
+    Compound
+      VarDecl(int a [6])
+        10 [6]
+      VarDecl(int c [6])
+      VarDecl(int d [6])
+        0 [6]
+      VarDecl(int result [6])
+      ExprStmt
+        = [7]
+          result [7]
+          Call(check_guess [7])
+            g [7]
+      IfStmt
+        && [8]
+          && [8]
+            == [8]
+              result [8]
+              1 [8]
+            || [8]
+              >= [8]
+                g [8]
+                0 [8]
+              < [8]
+                g [8]
+                0 [8]
+          ! [8]
+            == [8]
+              result [8]
+              0 [8]
+        Compound
+          Compound
+            VarDecl(int tmp [10])
+              * [10]
+                result [10]
+                2 [10]
+            ExprStmt
+              = [11]
+                tmp [11]
+                - [11]
+                  tmp [11]
+                  1 [11]
+      IfStmt
+        && [14]
+          < [14]
+            a [14]
+            max [14]
+          != [14]
+            b [14]
+            0 [14]
+        Compound
+          ExprStmt
+            = [15]
+              a [15]
+              + [15]
+                a [15]
+                b [15]
+        Compound
+          ExprStmt
+            = [17]
+              a [17]
+              0 [17]
+      WhileStmt
+        > [19]
+          a [19]
+          0 [19]
+        Compound
+          ExprStmt
+            = [20]
+              a [20]
+              - [20]
+                a [20]
+                1 [20]
+      ForStmt
+        = [22]
+          i [22]
+          0 [22]
+        < [22]
+          i [22]
+          10 [22]
+        = [22]
+          i [22]
+          + [22]
+            i [22]
+            1 [22]
+        Compound
+          IfStmt
+            == [23]
+              i [23]
+              5 [23]
+            ContinueStmt [24]
+          IfStmt
+            == [25]
+              i [25]
+              8 [25]
+            BreakStmt [26]
+          ExprStmt
+            = [27]
+              sum [27]
+              + [27]
+                sum [27]
+                i [27]
+      DoWhileStmt
+        Compound
+          ExprStmt
+            = [30]
+              sum [30]
+              - [30]
+                sum [30]
+                1 [30]
+        > [31]
+          sum [31]
+          0 [31]
+      ReturnStmt [32]
+        sum [32]
+  FunctionDef(int check_guess [36])
+    Param(int guess [36])
+    Compound
+      ConstDecl(int CORRECT [37])
+        1 [37]
+      ConstDecl(int WRONG [37])
+        0 [37]
+      VarDecl(int result [38])
+      IfStmt
+        == [39]
+          guess [39]
+          TARGET [39]
+        Compound
+          ExprStmt
+            = [40]
+              result [40]
+              CORRECT [40]
+          ExprStmt
+            = [41]
+              game_over [41]
+              1 [41]
+        Compound
+          ExprStmt
+            = [43]
+              result [43]
+              WRONG [43]
+          IfStmt
+            < [44]
+              guess [44]
+              TARGET [44]
+            ExprStmt
+              = [44]
+                hint [44]
+                L [44]
+            ExprStmt
+              = [45]
+                hint [45]
+                H [45]
+      ReturnStmt [47]
+        result [47]

@@ -1,0 +1,95 @@
+
+/**
+计算阶乘，演示递归和循环。
+函数：int fact_rec(int n)递归，int fact_iter(int n)迭代。
+使用while循环、return、if判断边界。
+表达式包含乘法、赋值、比较。
+**/
+
+// 全局常量
+const int MAX_N = 10, ERROR_VAL = 1;
+
+// 全局变量
+char algorithm = 'R';      // R:递归, I:迭代
+
+// 函数原型
+int fact_rec(int n);
+int fact_iter(int n);
+void print_fact(int n);
+void empty_fact();
+
+// 递归阶乘
+int fact_rec(int n) {
+    const int BASE = 1;
+    int result;
+    if (n <= 1) {
+        result = 1;
+    } else {
+        result = n * fact_rec(n - 1);
+    }
+    return result;
+}
+
+// 迭代阶乘
+int fact_iter(int n) {
+    int result = 1, i;
+    i = 2;
+    while (i <= n) {
+        result = result * i;
+        i = i + 1;
+    }
+    return result;
+}
+
+void print_fact(int n) {
+    int i = 0;
+    do {
+        int val;
+        if (algorithm == 'R') val = fact_rec(i);
+        else val = fact_iter(i);
+        i = i + 1;
+        if (val > MAX_N) continue;
+        if (i > n) break;
+    } while (i <= n);
+}
+
+void empty_fact() {}
+
+// 主函数
+int main() {
+    int n = 5, result,i;
+    int dummy;
+
+    dummy = n + result;
+    dummy = n * result;
+    dummy = n > result;
+    dummy = n == result;
+    dummy = n && result;
+    dummy = n || result;
+    dummy = !!n;
+    dummy = n = result = 0;
+
+    ;
+
+    result = fact_rec(n);
+    if (result > 0 && (n >= 0 || n < 0) && !(result < 0)) {
+        {
+            int tmp = result * 2;
+            tmp = tmp - 1;
+        }
+    }
+    while (n < 8) {
+        n = n + 1;
+    }
+    do {
+        n = n - 1;
+    } while (n > 3);
+    for (i = 0; i <= 5; i = i + 1) {
+        if (i > 3) break;
+
+    }
+    print_fact(6);
+    empty_fact();
+    result = fact_iter(7);
+    return 0;
+}

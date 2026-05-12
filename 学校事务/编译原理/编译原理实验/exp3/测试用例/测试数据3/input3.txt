@@ -1,0 +1,23 @@
+
+Program
+  FunctionDecl(int add)[1]
+    Param(int a)[1]
+    Param(int b)[1]
+  FunctionDecl(float divide)[2]
+    Param(float x)[2]
+    Param(float y)[2]
+  FunctionDef(int main)[4]
+    Compound
+      VarDecl(int x)[5]
+        10[5]
+      VarDecl(int y)[6]
+        5[6]
+      VarDecl(float f)[7]
+        2.5[7]
+      VarDecl(int r1)[9]
+      VarDecl(int r2)[10]
+      VarDecl(float r3)[11]
+      VarDecl(int r4)[12]
+      ExprStmt
+        =[14]
+          r1[14]

@@ -1,0 +1,250 @@
+
+Program
+  ConstDecl(char NEWLINE [10])
+    n [10]
+  VarDecl(char ch1 [13])
+    H [13]
+  VarDecl(char ch2 [13])
+    i [13]
+  VarDecl(char ch3 [13])
+    ! [13]
+  VarDecl(int char_count [14])
+    0 [14]
+  VarDecl(char mode [15])
+    U [15]
+  FunctionDecl(char to_upper [18])
+    Param(char c [18])
+  FunctionDecl(char to_lower [19])
+    Param(char c [19])
+  FunctionDecl(int count_chars [20])
+    Param(char target [20])
+  FunctionDecl(void print_chars [21])
+  FunctionDecl(void empty_string [22])
+  FunctionDef(char to_upper [25])
+    Param(char c [25])
+    Compound
+      ConstDecl(int OFFSET [26])
+        32 [26]
+      VarDecl(char result [27])
+      IfStmt
+        && [28]
+          >= [28]
+            c [28]
+            a [28]
+          <= [28]
+            c [28]
+            z [28]
+        Compound
+          ExprStmt
+            = [29]
+              result [29]
+              - [29]
+                c [29]
+                OFFSET [29]
+        Compound
+          ExprStmt
+            = [31]
+              result [31]
+              c [31]
+      ReturnStmt [33]
+        result [33]
+  FunctionDef(char to_lower [37])
+    Param(char c [37])
+    Compound
+      ConstDecl(int OFFSET [38])
+        32 [38]
+      VarDecl(char result [39])
+      IfStmt
+        && [40]
+          >= [40]
+            c [40]
+            A [40]
+          <= [40]
+            c [40]
+            Z [40]
+        Compound
+          ExprStmt
+            = [41]
+              result [41]
+              + [41]
+                c [41]
+                OFFSET [41]
+        Compound
+          ExprStmt
+            = [43]
+              result [43]
+              c [43]
+      ReturnStmt [45]
+        result [45]
+  FunctionDef(int count_chars [49])
+    Param(char target [49])
+    Compound
+      VarDecl(int count [50])
+        0 [50]
+      IfStmt
+        == [51]
+          ch1 [51]
+          target [51]
+        ExprStmt
+          = [51]
+            count [51]
+            + [51]
+              count [51]
+              1 [51]
+      IfStmt
+        == [52]
+          ch2 [52]
+          target [52]
+        ExprStmt
+          = [52]
+            count [52]
+            + [52]
+              count [52]
+              1 [52]
+      IfStmt
+        == [53]
+          ch3 [53]
+          target [53]
+        ExprStmt
+          = [53]
+            count [53]
+            + [53]
+              count [53]
+              1 [53]
+      ReturnStmt [54]
+        count [54]
+  FunctionDef(void print_chars [57])
+    Compound
+      VarDecl(int i [58])
+        0 [58]
+      DoWhileStmt
+        Compound
+          VarDecl(char c [60])
+          IfStmt
+            == [61]
+              mode [61]
+              U [61]
+            ExprStmt
+              = [61]
+                c [61]
+                Call(to_upper [61])
+                  ch1 [61]
+            ExprStmt
+              = [62]
+                c [62]
+                Call(to_lower [62])
+                  ch1 [62]
+          ExprStmt
+            = [63]
+              i [63]
+              + [63]
+                i [63]
+                1 [63]
+          IfStmt
+            == [64]
+              c [64]
+              NULL_CHAR [64]
+            ContinueStmt [64]
+          IfStmt
+            > [65]
+              i [65]
+              3 [65]
+            BreakStmt [65]
+        <= [66]
+          i [66]
+          3 [66]
+      ReturnStmt [67]
+  FunctionDef(void empty_string [70])
+    Compound [None]
+  FunctionDef(int main [73])
+    Compound
+      VarDecl(char c1 [74])
+        a [74]
+      VarDecl(char c2 [74])
+        b [74]
+      VarDecl(char c3 [74])
+      VarDecl(int i [75])
+      ExprStmt
+        = [76]
+          c3 [76]
+          Call(to_upper [76])
+            c1 [76]
+      IfStmt
+        && [77]
+          && [77]
+            >= [77]
+              c3 [77]
+              A [77]
+            || [77]
+              != [77]
+                c1 [77]
+                c2 [77]
+              == [77]
+                c1 [77]
+                c2 [77]
+          ! [77]
+            < [77]
+              c3 [77]
+              A [77]
+        Compound
+          Compound
+            VarDecl(char tmp [79])
+              + [79]
+                c3 [79]
+                1 [79]
+            ExprStmt
+              = [80]
+                tmp [80]
+                - [80]
+                  tmp [80]
+                  1 [80]
+      WhileStmt
+        < [83]
+          c1 [83]
+          z [83]
+        Compound
+          ExprStmt
+            = [84]
+              c1 [84]
+              + [84]
+                c1 [84]
+                1 [84]
+      DoWhileStmt
+        Compound
+          ExprStmt
+            = [88]
+              c2 [88]
+              - [88]
+                c2 [88]
+                1 [88]
+        > [89]
+          c2 [89]
+          a [89]
+      ForStmt
+        = [91]
+          i [91]
+          0 [91]
+        <= [91]
+          i [91]
+          5 [91]
+        = [91]
+          i [91]
+          + [91]
+            i [91]
+            1 [91]
+        Compound
+          IfStmt
+            > [92]
+              i [92]
+              3 [92]
+            BreakStmt [92]
+          ContinueStmt [93]
+      ExprStmt
+        Call(print_chars [95])
+      ExprStmt
+        Call(empty_string [96])
+      VarDecl(int cnt [97])
+        Call(count_chars [97])
+          H [97]
+      ReturnStmt [98]
+        0 [98]

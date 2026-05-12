@@ -1,0 +1,22 @@
+
+Program
+  VarDecl(int global)[1]
+    100[1]
+  FunctionDecl(int main)[3]
+    Compound
+      VarDecl(int x)[5]
+        10[5]
+      VarDecl(float x)[6]
+        20.5 [6]
+      VarDecl(int y)[7]
+        z[7]
+      IfStmt
+        >[12]
+          x[9]
+          0[9]
+        Compound
+          VarDecl(int a)[11]
+            5[11]
+          ExprStmt
+            =[12]
+              y[12]

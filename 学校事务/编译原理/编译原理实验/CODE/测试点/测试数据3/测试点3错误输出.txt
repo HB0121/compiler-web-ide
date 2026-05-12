@@ -1,0 +1,133 @@
+
+Program
+  FunctionDef(int main [1])
+    Compound
+      VarDecl(int a [3])
+      VarDecl(int b [3])
+      VarDecl(int c [3])
+      VarDecl(int d [3])
+      VarDecl(int e [3])
+      VarDecl(int f [3])
+      VarDecl(int g [3])
+      VarDecl(int h [3])
+      VarDecl(int i [3])
+      VarDecl(int j [3])
+      VarDecl(int k [3])
+      VarDecl(int l [3])
+      VarDecl(int m [3])
+      VarDecl(int n [3])
+      VarDecl(int o [3])
+      VarDecl(int x [3])
+      VarDecl(int result [4])
+      ExprStmt
+        = [7]
+          a [7]
+          1 [7]
+      ExprStmt
+        = [7]
+          b [7]
+          2 [7]
+      ExprStmt
+        = [7]
+          c [7]
+          3 [7]
+      ExprStmt
+        = [7]
+          d [7]
+          4 [7]
+      ExprStmt
+        = [7]
+          e [7]
+          5 [7]
+      ExprStmt
+        = [7]
+          f [7]
+          6 [7]
+      ExprStmt
+        = [7]
+          g [7]
+          7 [7]
+      ExprStmt
+        = [7]
+          h [7]
+          8 [7]
+      ExprStmt
+        = [7]
+          i [7]
+          9 [7]
+      ExprStmt
+        = [8]
+          j [8]
+          10 [8]
+      ExprStmt
+        = [8]
+          k [8]
+          11 [8]
+      ExprStmt
+        = [8]
+          l [8]
+          12 [8]
+      ExprStmt
+        = [8]
+          m [8]
+          13 [8]
+      ExprStmt
+        = [8]
+          n [8]
+          14 [8]
+      ExprStmt
+        = [8]
+          o [8]
+          15 [8]
+      ExprStmt
+        = [8]
+          x [8]
+          16 [8]
+      ExprStmt
+        = [25]
+          result [25]
+          || [25]
+            - [25]
+              a [25]
+            && [25]
+              b [25]
+              == [25]
+                c [25]
+                d [25]
+      ExprStmt
+        != [25]
+          e [25]
+      ExprStmt
+        > [25]
+          f [25]
+      ExprStmt
+        < [25]
+          g [25]
+      ExprStmt
+        >= [25]
+          h [25]
+      ExprStmt
+        <= [25]
+          - [25]
+            + [25]
+              i [25]
+              j [25]
+            * [25]
+              / [25]
+                * [25]
+                  k [25]
+                  l [25]
+                m [25]
+      ExprStmt
+        || [25]
+          && [25]
+            ! [25]
+              - [25]
+                n [25]
+                o [25]
+            Call(p [25])
+          + [25]
+            x [25]
+            123 [25]
+      ReturnStmt [27]
+        0 [27]

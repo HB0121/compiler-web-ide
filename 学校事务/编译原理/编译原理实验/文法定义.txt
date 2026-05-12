@@ -1,0 +1,88 @@
+1️程序整体结构
+<Program> ::= <global-decl-list> <main-function> <function-def-list>
+<global-decl-list> ::= <global-declaration> <global-decl-list>
+                     | ε
+<function-def-list> ::= <FunctionDef> <function-def-list>
+                      | ε
+2️全局声明
+<global-declaration> ::= <ConstDecl>
+                       | <VarDecl>
+                       | <FunctionDecl>
+3️主函数与函数
+<main-function> ::= "int" "main" "(" ")" <Compound>
+<FunctionDef> ::= <type> "identifier" "(" <parameter-list-opt> ")" <Compound>
+<FunctionDecl> ::= <type> "identifier" "(" <parameter-list-opt> ")" ";"
+4️类型与参数
+<type> ::= "int" | "float" | "char" | "void"
+<parameter-list-opt> ::= <parameter-list>
+                       | ε
+<parameter-list> ::= <Parameter> <parameter-list-tail>
+<parameter-list-tail> ::= "," <Parameter> <parameter-list-tail>
+                        | ε
+<Parameter> ::= <type> "identifier"
+5️常量与变量声明
+<ConstDecl> ::= "const" <type> <const-init-declarator>
+                        <const-init-declarator-tail> ";"              
+<const-init-declarator> ::= "identifier" "=" "constant"                        
+<const-init-declarator-tail> ::= "," <const-init-declarator>
+                               <const-init-declarator-tail>
+                               | ε
+<VarDecl> ::= <type> <variable-declarator>
+                           <variable-declarator-tail> ";"
+<variable-declarator-tail> ::= "," <variable-declarator>
+                             <variable-declarator-tail>
+                             | ε
+<variable-declarator> ::= "identifier"
+                        | "identifier" "=" <ExprStmt>
+6️语句与复合语句
+<Compound> ::= "{" <statement-list> "}"
+<statement-list> ::= <statement> <statement-list>
+                   | ε
+<statement> ::= <VarDecl>
+              | <assignment-statement>
+              | <IfStmt>
+              | <WhileStmt>
+              | <ReturnStmt>
+              | <expression-statement>
+              | <Compound>
+7️控制语句
+<assignment-statement> ::= "identifier" "=" <ExprStmt> ";"
+<IfStmt> ::= "if" "(" <boolean-expression> ")"
+                   <statement> <else-part>
+<else-part> ::= "else" <statement>
+              | ε
+<WhileStmt> ::= "while" "(" <boolean-expression> ")"
+                      <statement>
+<ReturnStmt> ::= "return" <expression-opt> ";"
+<expression-opt> ::= <ExprStmt>
+                   | ε
+8️表达式系统（全部消除左递归）
+逻辑表达式
+<ExprStmt> ::= <logical-expression>
+<logical-expression> ::= <logical-term> <logical-expression-tail>
+<logical-expression-tail> ::= "||" <logical-term>
+                              <logical-expression-tail>
+                            | ε
+<logical-term> ::= <logical-factor> <logical-term-tail>
+<logical-term-tail> ::= "&&" <logical-factor>
+                        <logical-term-tail>
+                      | ε
+<logical-factor> ::= "!" <logical-factor>
+                   | <relational-expression>
+                   | "(" <logical-expression> ")"
+关系与算术表达式
+<relational-expression> ::= <arithmetic-expression>
+                            <relational-operator>
+                            <arithmetic-expression>
+<relational-operator> ::= ">" | "<" | ">=" | "<=" | "==" | "!="
+<arithmetic-expression> ::= <term> <arithmetic-expression-tail>
+<arithmetic-expression-tail> ::= "+" <term> <arithmetic-expression-tail>
+                               | "-" <term> <arithmetic-expression-tail>
+                               | ε
+<term> ::= <factor> <term-tail>
+<term-tail> ::= "*" <factor> <term-tail>
+              | "/" <factor> <term-tail>
+              | ε
+<factor> ::= "identifier"
+           | "constant"
+           | "(" <arithmetic-expression> ")"

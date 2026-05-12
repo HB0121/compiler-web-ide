@@ -1,0 +1,252 @@
+
+Program
+  ConstDecl(int GLOBAL_MAX [2])
+    100 [2]
+  ConstDecl(int GLOBAL_MIN [2])
+    0 [2]
+  ConstDecl(float PI [3])
+    3.14159 [3]
+  VarDecl(int global_int [6])
+    10 [6]
+  VarDecl(float global_float [7])
+  VarDecl(char global_char [8])
+    A [8]
+  FunctionDecl(int add [11])
+    Param(int a [11])
+    Param(int b [11])
+  FunctionDecl(float divide [12])
+    Param(float x [12])
+    Param(float y [12])
+  FunctionDecl(void check_range [13])
+    Param(int value [13])
+  FunctionDecl(void empty_func [14])
+  FunctionDef(int add [17])
+    Param(int a [17])
+    Param(int b [17])
+    Compound
+      ConstDecl(int LOCAL_CONST [18])
+        100 [18]
+      VarDecl(int result [19])
+      ExprStmt
+        = [20]
+          result [20]
+          + [20]
+            a [20]
+            b [20]
+      ReturnStmt [21]
+        result [21]
+  FunctionDef(float divide [25])
+    Param(float x [25])
+    Param(float y [25])
+    Compound
+      IfStmt
+        == [26]
+          y [26]
+          0 [26]
+        Compound
+          ReturnStmt [27]
+            0.0 [27]
+          ExprStmt
+            f [27]
+        Compound
+          ReturnStmt [29]
+            / [29]
+              x [29]
+              y [29]
+  FunctionDef(void check_range [34])
+    Param(int value [34])
+    Compound
+      VarDecl(int i [35])
+        0 [35]
+      WhileStmt
+        < [36]
+          i [36]
+          10 [36]
+        Compound
+          ExprStmt
+            = [37]
+              i [37]
+              + [37]
+                i [37]
+                1 [37]
+          IfStmt
+            == [38]
+              i [38]
+              value [38]
+            Compound
+              ContinueStmt [39]
+          IfStmt
+            > [41]
+              i [41]
+              value [41]
+            Compound
+              BreakStmt [42]
+      DoWhileStmt
+        Compound
+          ExprStmt
+            = [47]
+              value [47]
+              - [47]
+                value [47]
+                1 [47]
+        > [48]
+          value [48]
+          0 [48]
+      ExprStmt
+      ExprStmt
+        0 [50]
+      ExprStmt
+        < [50]
+          j [50]
+          5 [50]
+      ExprStmt
+        = [50]
+          j [50]
+          + [50]
+            j [50]
+            1 [50]
+      ExprStmt
+      Compound
+  FunctionDef(void empty_func [56])
+    Compound
+  FunctionDef(int main [61])
+    Compound
+      ConstDecl(int LOCAL_MAX [63])
+        50 [63]
+      ConstDecl(int LOCAL_MIN [63])
+        10 [63]
+      VarDecl(int a [65])
+        5 [65]
+      VarDecl(int b [65])
+        3 [65]
+      VarDecl(int c [65])
+      VarDecl(float x [66])
+        2.5 [66]
+      ExprStmt
+        f [66]
+      ExprStmt
+      ExprStmt
+        y [66]
+      VarDecl(char ch [67])
+        Z [67]
+      ExprStmt
+        = [70]
+          a [70]
+          = [70]
+            b [70]
+            = [70]
+              c [70]
+              0 [70]
+      VarDecl(float arithmetic [73])
+        + [73]
+          - [73]
+            x [73]
+          / [73]
+            * [73]
+              + [73]
+                a [73]
+                b [73]
+              c [73]
+            2.0 [73]
+      ExprStmt
+        - [73]
+          f [73]
+          - [73]
+            y [73]
+            1.0 [73]
+      ExprStmt
+        f [73]
+      ExprStmt
+      VarDecl(int relation [76])
+        && [76]
+          && [76]
+            >= [76]
+              a [76]
+              b [76]
+            <= [76]
+              c [76]
+              10 [76]
+          != [76]
+            a [76]
+            b [76]
+      VarDecl(int logical [79])
+        || [79]
+          && [79]
+            > [79]
+              a [79]
+              b [79]
+            < [79]
+              c [79]
+              10 [79]
+          ! [79]
+            == [79]
+              b [79]
+              0 [79]
+      VarDecl(int sum [82])
+        Call(add [82])
+          a [82]
+          b [82]
+      VarDecl(float quotient [83])
+        Call(divide [83])
+          x [83]
+      ExprStmt
+        c [83]
+      ExprStmt
+      ExprStmt
+        = [86]
+          sum [86]
+          Call(add [86])
+            sum [86]
+            10 [86]
+      ExprStmt
+      IfStmt
+        > [92]
+          sum [92]
+          GLOBAL_MAX [92]
+        Compound
+          ExprStmt
+            = [93]
+              sum [93]
+              GLOBAL_MAX [93]
+        IfStmt
+          < [94]
+            sum [94]
+            GLOBAL_MIN [94]
+          Compound
+            ExprStmt
+              = [95]
+                sum [95]
+                GLOBAL_MIN [95]
+          Compound
+            ExprStmt
+              = [97]
+                sum [97]
+                sum [97]
+      WhileStmt
+        < [101]
+          a [101]
+          10 [101]
+        Compound
+          ExprStmt
+            = [102]
+              a [102]
+              + [102]
+                a [102]
+                1 [102]
+          IfStmt
+            == [103]
+              a [103]
+              5 [103]
+            ContinueStmt [103]
+          IfStmt
+            == [104]
+              a [104]
+              8 [104]
+            BreakStmt [104]
+      ExprStmt
+        Call(check_range [108])
+          sum [108]
+      ExprStmt
+        Call(empty_func [109])
+      ReturnStmt [112]
+        0 [112]

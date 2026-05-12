@@ -1,0 +1,22 @@
+
+Program
+  FunctionDecl(int add)[3]
+    Param(int x)[3]
+    Param(int y)[3]
+  FunctionDecl(int multiply)[4]
+    Param(int a)[4]
+    Param(int b)[4]
+  FunctionDef(int main)[6]
+    Compound
+      VarDecl(int result)[7]
+      ExprStmt
+        =[9]
+          result[9]
+          Call(add)[9]
+            5[9]
+            3[9]
+      ExprStmt
+        =[10]
+          result[10]
+          Call(multiply)[10]
+            4[10]

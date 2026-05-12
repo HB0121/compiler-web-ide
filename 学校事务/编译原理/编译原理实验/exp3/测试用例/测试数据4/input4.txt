@@ -1,0 +1,23 @@
+
+Program
+  VarDecl(int x)[1]
+    100[1]
+  VarDecl(int y)[2]
+    200[2]
+  VarDecl(float f)[3]
+    3.14[3]
+  VarDecl(const int C)[4]
+    100[4]
+  FunctionDecl(int foo)[6]
+    Param(int a)[6]
+  FunctionDecl(void bar)[7]
+  FunctionDecl(int add)[8]
+    Param(int a)[8]
+    Param(int b)[8]
+  FunctionDef(int main)[10]
+    Compound
+      VarDecl(int i)[11]
+        0[11]
+      VarDecl(int sum)[12]
+        0[12]
+      WhileStmt[14]
