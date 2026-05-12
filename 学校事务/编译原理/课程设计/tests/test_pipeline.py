@@ -49,5 +49,21 @@ class PipelineSmokeTests(unittest.TestCase):
             self.assertTrue((out_dir / "quads.txt").exists())
 
 
+class LexerTests(unittest.TestCase):
+    def test_lexer_recognizes_comments_operators_and_lines(self):
+        from compiler.lexer import Lexer
+
+        source = "int main() {\n  // comment\n  int x = 1;\n  x = x + 2;\n}\n"
+        tokens, diagnostics = Lexer().tokenize(source)
+        texts = [token.text for token in tokens]
+
+        self.assertEqual([], diagnostics)
+        self.assertEqual(
+            ["int", "main", "(", ")", "{", "int", "x", "=", "1", ";", "x", "=", "x", "+", "2", ";", "}"],
+            texts,
+        )
+        self.assertEqual(3, tokens[5].line)
+
+
 if __name__ == "__main__":
     unittest.main()
