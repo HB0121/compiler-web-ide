@@ -62,7 +62,20 @@ class LexerTests(unittest.TestCase):
             ["int", "main", "(", ")", "{", "int", "x", "=", "1", ";", "x", "=", "x", "+", "2", ";", "}"],
             texts,
         )
+        self.assertEqual(101, tokens[0].code)
+        self.assertEqual(700, tokens[1].code)
+        self.assertEqual(401, tokens[8].code)
         self.assertEqual(3, tokens[5].line)
+
+    def test_lexer_recognizes_escaped_char_literals(self):
+        from compiler.lexer import Lexer
+
+        tokens, diagnostics = Lexer().tokenize("char c = '\\n'; char q = '\\'';")
+        char_literals = [token for token in tokens if token.code == 403]
+
+        self.assertEqual([], diagnostics)
+        self.assertEqual(["'\\n'", "'\\''"], [token.text for token in char_literals])
+        self.assertEqual([403, 403], [token.code for token in char_literals])
 
 
 if __name__ == "__main__":

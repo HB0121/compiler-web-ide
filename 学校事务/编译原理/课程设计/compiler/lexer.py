@@ -137,7 +137,14 @@ class Lexer:
                 start_column = column
                 i += 1
                 column += 1
-                while i < len(source) and source[i] != "'" and source[i] != "\n":
+                while i < len(source):
+                    if source[i] == "\n" or source[i] == "'":
+                        break
+                    if source[i] == "\\":
+                        i += 1
+                        column += 1
+                        if i >= len(source) or source[i] == "\n":
+                            break
                     i += 1
                     column += 1
                 if i < len(source) and source[i] == "'":
