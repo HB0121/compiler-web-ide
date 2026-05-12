@@ -153,7 +153,18 @@ class SemanticAnalyzer:
 
         if node.name == "ForStmt":
             self.enter_scope()
-            for child in node.children:
+            children = list(node.children)
+            if children:
+                init = children[0]
+                if init.name in {"VarDecl", "ConstDecl"}:
+                    self.analyze_declaration(init)
+                else:
+                    self.evaluate_expression(init)
+            if len(children) > 1:
+                self.evaluate_expression(children[1])
+            if len(children) > 2:
+                self.evaluate_expression(children[2])
+            for child in children[3:]:
                 self.analyze(child, in_loop=True)
             self.exit_scope()
             return

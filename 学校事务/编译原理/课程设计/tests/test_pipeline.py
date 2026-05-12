@@ -164,6 +164,13 @@ class SemanticTests(unittest.TestCase):
         self.assertNotIn("308", codes)
         self.assertIn("i", var_names)
 
+    def test_for_bare_identifier_condition_reports_undeclared_identifier(self):
+        analyzer = self.analyze_source("int main(){for(int i=0;x;i=i+1){break;} return 0;}")
+        codes = [diagnostic.code for diagnostic in analyzer.diagnostics]
+
+        self.assertIn("302", codes)
+        self.assertNotIn("308", codes)
+
     def test_mismatched_prototype_definition_reports_duplicate_function(self):
         analyzer = self.analyze_source("int f(int a); float f(float b){return b;} int main(){return 0;}")
 
@@ -213,6 +220,75 @@ class SemanticTests(unittest.TestCase):
 
         self.assertIn("302", codes)
         self.assertNotIn("308", codes)
+
+
+class IRTests(unittest.TestCase):
+    def parse_source(self, source):
+        from compiler.lexer import Lexer
+        from compiler.parser import Parser
+
+        tokens, lexer_diagnostics = Lexer().tokenize(source)
+        ast, parser_diagnostics = Parser(tokens).parse()
+
+        self.assertEqual([], lexer_diagnostics)
+        self.assertEqual([], parser_diagnostics)
+        return ast
+
+    def assert_no_unresolved_jumps(self, quads):
+        unresolved = [quad for quad in quads if str(quad[0]).startswith("J") and quad[3] == "_"]
+
+        self.assertEqual([], unresolved)
+
+    def test_generates_basic_assignment_arithmetic_return_and_sys(self):
+        from compiler.ir import format_quads, generate_quads
+
+        ast = self.parse_source("int main(){int x=1; x=x+2; return x;}")
+        formatted = format_quads(generate_quads(ast))
+
+        self.assertIn("main", formatted)
+        self.assertIn("'='", formatted)
+        self.assertIn("'+'", formatted)
+        self.assertIn("'ret'", formatted)
+        self.assertIn("'sys'", formatted)
+
+    def test_generates_while_relational_and_unconditional_jumps(self):
+        from compiler.ir import generate_quads
+
+        ast = self.parse_source("int main(){int i=0; while(i<3){i=i+1;} return i;}")
+        quads = generate_quads(ast)
+        ops = [quad[0] for quad in quads]
+
+        self.assertIn("J<", ops)
+        self.assertIn("J", ops)
+        self.assert_no_unresolved_jumps(quads)
+
+    def test_generates_for_continue_without_crashing(self):
+        from compiler.ir import generate_quads
+
+        ast = self.parse_source("int main(){for(int i=0;i<2;i=i+1){continue;} return 0;}")
+        quads = generate_quads(ast)
+        ops = [quad[0] for quad in quads]
+        step_index = ops.index("+")
+        jumps_to_step = [quad for quad in quads if quad[0] == "J" and quad[3] == step_index]
+
+        self.assertIn("J<", ops)
+        self.assertIn("J", ops)
+        self.assertGreaterEqual(len(jumps_to_step), 2)
+        self.assert_no_unresolved_jumps(quads)
+
+    def test_partial_return_non_main_false_branch_targets_implicit_ret(self):
+        from compiler.ir import generate_quads
+
+        ast = self.parse_source("int f(int x){if(x)return 1;} int main(){return 0;}")
+        quads = generate_quads(ast)
+        false_jump = quads[2]
+        false_target = false_jump[3]
+
+        self.assertEqual("J", false_jump[0])
+        self.assertIsInstance(false_target, int)
+        self.assertEqual("ret", quads[false_target][0])
+        self.assertNotEqual("main", quads[false_target][0])
+        self.assert_no_unresolved_jumps(quads)
 
 
 if __name__ == "__main__":
