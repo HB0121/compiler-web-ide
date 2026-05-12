@@ -51,6 +51,13 @@ class PipelineSmokeTests(unittest.TestCase):
             self.assertIn("FunctionDef(int main)", (out_dir / "ast.txt").read_text(encoding="utf-8"))
             self.assertIn("sys", (out_dir / "quads.txt").read_text(encoding="utf-8"))
 
+    def test_pipeline_returns_parser_diagnostic_for_missing_logical_rhs(self):
+        from compiler.pipeline import run_pipeline
+
+        result = run_pipeline("int main(){int a;if(a &&){return 1;}return 0;}")
+
+        self.assertIn("parser", [diagnostic.phase for diagnostic in result.diagnostics])
+
 
 class LexerTests(unittest.TestCase):
     def test_lexer_recognizes_comments_operators_and_lines(self):
@@ -140,6 +147,16 @@ class ParserTests(unittest.TestCase):
         self.assertEqual("2", if_node.children[0].children[1].name)
         self.assertEqual("Compound", if_node.children[1].name)
 
+    def test_for_statement_preserves_omitted_init_position(self):
+        compound = self.main_compound("int main(){int i=0;for(;i<3;i=i+1){continue;}}")
+        for_node = compound.children[1]
+
+        self.assertEqual("ForStmt", for_node.name)
+        self.assertEqual("Empty", for_node.children[0].name)
+        self.assertEqual("<", for_node.children[1].name)
+        self.assertEqual("=", for_node.children[2].name)
+        self.assertEqual("Compound", for_node.children[3].name)
+
 
 class SemanticTests(unittest.TestCase):
     def analyze_source(self, source):
@@ -183,6 +200,18 @@ class SemanticTests(unittest.TestCase):
         analyzer = self.analyze_source("int f(); int main(){return f();}")
 
         self.assertIn("304", [diagnostic.code for diagnostic in analyzer.diagnostics])
+
+    def test_forward_declared_later_defined_function_call_is_allowed(self):
+        analyzer = self.analyze_source("int f(); int main(){return f();} int f(){return 1;}")
+
+        self.assertNotIn("304", [diagnostic.code for diagnostic in analyzer.diagnostics])
+
+    def test_for_omitted_init_uses_declared_condition_identifier(self):
+        analyzer = self.analyze_source("int main(){int i=0;for(;i<3;i=i+1){continue;} return i;}")
+        codes = [diagnostic.code for diagnostic in analyzer.diagnostics]
+
+        self.assertNotIn("302", codes)
+        self.assertNotIn("308", codes)
 
     def test_mixed_relational_operands_report_expression_type_mismatch(self):
         analyzer = self.analyze_source("int main(){int a; char c; if(a<c){return 1;} return 0;}")
@@ -277,6 +306,16 @@ class IRTests(unittest.TestCase):
         self.assertIn("J<", ops)
         self.assertIn("J", ops)
         self.assertGreaterEqual(len(jumps_to_step), 2)
+        self.assert_no_unresolved_jumps(quads)
+
+    def test_generates_for_with_omitted_init_condition_jump(self):
+        from compiler.ir import generate_quads
+
+        ast = self.parse_source("int main(){int i=0;for(;i<3;i=i+1){continue;} return i;}")
+        quads = generate_quads(ast)
+        ops = [quad[0] for quad in quads]
+
+        self.assertIn("J<", ops)
         self.assert_no_unresolved_jumps(quads)
 
     def test_partial_return_non_main_false_branch_targets_implicit_ret(self):
