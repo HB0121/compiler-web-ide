@@ -1,5 +1,25 @@
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple, TypedDict
+
+
+class SymbolInfo(TypedDict, total=False):
+    name: str
+    type: str
+    value: object
+    line: int
+    params: List[str]
+    return_type: str
+    scope: str
+
+
+class OutputTexts(TypedDict):
+    tokens: str
+    ast: str
+    semantic_errors: str
+    const: str
+    var: str
+    function: str
+    quads: str
 
 
 @dataclass
@@ -39,11 +59,11 @@ class PipelineResult:
     tokens: List[Token]
     ast: Optional[ASTNode]
     diagnostics: List[Diagnostic]
-    const_symbols: List[Dict[str, object]]
-    var_symbols: List[Dict[str, object]]
-    function_symbols: List[Dict[str, object]]
+    const_symbols: List[SymbolInfo]
+    var_symbols: List[SymbolInfo]
+    function_symbols: List[SymbolInfo]
     quads: List[Tuple[object, object, object, object]]
-    texts: Dict[str, str]
+    texts: OutputTexts
 
 
 def format_ast(node: Optional[ASTNode], level: int = 0) -> str:
