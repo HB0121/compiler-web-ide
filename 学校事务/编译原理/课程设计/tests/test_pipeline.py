@@ -138,5 +138,32 @@ class ParserTests(unittest.TestCase):
         self.assertEqual("Compound", if_node.children[1].name)
 
 
+class SemanticTests(unittest.TestCase):
+    def analyze_source(self, source):
+        from compiler.lexer import Lexer
+        from compiler.parser import Parser
+        from compiler.semantic import SemanticAnalyzer
+
+        tokens, lexer_diagnostics = Lexer().tokenize(source)
+        ast, parser_diagnostics = Parser(tokens).parse()
+
+        self.assertEqual([], lexer_diagnostics)
+        self.assertEqual([], parser_diagnostics)
+        return SemanticAnalyzer().analyze_program(ast)
+
+    def test_reports_undeclared_identifier_assignment(self):
+        analyzer = self.analyze_source("int main() { x = 1; return 0; }")
+
+        self.assertIn("302", [diagnostic.code for diagnostic in analyzer.diagnostics])
+
+    def test_for_decl_scope_allows_break_and_records_loop_var(self):
+        analyzer = self.analyze_source("int main(){for(int i=0;i<2;i=i+1){break;} return 0;}")
+        codes = [diagnostic.code for diagnostic in analyzer.diagnostics]
+        var_names = [row["name"] for row in analyzer.history_symbols["var"]]
+
+        self.assertNotIn("308", codes)
+        self.assertIn("i", var_names)
+
+
 if __name__ == "__main__":
     unittest.main()
