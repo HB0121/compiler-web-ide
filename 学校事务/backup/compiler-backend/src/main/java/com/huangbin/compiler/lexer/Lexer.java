@@ -10,18 +10,6 @@ import java.util.Map;
 
 public class Lexer {
 
-    // 测试用代码，跑通后可以删掉
-    public static void main(String[] args) {
-        String testCode = "int main() { \n // 测试注释 \n int x = 10; \n return x; \n }";
-        Lexer lexer = new Lexer();
-        LexerResult result = lexer.tokenize(testCode);
-
-        System.out.println("====== Tokens ======");
-        result.tokens.forEach(System.out::println);
-
-        System.out.println("====== Errors ======");
-        result.diagnostics.forEach(d -> System.out.println(d.format()));
-    }
 
     private static final Map<String, Integer> KEYWORDS = new HashMap<>();
     private static final Map<String, Integer> OPERATORS = new HashMap<>();
