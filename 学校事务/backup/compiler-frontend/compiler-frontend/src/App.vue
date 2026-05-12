@@ -1,10 +1,17 @@
 <template>
   <div class="ide-container">
     <header class="header">
-      <h1>Compiler Web IDE</h1>
-      <button class="run-btn" @click="runCompile" :disabled="loading">
-        {{ loading ? '编译中...' : '▶ 运行 (Run)' }}
-      </button>
+      <div class="logo">
+        <span class="icon">💻</span> Compiler Web IDE
+      </div>
+      <div class="actions">
+        <span v-if="compileStatus !== null" :class="['status-badge', compileStatus ? 'success' : 'error']">
+          {{ compileStatus ? '✅ 编译成功' : '❌ 编译失败' }}
+        </span>
+        <button class="run-btn" @click="runCompile" :disabled="loading">
+          {{ loading ? '编译中...' : '▶ 运行 (Run)' }}
+        </button>
+      </div>
     </header>
 
     <main class="main-content">
@@ -14,29 +21,100 @@
           theme="vs-dark"
           language="c"
           :options="editorOptions"
-          @mount="handleEditorMount"
         />
       </div>
 
       <div class="result-pane">
-        <div class="result-header">编译结果 (JSON)</div>
-        <pre class="result-content">{{ compileResult }}</pre>
+        <div class="tabs-header">
+          <button :class="['tab-btn', { active: activeTab === 'tokens' }]" @click="activeTab = 'tokens'">📦 Tokens</button>
+          <button :class="['tab-btn', { active: activeTab === 'ast' }]" @click="activeTab = 'ast'">🌳 语法树 (AST)</button>
+          <button :class="['tab-btn', { active: activeTab === 'errors' }]" @click="activeTab = 'errors'">⚠️ 诊断信息 ({{ diagnostics.length }})</button>
+          <button :class="['tab-btn', { active: activeTab === 'raw' }]" @click="activeTab = 'raw'">📄 Raw JSON</button>
+        </div>
+
+        <div class="tabs-content">
+          
+          <div v-if="activeTab === 'tokens'" class="tab-panel">
+            <table class="data-table" v-if="tokens.length > 0">
+              <thead>
+                <tr>
+                  <th>Line</th>
+                  <th>Col</th>
+                  <th>Text (值)</th>
+                  <th>Type (类型)</th>
+                  <th>Code (种别码)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(token, index) in tokens" :key="index">
+                  <td>{{ token.line }}</td>
+                  <td>{{ token.column }}</td>
+                  <td class="highlight-text">{{ token.text }}</td>
+                  <td><span class="badge">{{ token.kind }}</span></td>
+                  <td>{{ token.code }}</td>
+                </tr>
+              </tbody>
+            </table>
+            <div v-else class="empty-state">暂无 Token 数据</div>
+          </div>
+
+          <div v-if="activeTab === 'ast'" class="tab-panel ast-panel">
+            <div v-if="flattenedAst.length > 0">
+              <div 
+                v-for="(node, index) in flattenedAst" 
+                :key="index" 
+                class="ast-node"
+                :style="{ paddingLeft: (node.depth * 24) + 'px' }"
+              >
+                <span class="ast-line" v-if="node.depth > 0">└─</span>
+                <span class="ast-name">{{ node.name }}</span>
+                <span class="ast-value" v-if="node.value"> : "{{ node.value }}"</span>
+                <span class="ast-linenum" v-if="node.line">(Line: {{ node.line }})</span>
+              </div>
+            </div>
+            <div v-else class="empty-state">暂无 AST 数据</div>
+          </div>
+
+          <div v-if="activeTab === 'errors'" class="tab-panel">
+            <div v-if="diagnostics.length > 0" class="error-list">
+              <div v-for="(err, index) in diagnostics" :key="index" class="error-item">
+                <strong>[{{ err.code }}]</strong> Line {{ err.line }}: {{ err.message }} 
+                <span class="err-phase">({{ err.phase }})</span>
+              </div>
+            </div>
+            <div v-else class="success-state">
+              🎉 完美！没有发现任何语法或词法错误。
+            </div>
+          </div>
+
+          <div v-if="activeTab === 'raw'" class="tab-panel">
+            <pre class="raw-json">{{ rawJson }}</pre>
+          </div>
+
+        </div>
       </div>
     </main>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import axios from 'axios'
 import { VueMonacoEditor } from '@guolao/vue-monaco-editor'
 
-// 1. 定义响应式状态
-const sourceCode = ref('int a = 10;\nb = a;\n') // 默认代码
-const compileResult = ref('点击上方 "运行" 按钮查看结果...')
+// === 状态定义 ===
+const sourceCode = ref('int a = 10;\nb = a;\n')
 const loading = ref(false)
+const activeTab = ref('tokens') // 默认打开 tokens 选项卡
 
-// 2. 编辑器配置
+// 接收后端的数据
+const tokens = ref([])
+const rawAst = ref(null)
+const diagnostics = ref([])
+const rawJson = ref('点击运行获取结果...')
+const compileStatus = ref(null)
+
+// === 核心逻辑 ===
 const editorOptions = {
   automaticLayout: true,
   fontSize: 16,
@@ -44,29 +122,55 @@ const editorOptions = {
   wordWrap: 'on'
 }
 
-// 3. 编辑器加载完成的回调
-const handleEditorMount = (editor) => {
-  console.log('Monaco Editor 已挂载!')
-}
+// 扁平化 AST 树结构，方便在 HTML 中通过循环渲染并加缩进
+const flattenedAst = computed(() => {
+  const result = []
+  const traverse = (node, depth) => {
+    if (!node) return
+    result.push({ ...node, depth })
+    if (node.children && node.children.length > 0) {
+      node.children.forEach(child => traverse(child, depth + 1))
+    }
+  }
+  traverse(rawAst.value, 0)
+  return result
+})
 
-// 4. 调用 Spring Boot 后端 API
+// 调用后端 API
 const runCompile = async () => {
   if (!sourceCode.value.trim()) return
   
   loading.value = true
-  compileResult.value = '正在请求后端...'
+  compileStatus.value = null
   
   try {
-    // 这里的端口 8080 要和你 Spring Boot 启动的端口一致
     const response = await axios.post('http://localhost:8080/api/compile', {
       sourceCode: sourceCode.value
     })
     
-    // 把后端返回的 JSON 格式化展示出来 (缩进为 2 个空格)
-    compileResult.value = JSON.stringify(response.data, null, 2)
+    const data = response.data
+    
+    // 解析并绑定数据
+    tokens.value = data.tokens || []
+    rawAst.value = data.ast || null
+    diagnostics.value = data.diagnostics || []
+    compileStatus.value = data.success
+    
+    rawJson.value = JSON.stringify(data, null, 2)
+    
+    // 如果有错误，自动切到错误面板
+    if (!data.success) {
+      activeTab.value = 'errors'
+    } else if (activeTab.value === 'raw') {
+      activeTab.value = 'tokens'
+    }
+    
   } catch (error) {
     console.error(error)
-    compileResult.value = '请求失败，请检查 Spring Boot 后端是否启动，以及跨域配置。\n' + error.message
+    rawJson.value = '请求失败: ' + error.message
+    compileStatus.value = false
+    diagnostics.value = [{ code: 'HTTP_ERR', line: 0, message: '无法连接到后端服务器', phase: 'network' }]
+    activeTab.value = 'errors'
   } finally {
     loading.value = false
   }
@@ -74,68 +178,84 @@ const runCompile = async () => {
 </script>
 
 <style scoped>
-/* 极简 IDE 样式 */
+/* === 全局布局 === */
 .ide-container {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  font-family: system-ui, -apple-system, sans-serif;
+  display: flex; flex-direction: column; height: 100vh;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #1e1e1e;
 }
 
 .header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 20px;
-  background-color: #2d2d2d;
-  color: white;
-  height: 60px;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0 20px; background-color: #252526; color: white; height: 60px;
+  border-bottom: 1px solid #3c3c3c;
 }
+
+.logo { font-size: 20px; font-weight: bold; }
+.actions { display: flex; align-items: center; gap: 15px; }
+
+.status-badge {
+  padding: 5px 10px; border-radius: 4px; font-weight: bold; font-size: 14px;
+}
+.status-badge.success { background-color: #2e7d32; color: #e8f5e9; }
+.status-badge.error { background-color: #c62828; color: #ffebee; }
 
 .run-btn {
-  background-color: #4CAF50;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  font-size: 16px;
-  cursor: pointer;
-  border-radius: 4px;
+  background-color: #0e639c; color: white; border: none;
+  padding: 8px 24px; font-size: 15px; font-weight: bold; cursor: pointer; border-radius: 4px;
+  transition: background 0.2s;
 }
+.run-btn:hover { background-color: #1177bb; }
+.run-btn:disabled { background-color: #555; cursor: not-allowed; }
 
-.run-btn:hover { background-color: #45a049; }
-.run-btn:disabled { background-color: #777; cursor: not-allowed; }
+/* === 主体内容 === */
+.main-content { display: flex; flex: 1; overflow: hidden; }
+.editor-pane { flex: 5; border-right: 1px solid #3c3c3c; }
+.result-pane { flex: 5; display: flex; flex-direction: column; background-color: #1e1e1e; color: #d4d4d4;}
 
-.main-content {
-  display: flex;
-  flex: 1;
-  overflow: hidden;
+/* === 选项卡样式 === */
+.tabs-header {
+  display: flex; background-color: #2d2d2d; border-bottom: 1px solid #3c3c3c;
 }
-
-.editor-pane {
-  flex: 1;
-  border-right: 2px solid #ddd;
+.tab-btn {
+  background: none; border: none; color: #969696; padding: 12px 20px;
+  font-size: 14px; cursor: pointer; border-right: 1px solid #3c3c3c;
+  transition: all 0.2s;
 }
+.tab-btn:hover { color: #fff; background-color: #333; }
+.tab-btn.active { color: #fff; background-color: #1e1e1e; border-top: 2px solid #0e639c; }
 
-.result-pane {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  background-color: #f5f5f5;
-}
+.tabs-content { flex: 1; overflow: auto; position: relative; }
+.tab-panel { padding: 0; min-height: 100%; }
 
-.result-header {
-  padding: 10px;
-  background-color: #e0e0e0;
-  font-weight: bold;
-  border-bottom: 1px solid #ccc;
+/* === 表格样式 (Tokens) === */
+.data-table {
+  width: 100%; border-collapse: collapse; font-size: 14px; text-align: left;
 }
+.data-table th { background-color: #2d2d2d; padding: 10px 15px; font-weight: 600; border-bottom: 1px solid #3c3c3c; position: sticky; top: 0;}
+.data-table td { padding: 8px 15px; border-bottom: 1px solid #333; }
+.data-table tr:hover { background-color: #2a2d2e; }
 
-.result-content {
-  flex: 1;
-  padding: 15px;
-  margin: 0;
-  overflow: auto;
-  font-family: 'Consolas', monospace;
-  font-size: 14px;
+.highlight-text { color: #ce9178; font-family: 'Consolas', monospace; font-weight: bold;}
+.badge { background-color: #4d4d4d; padding: 2px 8px; border-radius: 10px; font-size: 12px; }
+
+/* === AST 树样式 === */
+.ast-panel { padding: 15px; font-family: 'Consolas', monospace; font-size: 15px; line-height: 1.8;}
+.ast-line { color: #666; margin-right: 5px; }
+.ast-name { color: #569cd6; font-weight: bold; }
+.ast-value { color: #ce9178; }
+.ast-linenum { color: #858585; font-size: 12px; margin-left: 10px;}
+
+/* === 错误诊断样式 === */
+.error-list { padding: 15px; }
+.error-item {
+  background-color: #3a1d1d; border-left: 4px solid #f48771; padding: 12px;
+  margin-bottom: 10px; border-radius: 0 4px 4px 0; color: #f48771; font-family: 'Consolas', monospace;
 }
+.err-phase { color: #999; float: right; font-size: 12px;}
+.success-state { padding: 30px; text-align: center; color: #4caf50; font-size: 16px; margin-top: 50px;}
+
+/* === 通用空状态/RAW === */
+.empty-state { padding: 50px; text-align: center; color: #666; }
+.raw-json { padding: 15px; margin: 0; font-family: 'Consolas', monospace; font-size: 13px; color: #9cdcfe;}
 </style>
