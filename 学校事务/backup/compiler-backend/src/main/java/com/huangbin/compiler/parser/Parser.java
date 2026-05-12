@@ -19,7 +19,6 @@ public class Parser {
         }
     }
 
-
     private final List<Token> tokens;
     private int pos = 0;
     private final List<Diagnostic> diagnostics = new ArrayList<>();
@@ -148,8 +147,62 @@ public class Parser {
         return assignNode;
     }
 
-    // 解析极简表达式（当前仅支持数字或单个标识符）
+    // ================== 增强版表达式解析 (支持加减乘除和括号) ==================
+
+    // 解析加减法表达式: Term { (+ | -) Term }
     private ASTNode parseExpression() {
+        ASTNode left = parseTerm();
+        if (left == null) return null;
+
+        Token curr = current();
+        while (curr != null && (curr.getText().equals("+") || curr.getText().equals("-"))) {
+            pos++; // 消耗运算符
+            ASTNode opNode = new ASTNode("BinOp");
+            opNode.setValue(curr.getText());
+            opNode.setLine(curr.getLine());
+
+            ASTNode right = parseTerm();
+            if (right == null) {
+                diagnostics.add(new Diagnostic("parser", curr.getLine(), "P005", "Expected term after " + curr.getText()));
+                break;
+            }
+
+            opNode.addChild(left);
+            opNode.addChild(right);
+            left = opNode; // 将新构建的节点作为下一轮循环的左节点
+            curr = current();
+        }
+        return left;
+    }
+
+    // 解析乘除法项: Factor { (* | /) Factor }
+    private ASTNode parseTerm() {
+        ASTNode left = parseFactor();
+        if (left == null) return null;
+
+        Token curr = current();
+        while (curr != null && (curr.getText().equals("*") || curr.getText().equals("/"))) {
+            pos++;
+            ASTNode opNode = new ASTNode("BinOp");
+            opNode.setValue(curr.getText());
+            opNode.setLine(curr.getLine());
+
+            ASTNode right = parseFactor();
+            if (right == null) {
+                diagnostics.add(new Diagnostic("parser", curr.getLine(), "P006", "Expected factor after " + curr.getText()));
+                break;
+            }
+
+            opNode.addChild(left);
+            opNode.addChild(right);
+            left = opNode;
+            curr = current();
+        }
+        return left;
+    }
+
+    // 解析基础因子: 标识符 或 字面量 或 (表达式)
+    private ASTNode parseFactor() {
         Token curr = current();
         if (curr == null) return null;
 
@@ -165,6 +218,11 @@ public class Parser {
             idNode.setLine(curr.getLine());
             pos++;
             return idNode;
+        } else if (matchText("(") != null) {
+            // 处理括号优先级
+            ASTNode expr = parseExpression();
+            expectText(")");
+            return expr;
         }
 
         diagnostics.add(new Diagnostic("parser", curr.getLine(), "P004", "Expected expression"));
