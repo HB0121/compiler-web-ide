@@ -49,6 +49,7 @@ IDENTIFIER_CODE = 700
 INT_LITERAL_CODE = 401
 FLOAT_LITERAL_CODE = 402
 CHAR_LITERAL_CODE = 403
+SUPPORTED_CHAR_ESCAPES = {"n", "t", "r", "0", "'", "\\"}
 
 
 class Lexer:
@@ -150,7 +151,14 @@ class Lexer:
                 if i < len(source) and source[i] == "'":
                     i += 1
                     column += 1
-                    tokens.append(Token(source[start:i], CHAR_LITERAL_CODE, line, start_column, "char_literal"))
+                    text = source[start:i]
+                    payload = text[1:-1]
+                    is_ordinary_char = len(payload) == 1 and payload != "\\"
+                    is_escape_char = len(payload) == 2 and payload[0] == "\\" and payload[1] in SUPPORTED_CHAR_ESCAPES
+                    if is_ordinary_char or is_escape_char:
+                        tokens.append(Token(text, CHAR_LITERAL_CODE, line, start_column, "char_literal"))
+                    else:
+                        diagnostics.append(Diagnostic("lexer", line, "L004", f"malformed char literal at column {start_column}"))
                 else:
                     diagnostics.append(Diagnostic("lexer", line, "L002", f"unclosed char literal at column {start_column}"))
                 continue

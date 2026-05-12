@@ -70,12 +70,21 @@ class LexerTests(unittest.TestCase):
     def test_lexer_recognizes_escaped_char_literals(self):
         from compiler.lexer import Lexer
 
-        tokens, diagnostics = Lexer().tokenize("char c = '\\n'; char q = '\\'';")
+        tokens, diagnostics = Lexer().tokenize("char a = 'x'; char n = '\\n'; char t = '\\t'; char r = '\\r'; char z = '\\0'; char q = '\\''; char b = '\\\\';")
         char_literals = [token for token in tokens if token.code == 403]
 
         self.assertEqual([], diagnostics)
-        self.assertEqual(["'\\n'", "'\\''"], [token.text for token in char_literals])
-        self.assertEqual([403, 403], [token.code for token in char_literals])
+        self.assertEqual(["'x'", "'\\n'", "'\\t'", "'\\r'", "'\\0'", "'\\''", "'\\\\'"], [token.text for token in char_literals])
+        self.assertEqual([403, 403, 403, 403, 403, 403, 403], [token.code for token in char_literals])
+
+    def test_lexer_rejects_empty_and_multi_character_literals(self):
+        from compiler.lexer import Lexer
+
+        tokens, diagnostics = Lexer().tokenize("char empty = ''; char multi = 'ab';")
+
+        self.assertEqual([], [token for token in tokens if token.code == 403])
+        self.assertEqual(2, len(diagnostics))
+        self.assertTrue(all(diagnostic.phase == "lexer" for diagnostic in diagnostics))
 
 
 if __name__ == "__main__":
