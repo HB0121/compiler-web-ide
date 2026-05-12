@@ -1,7 +1,38 @@
 Program
-  FunctionDef(int main)[1]
+  ConstDecl(int limit)[1]
+    3[1]
+  FunctionDef(int add)[3]
+    Param(int a)[3]
+    Param(int b)[3]
     Compound
-      VarDecl(int x)[1]
-        1[1]
-      ReturnStmt[1]
-        x[1]
+      VarDecl(int c)[4]
+        +
+          a[4]
+          b[4]
+      ReturnStmt[5]
+        c[5]
+  FunctionDef(int main)[8]
+    Compound
+      VarDecl(int i)[9]
+        0[9]
+      VarDecl(int total)[10]
+        0[10]
+      WhileStmt
+        <
+          i[11]
+          limit[11]
+        Compound
+          ExprStmt
+            =
+              total[12]
+              Call(add)[12]
+                total[12]
+                i[12]
+          ExprStmt
+            =
+              i[13]
+              +
+                i[13]
+                1[13]
+      ReturnStmt[15]
+        total[15]
