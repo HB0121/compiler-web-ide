@@ -158,13 +158,24 @@ class SemanticAnalyzer:
             self.exit_scope()
             return
 
-        if node.name in {"WhileStmt", "DoWhileStmt"}:
-            for child in node.children:
+        if node.name == "WhileStmt":
+            if node.children:
+                self.evaluate_expression(node.children[0])
+            for child in node.children[1:]:
                 self.analyze(child, in_loop=True)
             return
 
+        if node.name == "DoWhileStmt":
+            if node.children:
+                for child in node.children[:-1]:
+                    self.analyze(child, in_loop=True)
+                self.evaluate_expression(node.children[-1])
+            return
+
         if node.name == "IfStmt":
-            for child in node.children:
+            if node.children:
+                self.evaluate_expression(node.children[0])
+            for child in node.children[1:]:
                 self.analyze(child, in_loop)
             return
 

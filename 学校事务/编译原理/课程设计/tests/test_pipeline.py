@@ -195,6 +195,25 @@ class SemanticTests(unittest.TestCase):
         self.assertNotIn("310", [diagnostic.code for diagnostic in int_analyzer.diagnostics])
         self.assertIn("307", [diagnostic.code for diagnostic in float_analyzer.diagnostics])
 
+    def test_if_bare_identifier_condition_reports_undeclared_identifier(self):
+        analyzer = self.analyze_source("int main(){if(x){return 1;} return 0;}")
+
+        self.assertIn("302", [diagnostic.code for diagnostic in analyzer.diagnostics])
+
+    def test_while_bare_identifier_condition_reports_undeclared_identifier(self):
+        analyzer = self.analyze_source("int main(){while(x){break;} return 0;}")
+        codes = [diagnostic.code for diagnostic in analyzer.diagnostics]
+
+        self.assertIn("302", codes)
+        self.assertNotIn("308", codes)
+
+    def test_do_while_bare_identifier_condition_reports_undeclared_identifier(self):
+        analyzer = self.analyze_source("int main(){do{break;}while(x); return 0;}")
+        codes = [diagnostic.code for diagnostic in analyzer.diagnostics]
+
+        self.assertIn("302", codes)
+        self.assertNotIn("308", codes)
+
 
 if __name__ == "__main__":
     unittest.main()
