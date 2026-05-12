@@ -87,5 +87,56 @@ class LexerTests(unittest.TestCase):
         self.assertTrue(all(diagnostic.phase == "lexer" for diagnostic in diagnostics))
 
 
+class ParserTests(unittest.TestCase):
+    def parse_source(self, source):
+        from compiler.lexer import Lexer
+        from compiler.parser import Parser
+
+        tokens, lexer_diagnostics = Lexer().tokenize(source)
+        ast, parser_diagnostics = Parser(tokens).parse()
+
+        self.assertEqual([], lexer_diagnostics)
+        self.assertEqual([], parser_diagnostics)
+        return ast
+
+    def main_compound(self, source):
+        ast = self.parse_source(source)
+        function = ast.children[0]
+        return function.children[-1]
+
+    def test_for_statement_preserves_declaration_initializer(self):
+        compound = self.main_compound("int main(){for(int i=0;i<3;i=i+1){break;}}")
+        for_node = compound.children[0]
+
+        self.assertEqual("ForStmt", for_node.name)
+        self.assertEqual("VarDecl", for_node.children[0].name)
+        self.assertEqual("int i", for_node.children[0].value)
+        self.assertEqual("0", for_node.children[0].children[0].name)
+        self.assertEqual("<", for_node.children[1].name)
+        self.assertEqual("=", for_node.children[2].name)
+        self.assertEqual("Compound", for_node.children[3].name)
+        self.assertEqual("BreakStmt", for_node.children[3].children[0].name)
+
+    def test_grouped_assignment_expr_parses_recursively(self):
+        compound = self.main_compound("int main(){int x;int y;x=(y=1);}")
+        assign = compound.children[2].children[0]
+
+        self.assertEqual("=", assign.name)
+        self.assertEqual("x", assign.children[0].name)
+        self.assertEqual("=", assign.children[1].name)
+        self.assertEqual("y", assign.children[1].children[0].name)
+        self.assertEqual("1", assign.children[1].children[1].name)
+
+    def test_if_condition_accepts_assignment_expression(self):
+        compound = self.main_compound("int main(){int x;if(x=2){break;}}")
+        if_node = compound.children[1]
+
+        self.assertEqual("IfStmt", if_node.name)
+        self.assertEqual("=", if_node.children[0].name)
+        self.assertEqual("x", if_node.children[0].children[0].name)
+        self.assertEqual("2", if_node.children[0].children[1].name)
+        self.assertEqual("Compound", if_node.children[1].name)
+
+
 if __name__ == "__main__":
     unittest.main()

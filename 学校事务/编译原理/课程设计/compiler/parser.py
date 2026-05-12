@@ -241,7 +241,7 @@ class Parser:
         self.match_text("if")
         self.match_text("(")
         node = ASTNode("IfStmt")
-        node.add_child(self.parse_logical_expression())
+        node.add_child(self.parse_assignment_or_expr())
         self.expect_text(")")
 
         stmt = self.parse_statement()
@@ -257,56 +257,27 @@ class Parser:
         self.match_text("while")
         self.match_text("(")
         node = ASTNode("WhileStmt")
-        node.add_child(self.parse_logical_expression())
+        node.add_child(self.parse_assignment_or_expr())
         self.expect_text(")")
 
         stmt = self.parse_statement()
         self.add_statement(node, stmt)
         return node
 
-    def parse_for_stmt(self) -> Union[ASTNode, List[ASTNode]]:
+    def parse_for_stmt(self) -> ASTNode:
         self.match_text("for")
         self.match_text("(")
 
-        if self.current_token() and self.current_token().text in TYPE_NAMES:
-            node_list = [ASTNode("ExprStmt")]
-
-            self.pos += 3
-            expr1 = self.parse_expr_stmt()
-            stmt1 = ASTNode("ExprStmt")
-            if expr1:
-                stmt1.add_child(expr1)
-            node_list.append(stmt1)
-            self.expect_text(";")
-
-            expr2 = self.parse_logical_expression()
-            stmt2 = ASTNode("ExprStmt")
-            if expr2:
-                stmt2.add_child(expr2)
-            node_list.append(stmt2)
-            self.expect_text(";")
-
-            expr3 = self.parse_assignment_or_expr()
-            stmt3 = ASTNode("ExprStmt")
-            if expr3:
-                stmt3.add_child(expr3)
-            node_list.append(stmt3)
-            self.expect_text(")")
-
-            node_list.append(ASTNode("ExprStmt"))
-            compound = self.parse_statement()
-            if isinstance(compound, list):
-                node_list.extend(compound)
-            elif compound:
-                node_list.append(compound)
-            return node_list
-
         node = ASTNode("ForStmt")
-        init_node = self.parse_assignment_or_expr()
-        node.add_child(init_node)
-        self.expect_text(";")
+        if self.current_token() and self.current_token().text in TYPE_NAMES:
+            for decl in self.parse_var_decl():
+                node.add_child(decl)
+        else:
+            init_node = self.parse_assignment_or_expr()
+            node.add_child(init_node)
+            self.expect_text(";")
 
-        cond_node = self.parse_logical_expression()
+        cond_node = self.parse_assignment_or_expr()
         node.add_child(cond_node)
         self.expect_text(";")
 
@@ -327,7 +298,7 @@ class Parser:
 
         self.match_text("while")
         self.match_text("(")
-        node.add_child(self.parse_logical_expression())
+        node.add_child(self.parse_assignment_or_expr())
         self.expect_text(")")
         self.expect_text(";")
         return node
@@ -496,7 +467,7 @@ class Parser:
 
         if token.text == "(":
             self.pos += 1
-            node = self.parse_logical_expression()
+            node = self.parse_assignment_or_expr()
             if self.current_token() and self.current_token().text == ")":
                 self.expect_text(")")
             elif not node:
