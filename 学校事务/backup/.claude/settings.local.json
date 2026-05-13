@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C \"/d/Users/28197/Documents/GitHub/bivote_rep/学校事务/backup\" log --oneline -10)"
+    ]
+  }
+}
