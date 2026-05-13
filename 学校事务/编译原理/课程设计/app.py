@@ -569,11 +569,23 @@ class CompilerApp:
             self._draw_automata_graph(self.current_visual_key)
 
     def _fit_graph_zoom(self) -> None:
-        fragments = self.log_graph_fragments
-        if not fragments:
+        if self.current_visual_key in {"log_nfa_visual", "log_dfa_visual"}:
+            item_count = len(self.log_graph_fragments)
+            natural_width = 70 * 2 + 150 * item_count + 120
+        elif self.current_visual_key == "cfg_visual" and self.control_flow_analysis is not None:
+            item_count = len(self.control_flow_analysis.basic_blocks)
+            columns = 2 if item_count > 3 else 1
+            natural_width = 60 * 2 + columns * 190 + (columns - 1) * 84
+        elif self.current_visual_key == "dag_visual" and self.control_flow_analysis is not None:
+            dag = next((item for item in self.control_flow_analysis.dag_blocks if item.nodes), None)
+            item_count = len(dag.nodes) if dag is not None else 0
+            natural_width = 70 * 2 + max(1, item_count) * 120
+        else:
+            return
+
+        if item_count <= 0:
             return
         available_width = max(self.graph_canvas.winfo_width(), 640)
-        natural_width = 70 * 2 + 150 * len(fragments) + 120
         self.graph_zoom = min(2.5, max(0.5, available_width / natural_width))
         self.graph_zoom_var.set(f"{round(self.graph_zoom * 100):.0f}%")
         if self.current_visual_key:
