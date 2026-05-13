@@ -248,6 +248,7 @@ class CompilerApp:
     def _build_summary(self, parent: ttk.Frame) -> None:
         summary = ttk.Frame(parent, style="Summary.TFrame")
         summary.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(0, 10))
+        summary.columnconfigure(4, weight=0)
         for index, (key, label) in enumerate(
             (("tokens", "Tokens"), ("diagnostics", "Diagnostics"), ("quads", "Quadruples"), ("return", "Return"))
         ):
@@ -258,6 +259,7 @@ class CompilerApp:
             self.summary_vars[key] = value
             ttk.Label(card, textvariable=value, style="SummaryValue.TLabel").pack(anchor=tk.W)
             ttk.Label(card, text=label, style="SummaryLabel.TLabel").pack(anchor=tk.W)
+        ttk.Button(summary, text="复制汇编", command=self.copy_assembly, style="Subtle.TButton").grid(row=0, column=4, sticky="e")
 
     def _build_result_view(self, parent: ttk.Frame) -> None:
         nav_frame = ttk.Frame(parent, style="Panel.TFrame")
@@ -445,6 +447,20 @@ class CompilerApp:
 
         messagebox.showinfo("Export Complete", "Outputs written to outputs/")
         self._set_status("Exported outputs/")
+
+    def copy_assembly(self) -> None:
+        if self.current_result is None and not self.run():
+            return
+        assembly = self.result_cache.get("assembly", "")
+        if not assembly.strip():
+            messagebox.showwarning("No Assembly", "Please run the compiler before copying assembly.")
+            self._set_status("No assembly to copy")
+            return
+        self.root.clipboard_clear()
+        self.root.clipboard_append(assembly)
+        self.root.update()
+        self._select_result("assembly")
+        self._set_status("Assembly copied to clipboard")
 
     def run_log_automata(self) -> None:
         pattern = self.regex_var.get().strip()
