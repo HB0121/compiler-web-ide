@@ -5,20 +5,8 @@
 .MODEL SMALL
 .STACK 100h
 .DATA
+limit DW 3
 .CODE
-
-main PROC
-    push bp
-    mov bp, sp
-    mov ax, @data
-    mov ds, ax
-    sub sp, 2
-    mov ax, 3
-    mov WORD PTR [bp-2], ax
-    mov ax, 0
-    mov ah, 4Ch
-    int 21h
-main ENDP
 
 fn_add PROC
     push bp
@@ -42,27 +30,27 @@ main PROC
     mov bp, sp
     mov ax, @data
     mov ds, ax
-    sub sp, 10
+    sub sp, 8
     mov ax, 0
     mov WORD PTR [bp-2], ax
     mov ax, 0
     mov WORD PTR [bp-4], ax
 L9:
     mov ax, WORD PTR [bp-2]
-    cmp ax, WORD PTR [bp-6]
+    cmp ax, limit
     jl L11
     jmp L18
 L11:
     mov ax, WORD PTR [bp-4]
     mov bx, WORD PTR [bp-2]
     call fn_add
-    mov WORD PTR [bp-8], ax
-    mov ax, WORD PTR [bp-8]
+    mov WORD PTR [bp-6], ax
+    mov ax, WORD PTR [bp-6]
     mov WORD PTR [bp-4], ax
     mov ax, WORD PTR [bp-2]
     add ax, 1
-    mov WORD PTR [bp-10], ax
-    mov ax, WORD PTR [bp-10]
+    mov WORD PTR [bp-8], ax
+    mov ax, WORD PTR [bp-8]
     mov WORD PTR [bp-2], ax
     jmp L9
 L18:
