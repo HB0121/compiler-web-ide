@@ -1,0 +1,23 @@
+# IDE & tools
+.claude/
+.superpowers/
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Java / Maven
+compiler-backend/target/
+*.class
+*.jar
+*.war
+
+# Node / frontend
+compiler-frontend/node_modules/
+compiler-frontend/dist/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
