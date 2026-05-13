@@ -33,7 +33,28 @@ int main() {
 
 RESULT_GROUPS = (
     (
-        "日志自动机(4.1)",
+        "编译流程",
+        (
+            ("tokens", "Tokens"),
+            ("ast", "AST"),
+            ("semantic_errors", "Semantic Errors"),
+            ("quads", "Quadruples"),
+            ("interpreter", "Interpreter"),
+        ),
+    ),
+    ("符号与诊断", (("const", "Const Symbols"), ("var", "Var Symbols"), ("function", "Functions"))),
+    (
+        "后端输出",
+        (
+            ("optimized_quads", "Optimized Quads"),
+            ("llvm_ir", "LLVM IR"),
+            ("target_code", "Target Code"),
+            ("assembly", "Assembly"),
+            ("optimized_target_code", "Optimized Target Code"),
+        ),
+    ),
+    (
+        "扩展任务",
         (
             ("log_extract", "Log Extract"),
             ("log_nfa", "NFA Graph"),
@@ -41,28 +62,21 @@ RESULT_GROUPS = (
             ("log_dfa_table", "DFA Table"),
             ("log_nfa_visual", "NFA Visual"),
             ("log_dfa_visual", "DFA Visual"),
-        ),
-    ),
-    ("基础分析", (("tokens", "Tokens"), ("ast", "AST"), ("semantic_errors", "Semantic Errors"))),
-    ("符号表", (("const", "Const Symbols"), ("var", "Var Symbols"), ("function", "Functions"))),
-    (
-        "中间与后端",
-        (
-            ("quads", "Quadruples"),
-            ("optimized_quads", "Optimized Quads"),
             ("basic_blocks", "Basic Blocks"),
             ("cfg", "CFG"),
             ("dag", "DAG"),
             ("dag_optimized_quads", "DAG Optimized Quads"),
             ("cfg_visual", "CFG Visual"),
             ("dag_visual", "DAG Visual"),
-            ("interpreter", "Interpreter"),
-            ("llvm_ir", "LLVM IR"),
-            ("target_code", "Target Code"),
-            ("assembly", "Assembly"),
-            ("optimized_target_code", "Optimized Target Code"),
         ),
     ),
+)
+
+WELCOME_TEXT = (
+    "就绪。\n\n"
+    "左侧输入或打开源代码后，点击“运行”查看编译结果。\n"
+    "进行 4.1 日志任务时，粘贴日志、填写 Regex，然后点击“日志识别”。\n"
+    "结果会在这里显示。\n"
 )
 
 LOG_PLACEHOLDERS = {
@@ -95,7 +109,7 @@ class CompilerApp:
         self.graph_zoom_var = tk.StringVar(value="100%")
 
         self.root.title("Compiler Course Design")
-        self.root.geometry("1180x760")
+        self.root.geometry("1160x740")
         self.root.minsize(980, 620)
 
         self._configure_style()
@@ -103,6 +117,7 @@ class CompilerApp:
         self._build_toolbar()
         self._build_main_area()
         self._build_status_bar()
+        self.clear_results()
 
         self.source_text.insert("1.0", SAMPLE_SOURCE)
         self.source_text.edit_modified(False)
@@ -127,42 +142,45 @@ class CompilerApp:
 
         self.root.configure(bg="#f4f6f8")
         style.configure(".", font=("Microsoft YaHei UI", 10), background="#f4f6f8")
-        style.configure("Toolbar.TFrame", background="#1f2937")
-        style.configure("ToolbarTitle.TLabel", background="#1f2937", foreground="#f9fafb", font=("Microsoft YaHei UI", 12, "bold"))
-        style.configure("Toolbar.TButton", padding=(12, 5), font=("Microsoft YaHei UI", 10))
+        style.configure("Toolbar.TFrame", background="#111827")
+        style.configure("ToolbarTitle.TLabel", background="#111827", foreground="#f9fafb", font=("Microsoft YaHei UI", 11, "bold"))
+        style.configure("Toolbar.TButton", padding=(10, 4), font=("Microsoft YaHei UI", 9))
+        style.configure("Subtle.TButton", padding=(8, 3), font=("Microsoft YaHei UI", 9))
         style.configure("Panel.TFrame", background="#ffffff", relief=tk.FLAT)
         style.configure("PanelTitle.TLabel", background="#ffffff", foreground="#111827", font=("Microsoft YaHei UI", 10, "bold"))
         style.configure("Summary.TFrame", background="#ffffff")
-        style.configure("SummaryValue.TLabel", background="#ffffff", foreground="#111827", font=("Microsoft YaHei UI", 13, "bold"))
+        style.configure("SummaryValue.TLabel", background="#ffffff", foreground="#111827", font=("Microsoft YaHei UI", 12, "bold"))
         style.configure("SummaryLabel.TLabel", background="#ffffff", foreground="#6b7280", font=("Microsoft YaHei UI", 9))
-        style.configure("Treeview", rowheight=26, font=("Microsoft YaHei UI", 10), background="#ffffff", fieldbackground="#ffffff")
+        style.configure("Treeview", rowheight=24, font=("Microsoft YaHei UI", 9), background="#ffffff", fieldbackground="#ffffff")
         style.configure("Treeview.Heading", font=("Microsoft YaHei UI", 10, "bold"))
         style.configure("Diagnostics.Treeview", rowheight=22, font=("Microsoft YaHei UI", 9))
 
     def _build_toolbar(self) -> None:
-        toolbar = ttk.Frame(self.root, padding=(12, 10), style="Toolbar.TFrame")
+        toolbar = ttk.Frame(self.root, padding=(12, 7), style="Toolbar.TFrame")
         toolbar.pack(side=tk.TOP, fill=tk.X)
 
-        ttk.Label(toolbar, text="编译原理课程设计", style="ToolbarTitle.TLabel").pack(side=tk.LEFT, padx=(0, 18))
+        ttk.Label(toolbar, text="编译原理课程设计", style="ToolbarTitle.TLabel").pack(side=tk.LEFT, padx=(0, 20))
 
         buttons = (
             ("打开", self.open_file),
             ("保存", self.save_file),
             ("运行", self.run),
-            ("日志识别", self.run_log_automata),
-            ("格式化", self.format_current_source),
             ("导出", self.export),
-            ("清空", self.clear),
         )
         for label, command in buttons:
-            ttk.Button(toolbar, text=label, command=command, style="Toolbar.TButton").pack(side=tk.LEFT, padx=(0, 8))
+            ttk.Button(toolbar, text=label, command=command, style="Toolbar.TButton").pack(side=tk.LEFT, padx=(0, 6))
 
     def _build_main_area(self) -> None:
         main = ttk.PanedWindow(self.root, orient=tk.HORIZONTAL)
         main.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=12, pady=12)
 
         source_frame = ttk.Frame(main, padding=10, style="Panel.TFrame")
-        ttk.Label(source_frame, text="Source", style="PanelTitle.TLabel").grid(row=0, column=0, columnspan=3, sticky="w", pady=(0, 8))
+        source_header = ttk.Frame(source_frame, style="Panel.TFrame")
+        source_header.grid(row=0, column=0, columnspan=3, sticky="ew", pady=(0, 8))
+        source_header.columnconfigure(0, weight=1)
+        ttk.Label(source_header, text="Source", style="PanelTitle.TLabel").grid(row=0, column=0, sticky="w")
+        ttk.Button(source_header, text="格式化", command=self.format_current_source, style="Subtle.TButton").grid(row=0, column=1, padx=(0, 6))
+        ttk.Button(source_header, text="清空", command=self.clear, style="Subtle.TButton").grid(row=0, column=2)
 
         self.source_text = tk.Text(
             source_frame,
@@ -207,6 +225,7 @@ class CompilerApp:
         regex_frame.columnconfigure(1, weight=1)
         ttk.Label(regex_frame, text="Regex", style="PanelTitle.TLabel").grid(row=0, column=0, sticky="w", padx=(0, 8))
         ttk.Entry(regex_frame, textvariable=self.regex_var).grid(row=0, column=1, sticky="ew")
+        ttk.Button(regex_frame, text="日志识别", command=self.run_log_automata, style="Subtle.TButton").grid(row=0, column=2, padx=(8, 0))
 
     def _build_diagnostics_panel(self, parent: ttk.Frame) -> None:
         ttk.Label(parent, text="Diagnostics", style="PanelTitle.TLabel").grid(row=4, column=0, columnspan=3, sticky="w", pady=(8, 6))
@@ -233,7 +252,7 @@ class CompilerApp:
             (("tokens", "Tokens"), ("diagnostics", "Diagnostics"), ("quads", "Quadruples"), ("return", "Return"))
         ):
             summary.columnconfigure(index, weight=1)
-            card = ttk.Frame(summary, padding=(10, 8), style="Summary.TFrame")
+            card = ttk.Frame(summary, padding=(8, 5), style="Summary.TFrame")
             card.grid(row=0, column=index, sticky="ew", padx=(0, 8 if index < 3 else 0))
             value = tk.StringVar(value="-")
             self.summary_vars[key] = value
@@ -245,13 +264,14 @@ class CompilerApp:
         nav_frame.grid(row=2, column=0, sticky="nsw", padx=(0, 10))
 
         self.result_tree = ttk.Treeview(nav_frame, show="tree", selectmode="browse", height=18)
+        self.result_tree.column("#0", width=170, minwidth=140, stretch=False)
         tree_scroll = ttk.Scrollbar(nav_frame, orient=tk.VERTICAL, command=self.result_tree.yview)
         self.result_tree.configure(yscrollcommand=tree_scroll.set)
         self.result_tree.grid(row=0, column=0, sticky="ns")
         tree_scroll.grid(row=0, column=1, sticky="ns")
 
-        for group_title, items in RESULT_GROUPS:
-            group_id = self.result_tree.insert("", tk.END, text=group_title, open=True)
+        for index, (group_title, items) in enumerate(RESULT_GROUPS):
+            group_id = self.result_tree.insert("", tk.END, text=group_title, open=index < 2)
             for key, title in items:
                 item_id = self.result_tree.insert(group_id, tk.END, text=title)
                 self.tree_items[key] = item_id
@@ -486,7 +506,8 @@ class CompilerApp:
         self.log_graph_fragments = []
         self.current_visual_key = None
         self.control_flow_analysis = None
-        self._set_text(self.output_text, "")
+        self._show_text_output()
+        self._set_text(self.output_text, WELCOME_TEXT)
         if hasattr(self, "graph_canvas"):
             self.graph_canvas.delete("all")
 
