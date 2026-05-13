@@ -557,6 +557,23 @@ class AssemblyTests(unittest.TestCase):
         self.assertIn("mov WORD PTR [bp-", assembly)
         self.assertIn("int 21h", assembly)
 
+    def test_generates_masm16_globals_without_duplicate_main_proc(self):
+        from compiler.assembly import quads_to_masm16
+
+        quads = [
+            ("=", "3", "_", "limit"),
+            ("main", "_", "_", "_"),
+            ("J<", "i", "limit", 4),
+            ("J", "_", "_", 5),
+            ("ret", "_", "_", "limit"),
+            ("sys", "_", "_", "_"),
+        ]
+        assembly = quads_to_masm16(quads, {"main": []})
+
+        self.assertEqual(1, assembly.count("main PROC"))
+        self.assertIn("limit DW 3", assembly)
+        self.assertIn("cmp ax, limit", assembly)
+
     def test_generates_masm16_for_function_call_with_parameters(self):
         from compiler.assembly import quads_to_masm16
 
