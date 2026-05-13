@@ -9,6 +9,7 @@ import com.huangbin.compiler.ir.IRGenerator;
 import com.huangbin.compiler.ir.LLVMGenerator;
 import com.huangbin.compiler.lexer.Lexer;
 import com.huangbin.compiler.log.LogScanner;
+import com.huangbin.compiler.log.PipelineLogger;
 import com.huangbin.compiler.model.ASTNode;
 import com.huangbin.compiler.model.Diagnostic;
 import com.huangbin.compiler.model.Token;
