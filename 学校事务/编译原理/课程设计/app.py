@@ -38,6 +38,8 @@ RESULT_GROUPS = (
             ("log_nfa", "NFA Graph"),
             ("log_dfa", "DFA Graph"),
             ("log_dfa_table", "DFA Table"),
+            ("log_nfa_visual", "NFA Visual"),
+            ("log_dfa_visual", "DFA Visual"),
         ),
     ),
     ("基础分析", (("tokens", "Tokens"), ("ast", "AST"), ("semantic_errors", "Semantic Errors"))),
@@ -60,6 +62,8 @@ LOG_PLACEHOLDERS = {
     "log_nfa": "Enter a regex and click 日志识别 to build the NFA graph.\n",
     "log_dfa": "Enter a regex and click 日志识别 to build the DFA graph.\n",
     "log_dfa_table": "Enter a regex and click 日志识别 to build the DFA transition table.\n",
+    "log_nfa_visual": "Enter a regex and click 日志识别 to draw the NFA graph.\n",
+    "log_dfa_visual": "Enter a regex and click 日志识别 to draw the DFA graph.\n",
 }
 
 
@@ -76,6 +80,8 @@ class CompilerApp:
         self.diagnostics_job = None
         self.editor_diagnostics = []
         self.error_lines: set[int] = set()
+        self.log_graph_fragments: list[str] = []
+        self.current_visual_key: str | None = None
 
         self.root.title("Compiler Course Design")
         self.root.geometry("1180x760")
@@ -261,6 +267,8 @@ class CompilerApp:
         output_x = ttk.Scrollbar(text_frame, orient=tk.HORIZONTAL, command=self.output_text.xview)
         self.output_text.configure(yscrollcommand=output_y.set, xscrollcommand=output_x.set)
         self.output_text.grid(row=0, column=0, sticky="nsew")
+        self.graph_canvas = tk.Canvas(text_frame, background="#f8fafc", highlightthickness=0)
+        self.graph_canvas.bind("<Configure>", self._redraw_current_graph)
         output_y.grid(row=0, column=1, sticky="ns")
         output_x.grid(row=1, column=0, sticky="ew")
 
@@ -418,6 +426,9 @@ class CompilerApp:
         self.result_cache["log_nfa"] = result.nfa_text
         self.result_cache["log_dfa"] = result.dfa_text
         self.result_cache["log_dfa_table"] = result.dfa_table_text
+        self.result_cache["log_nfa_visual"] = "NFA graph rendered on canvas."
+        self.result_cache["log_dfa_visual"] = "DFA graph rendered on canvas."
+        self.log_graph_fragments = list(result.regex_fragments or [])
         self._select_result("log_extract")
         self._set_status(f"Log scan complete: {len(result.matches)} matches")
 
@@ -450,7 +461,11 @@ class CompilerApp:
 
     def clear_results(self) -> None:
         self.result_cache = dict(LOG_PLACEHOLDERS)
+        self.log_graph_fragments = []
+        self.current_visual_key = None
         self._set_text(self.output_text, "")
+        if hasattr(self, "graph_canvas"):
+            self.graph_canvas.delete("all")
 
     def _fill_results(self, result) -> None:
         self.result_cache = {**LOG_PLACEHOLDERS, **dict(result.texts)}
@@ -478,6 +493,10 @@ class CompilerApp:
         item_id = selected[0]
         for key, known_id in self.tree_items.items():
             if known_id == item_id:
+                if key in {"log_nfa_visual", "log_dfa_visual"}:
+                    self._show_graph(key)
+                    return
+                self._show_text_output()
                 self._set_text(self.output_text, self.result_cache.get(key, ""))
                 return
 
@@ -488,7 +507,77 @@ class CompilerApp:
         self.result_tree.selection_set(item_id)
         self.result_tree.focus(item_id)
         self.result_tree.see(item_id)
-        self._set_text(self.output_text, self.result_cache.get(key, ""))
+        if key in {"log_nfa_visual", "log_dfa_visual"}:
+            self._show_graph(key)
+        else:
+            self._show_text_output()
+            self._set_text(self.output_text, self.result_cache.get(key, ""))
+
+    def _show_text_output(self) -> None:
+        self.current_visual_key = None
+        if hasattr(self, "graph_canvas"):
+            self.graph_canvas.grid_remove()
+        self.output_text.grid()
+
+    def _show_graph(self, key: str) -> None:
+        self.current_visual_key = key
+        self.output_text.grid_remove()
+        self.graph_canvas.grid(row=0, column=0, sticky="nsew")
+        self._draw_automata_graph(key)
+
+    def _redraw_current_graph(self, event=None) -> None:
+        if self.current_visual_key:
+            self._draw_automata_graph(self.current_visual_key)
+
+    def _draw_automata_graph(self, key: str) -> None:
+        self.graph_canvas.delete("all")
+        fragments = self.log_graph_fragments
+        if not fragments:
+            self.graph_canvas.create_text(
+                24,
+                24,
+                anchor="nw",
+                fill="#334155",
+                font=("Microsoft YaHei UI", 11),
+                text="Enter a regex and click 日志识别 first.",
+            )
+            return
+
+        prefix = "q" if key == "log_nfa_visual" else "D"
+        title = "NFA Graph" if key == "log_nfa_visual" else "DFA Graph"
+        width = max(self.graph_canvas.winfo_width(), 640)
+        y = max(self.graph_canvas.winfo_height() // 2, 180)
+        margin = 70
+        step = max(120, min(180, (width - margin * 2) // max(len(fragments), 1)))
+        radius = 24
+
+        self.graph_canvas.create_text(margin, 28, anchor="w", fill="#0f172a", font=("Microsoft YaHei UI", 14, "bold"), text=title)
+        self.graph_canvas.create_text(margin, 52, anchor="w", fill="#64748b", font=("Consolas", 10), text=f"Regex: {self.regex_var.get().strip()}")
+
+        positions = []
+        for index in range(len(fragments) + 1):
+            positions.append((margin + index * step, y))
+
+        for index, (x, node_y) in enumerate(positions):
+            state = f"{prefix}{index}"
+            fill = "#dcfce7" if index == len(positions) - 1 else "#e0f2fe"
+            outline = "#16a34a" if index == len(positions) - 1 else "#0284c7"
+            self.graph_canvas.create_oval(x - radius, node_y - radius, x + radius, node_y + radius, fill=fill, outline=outline, width=2)
+            if index == len(positions) - 1:
+                self.graph_canvas.create_oval(x - radius + 5, node_y - radius + 5, x + radius - 5, node_y + radius - 5, outline=outline, width=2)
+            self.graph_canvas.create_text(x, node_y, text=state, fill="#0f172a", font=("Consolas", 11, "bold"))
+
+        start_x, start_y = positions[0]
+        self.graph_canvas.create_line(start_x - 58, start_y, start_x - radius, start_y, arrow=tk.LAST, fill="#334155", width=2)
+        self.graph_canvas.create_text(start_x - 62, start_y - 18, text="start", fill="#334155", font=("Consolas", 9))
+
+        for index, fragment in enumerate(fragments):
+            x1, y1 = positions[index]
+            x2, y2 = positions[index + 1]
+            self.graph_canvas.create_line(x1 + radius, y1, x2 - radius, y2, arrow=tk.LAST, fill="#334155", width=2)
+            label = fragment if len(fragment) <= 24 else fragment[:21] + "..."
+            self.graph_canvas.create_rectangle((x1 + x2) / 2 - 46, y1 - 48, (x1 + x2) / 2 + 46, y1 - 24, fill="#f8fafc", outline="")
+            self.graph_canvas.create_text((x1 + x2) / 2, y1 - 36, text=label, fill="#7c2d12", font=("Consolas", 9))
 
     def _source(self) -> str:
         return self.source_text.get("1.0", "end-1c")

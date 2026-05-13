@@ -27,6 +27,8 @@ class LogAnalysisResult:
     dfa_text: str
     dfa_table_text: str = ""
     no_match_message: str = "No log keywords matched. Paste log text on the left and click 日志识别."
+    regex_pattern: str = ""
+    regex_fragments: List[str] = None
 
     def format_matches(self) -> str:
         if not self.matches:
@@ -70,6 +72,8 @@ def analyze_log_with_regex(source: str, pattern: str) -> LogAnalysisResult:
         automata.dfa_text,
         automata.dfa_table_text,
         "No regex matches. Check the log text and regular expression.",
+        pattern,
+        automata.fragments,
     )
 
 
