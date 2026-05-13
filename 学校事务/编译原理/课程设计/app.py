@@ -54,6 +54,12 @@ RESULT_GROUPS = (
     ),
 )
 
+LOG_PLACEHOLDERS = {
+    "log_extract": "Paste log text on the left and click 日志识别.\n\nExample:\n2026-05-10 08:17:42 INFO ip=172.16.8.31 user=root status=200 action=login\n",
+    "log_nfa": "Click 日志识别 to build and display NFA information.\n",
+    "log_dfa": "Click 日志识别 to build and display DFA information.\n",
+}
+
 
 class CompilerApp:
     def __init__(self, root: tk.Tk) -> None:
@@ -422,11 +428,11 @@ class CompilerApp:
         self._set_status("Cleared")
 
     def clear_results(self) -> None:
-        self.result_cache = {}
+        self.result_cache = dict(LOG_PLACEHOLDERS)
         self._set_text(self.output_text, "")
 
     def _fill_results(self, result) -> None:
-        self.result_cache = dict(result.texts)
+        self.result_cache = {**LOG_PLACEHOLDERS, **dict(result.texts)}
 
     def _fill_summary(self, result) -> None:
         self.summary_vars["tokens"].set(str(len(result.tokens)))

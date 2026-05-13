@@ -649,6 +649,14 @@ class LogAutomataTests(unittest.TestCase):
         self.assertIn("IP", result.dfa_text)
         self.assertIn("2026-05-10 DATE", result.format_matches())
 
+    def test_no_log_matches_returns_actionable_message(self):
+        from compiler.log_automata import analyze_logs
+
+        result = analyze_logs("int main(){return 0;}")
+
+        self.assertEqual([], result.matches)
+        self.assertIn("No log keywords matched", result.format_matches())
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -3,12 +3,10 @@ package com.huangbin.compiler.parser;
 import com.huangbin.compiler.model.ASTNode;
 import com.huangbin.compiler.model.Diagnostic;
 import com.huangbin.compiler.model.Token;
-
 import java.util.ArrayList;
 import java.util.List;
 
 public class Parser {
-
     private final List<Token> tokens;
     private int pos = 0;
     private final List<Diagnostic> diagnostics = new ArrayList<>();
@@ -20,9 +18,7 @@ public class Parser {
 
     private Token matchText(String text) {
         Token curr = current();
-        if (curr != null && curr.getText().equals(text)) {
-            pos++; return curr;
-        }
+        if (curr != null && curr.getText().equals(text)) { pos++; return curr; }
         return null;
     }
 
@@ -36,23 +32,20 @@ public class Parser {
         return token;
     }
 
-    // ================= 顶层解析：支持全局变量和函数 =================
     public ASTNode parseProgram() {
         ASTNode programNode = new ASTNode("Program");
         while (pos < tokens.size()) {
             Token curr = current();
             if (curr == null) break;
-
             String text = curr.getText();
-            // 判断是否是声明语句 (变量或函数)
-            if (text.equals("const") || text.equals("int") || text.equals("float") || text.equals("char") || text.equals("void")) {
+
+            // 【升级】支持没有类型的 main()
+            if (text.equals("const") || text.equals("int") || text.equals("float") || text.equals("char") || text.equals("void") || text.equals("main")) {
                 boolean isFunc = false;
-                // 向前看(Lookahead)：找找有没有括号，判断是函数还是变量
                 for (int i = pos; i < tokens.size(); i++) {
                     if (tokens.get(i).getText().equals("(")) { isFunc = true; break; }
-                    if (tokens.get(i).getText().equals(";") || tokens.get(i).getText().equals("=")) { break; }
+                    if (tokens.get(i).getText().equals(";") || tokens.get(i).getText().equals("=") || tokens.get(i).getText().equals(",")) { break; }
                 }
-
                 if (isFunc) {
                     ASTNode func = parseFuncDecl();
                     if (func != null) programNode.addChild(func);
@@ -69,9 +62,11 @@ public class Parser {
         return programNode;
     }
 
-    // 【新增】解析函数声明，完美复刻 PARSE204 和 PARSE225
     private ASTNode parseFuncDecl() {
-        Token typeToken = current(); pos++; // void, int 等
+        String typeStr = "";
+        if (!current().getText().equals("main")) {
+            typeStr = current().getText() + " "; pos++;
+        }
         Token idToken = current();
         if (idToken != null && idToken.getKind().equals("identifier")) pos++;
 
@@ -80,47 +75,47 @@ public class Parser {
         expectText(")");
 
         ASTNode funcNode = new ASTNode("FuncDecl");
-        funcNode.setValue(typeToken.getText() + " " + (idToken != null ? idToken.getText() : ""));
+        funcNode.setValue(typeStr + (idToken != null ? idToken.getText() : ""));
 
-        Token brace = current();
-        if (brace != null && brace.getText().equals("{")) {
+        if (current() != null && current().getText().equals("{")) {
             funcNode.addChild(parseCompoundStmt());
         } else {
-            // 触发任务书要求的缺失代码块报错！
             diagnostics.add(new Diagnostic("parser", 0, "PARSE204", "Unknown: 代码块缺少左花括号"));
-            diagnostics.add(new Diagnostic("parser", idToken != null ? idToken.getLine() : 0, "PARSE225", "函数 '" + (idToken != null ? idToken.getText() : "") + "' 缺少函数体"));
+            diagnostics.add(new Diagnostic("parser", idToken != null ? idToken.getLine() : 0, "PARSE225", "函数缺少函数体"));
         }
         return funcNode;
     }
 
-    // 【升级】解析变量声明，完美复刻 SEM301 常量初始化检查
+    // 【升级】支持 int x, y, z; 连续声明
     private ASTNode parseVarDecl() {
-        boolean isConst = false;
-        if (current() != null && current().getText().equals("const")) {
-            isConst = true;
-            pos++;
-        }
-
+        boolean isConst = matchText("const") != null;
         Token typeToken = current(); pos++;
-        Token idToken = current();
-        if (idToken != null && idToken.getKind().equals("identifier")) pos++;
-        else { diagnostics.add(new Diagnostic("parser", typeToken.getLine(), "P003", "Expected id")); return null; }
-
         ASTNode varDeclNode = new ASTNode("VarDecl");
-        varDeclNode.setValue((isConst ? "const " : "") + typeToken.getText() + " " + idToken.getText());
+        varDeclNode.setValue((isConst ? "const " : "") + typeToken.getText());
 
-        if (matchText("=") != null) {
-            varDeclNode.addChild(parseExpression());
-        } else if (isConst) {
-            // 触发任务书要求的常量未初始化语义报错！
-            diagnostics.add(new Diagnostic("semantic", idToken.getLine(), "SEM301", "常量必须初始化: " + idToken.getText()));
+        while (current() != null) {
+            Token idToken = current();
+            if (idToken.getKind().equals("identifier")) pos++;
+            else break;
+
+            ASTNode idNode = new ASTNode("Identifier");
+            idNode.setValue(idToken.getText());
+
+            if (matchText("=") != null) {
+                ASTNode assign = new ASTNode("Assign");
+                assign.addChild(idNode);
+                assign.addChild(parseExpression());
+                varDeclNode.addChild(assign);
+            } else {
+                if (isConst) diagnostics.add(new Diagnostic("semantic", idToken.getLine(), "SEM301", "常量必须初始化: " + idToken.getText()));
+                varDeclNode.addChild(idNode);
+            }
+            if (matchText(",") == null) break;
         }
-
         expectText(";");
         return varDeclNode;
     }
 
-    // ================= 以下为语句和表达式解析 (保持之前的完美版) =================
     private ASTNode parseStatement() {
         Token curr = current();
         if (curr == null) return null;
@@ -130,10 +125,29 @@ public class Parser {
         if (text.equals("if")) return parseIfStmt();
         if (text.equals("while")) return parseWhileStmt();
         if (text.equals("{")) return parseCompoundStmt();
-        if (curr.getKind().equals("identifier")) return parseAssignment();
+
+        if (curr.getKind().equals("identifier")) {
+            // 【升级】如果是 identifier 后面跟着 ( ，说明是函数调用！
+            if (pos + 1 < tokens.size() && tokens.get(pos + 1).getText().equals("(")) {
+                return parseFuncCall();
+            }
+            return parseAssignment();
+        }
 
         diagnostics.add(new Diagnostic("parser", curr.getLine(), "P002", "Unexpected token: " + text));
         pos++; return null;
+    }
+
+    // 【新增】解析函数调用 write(x);
+    private ASTNode parseFuncCall() {
+        Token idToken = current(); pos++;
+        ASTNode callNode = new ASTNode("FuncCall");
+        callNode.setValue(idToken.getText());
+        expectText("(");
+        callNode.addChild(parseExpression());
+        expectText(")");
+        expectText(";");
+        return callNode;
     }
 
     private ASTNode parseCompoundStmt() {
@@ -150,9 +164,7 @@ public class Parser {
 
     private ASTNode parseIfStmt() {
         ASTNode ifNode = new ASTNode("IfStmt");
-        expectText("if"); expectText("(");
-        ifNode.addChild(parseCondition());
-        expectText(")");
+        expectText("if"); expectText("("); ifNode.addChild(parseCondition()); expectText(")");
         ifNode.addChild(parseStatement());
         if (matchText("else") != null) ifNode.addChild(parseStatement());
         return ifNode;
@@ -160,9 +172,7 @@ public class Parser {
 
     private ASTNode parseWhileStmt() {
         ASTNode whileNode = new ASTNode("WhileStmt");
-        expectText("while"); expectText("(");
-        whileNode.addChild(parseCondition());
-        expectText(")");
+        expectText("while"); expectText("("); whileNode.addChild(parseCondition()); expectText(")");
         whileNode.addChild(parseStatement());
         return whileNode;
     }
@@ -193,10 +203,8 @@ public class Parser {
         if (left == null) return null;
         Token curr = current();
         while (curr != null && (curr.getText().equals("+") || curr.getText().equals("-"))) {
-            pos++;
-            ASTNode opNode = new ASTNode("BinOp"); opNode.setValue(curr.getText());
-            ASTNode right = parseTerm();
-            opNode.addChild(left); opNode.addChild(right);
+            pos++; ASTNode opNode = new ASTNode("BinOp"); opNode.setValue(curr.getText());
+            ASTNode right = parseTerm(); opNode.addChild(left); opNode.addChild(right);
             left = opNode; curr = current();
         }
         return left;
@@ -206,11 +214,10 @@ public class Parser {
         ASTNode left = parseFactor();
         if (left == null) return null;
         Token curr = current();
-        while (curr != null && (curr.getText().equals("*") || curr.getText().equals("/"))) {
-            pos++;
-            ASTNode opNode = new ASTNode("BinOp"); opNode.setValue(curr.getText());
-            ASTNode right = parseFactor();
-            opNode.addChild(left); opNode.addChild(right);
+        // 【升级】把 % 取模运算加到乘除法同一优先级里
+        while (curr != null && (curr.getText().equals("*") || curr.getText().equals("/") || curr.getText().equals("%"))) {
+            pos++; ASTNode opNode = new ASTNode("BinOp"); opNode.setValue(curr.getText());
+            ASTNode right = parseFactor(); opNode.addChild(left); opNode.addChild(right);
             left = opNode; curr = current();
         }
         return left;

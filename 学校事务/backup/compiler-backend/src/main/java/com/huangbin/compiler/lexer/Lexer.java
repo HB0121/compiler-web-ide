@@ -34,11 +34,14 @@ public class Lexer {
         OPERATORS.put("<", 209);  OPERATORS.put("+", 210);
         OPERATORS.put("-", 211);  OPERATORS.put("*", 212);
         OPERATORS.put("/", 213);  OPERATORS.put("!", 214);
+        OPERATORS.put("%", 215);
 
         // 初始化分隔符
         SEPARATORS.put(";", '1'); SEPARATORS.put(",", '2');
         SEPARATORS.put("(", '3'); SEPARATORS.put(")", '4');
         SEPARATORS.put("{", '5'); SEPARATORS.put("}", '6');
+
+
     }
 
     // 用于封装返回结果的内部类

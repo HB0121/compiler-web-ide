@@ -27,6 +27,8 @@ class LogAnalysisResult:
     dfa_text: str
 
     def format_matches(self) -> str:
+        if not self.matches:
+            return "No log keywords matched. Paste log text on the left and click 日志识别.\n"
         lines = [f"{match.value} {match.kind}" for match in self.matches]
         return "\n".join(lines) + ("\n" if lines else "")
 
