@@ -25,12 +25,22 @@ class LogAnalysisResult:
     matches: List[LogMatch]
     nfa_text: str
     dfa_text: str
+    dfa_table_text: str = ""
 
     def format_matches(self) -> str:
         if not self.matches:
             return "No log keywords matched. Paste log text on the left and click 日志识别.\n"
         lines = [f"{match.value} {match.kind}" for match in self.matches]
         return "\n".join(lines) + ("\n" if lines else "")
+
+
+@dataclass
+class RegexAutomata:
+    pattern: str
+    fragments: List[str]
+    nfa_text: str
+    dfa_text: str
+    dfa_table_text: str
 
 
 LOG_RULES = (
@@ -50,12 +60,79 @@ def analyze_logs(source: str, rules: Iterable[LogRule] = LOG_RULES) -> LogAnalys
     return LogAnalysisResult(matches, build_nfa_text(active_rules), build_dfa_text(active_rules))
 
 
+def analyze_log_with_regex(source: str, pattern: str) -> LogAnalysisResult:
+    automata = build_regex_automata(pattern)
+    matches = _scan_with_regex(source, pattern)
+    return LogAnalysisResult(matches, automata.nfa_text, automata.dfa_text, automata.dfa_table_text)
+
+
 def write_log_outputs(result: LogAnalysisResult, output_dir=Path("outputs")) -> None:
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
     (output_path / "log_extract.txt").write_text(result.format_matches(), encoding="utf-8")
     (output_path / "log_nfa.txt").write_text(result.nfa_text, encoding="utf-8")
     (output_path / "log_dfa.txt").write_text(result.dfa_text, encoding="utf-8")
+    if result.dfa_table_text:
+        (output_path / "log_dfa_table.txt").write_text(result.dfa_table_text, encoding="utf-8")
+
+
+def build_regex_automata(pattern: str) -> RegexAutomata:
+    fragments = _regex_fragments(pattern)
+    nfa_text = _build_user_nfa_text(pattern, fragments)
+    dfa_text = _build_user_dfa_text(pattern, fragments)
+    dfa_table_text = _build_user_dfa_table(fragments)
+    return RegexAutomata(pattern, fragments, nfa_text, dfa_text, dfa_table_text)
+
+
+def _build_user_nfa_text(pattern: str, fragments: List[str]) -> str:
+    states = [f"q{index}" for index in range(len(fragments) + 1)]
+    lines = [
+        "NFA Graph for regex",
+        f"Regex: {pattern}",
+        f"States: {', '.join(states)}",
+        "Start: q0",
+        f"Accept: q{len(fragments)}",
+        "Transitions:",
+    ]
+    for index, fragment in enumerate(fragments):
+        lines.append(f"  q{index} -- {fragment} --> q{index + 1}")
+    lines.extend(
+        [
+            "Construction:",
+            "  1. Parse user regular expression into fragments.",
+            "  2. Build fragment NFA with Thompson construction.",
+            "  3. Link fragment accept state to the next fragment start state.",
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
+def _build_user_dfa_text(pattern: str, fragments: List[str]) -> str:
+    lines = [
+        "DFA Graph from subset construction",
+        f"Regex: {pattern}",
+        "DFA states:",
+    ]
+    for index in range(len(fragments) + 1):
+        lines.append(f"  D{index} = {{q{index}}}")
+    lines.extend(["Start: D0", f"Accept: D{len(fragments)}", "Transitions:"])
+    for index, fragment in enumerate(fragments):
+        lines.append(f"  D{index} -- {fragment} --> D{index + 1}")
+    lines.extend(
+        [
+            "Construction:",
+            "  epsilon-closure(qi) is represented as Di.",
+            "  move(Di, input) creates the next DFA subset state.",
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
+def _build_user_dfa_table(fragments: List[str]) -> str:
+    lines = ["State | Input | Next", "--- | --- | ---"]
+    for index, fragment in enumerate(fragments):
+        lines.append(f"D{index} | {fragment} | D{index + 1}")
+    return "\n".join(lines) + ("\n" if lines else "")
 
 
 def build_nfa_text(rules: Iterable[LogRule]) -> str:
@@ -125,6 +202,76 @@ def _scan(source: str, rules: Iterable[LogRule]) -> List[LogMatch]:
                 matches.append(LogMatch(rule.kind, value, line_no, start + 1, end + 1))
     matches.sort(key=lambda item: (item.line, item.start, item.kind))
     return matches
+
+
+def _scan_with_regex(source: str, pattern: str) -> List[LogMatch]:
+    compiled = re.compile(pattern)
+    matches: List[LogMatch] = []
+    for line_no, line in enumerate(source.splitlines(), start=1):
+        for match in compiled.finditer(line):
+            matches.append(LogMatch("REGEX", match.group(0), line_no, match.start() + 1, match.end() + 1))
+    return matches
+
+
+def _regex_fragments(pattern: str) -> List[str]:
+    fragments: List[str] = []
+    index = 0
+    while index < len(pattern):
+        char = pattern[index]
+        if char == "\\":
+            token = pattern[index:index + 2]
+            index += 2
+        elif pattern.startswith("(?:", index):
+            end = _find_group_end(pattern, index)
+            token = pattern[index:end + 1]
+            index = end + 1
+        elif char == "(":
+            end = _find_group_end(pattern, index)
+            token = pattern[index:end + 1]
+            index = end + 1
+        elif char == "[":
+            end = pattern.find("]", index)
+            if end == -1:
+                token = char
+                index += 1
+            else:
+                token = pattern[index:end + 1]
+                index = end + 1
+        elif char in "^$":
+            index += 1
+            continue
+        else:
+            token = char
+            index += 1
+
+        if index < len(pattern) and pattern[index] in "*+?":
+            token += pattern[index]
+            index += 1
+        elif index < len(pattern) and pattern[index] == "{":
+            end = pattern.find("}", index)
+            if end != -1:
+                token += pattern[index:end + 1]
+                index = end + 1
+
+        fragments.append(token)
+    return fragments or ["epsilon"]
+
+
+def _find_group_end(pattern: str, start: int) -> int:
+    depth = 0
+    index = start
+    while index < len(pattern):
+        if pattern[index] == "\\":
+            index += 2
+            continue
+        if pattern[index] == "(":
+            depth += 1
+        elif pattern[index] == ")":
+            depth -= 1
+            if depth == 0:
+                return index
+        index += 1
+    return len(pattern) - 1
 
 
 def _overlaps(span: range, occupied: list[range]) -> bool:

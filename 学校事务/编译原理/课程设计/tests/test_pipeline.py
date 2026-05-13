@@ -623,6 +623,33 @@ class SourceFormatTests(unittest.TestCase):
 
 
 class LogAutomataTests(unittest.TestCase):
+    def test_user_regex_matches_log_and_builds_graphs(self):
+        from compiler.log_automata import analyze_log_with_regex
+
+        result = analyze_log_with_regex(
+            "2026-05-10 08:17:42 INFO ip=172.16.8.31 user=root status=200",
+            r"\d{4}-\d{2}-\d{2}",
+        )
+
+        self.assertEqual(["2026-05-10"], [match.value for match in result.matches])
+        self.assertIn("NFA Graph for regex", result.nfa_text)
+        self.assertIn(r"q0 -- \d{4} --> q1", result.nfa_text)
+        self.assertIn("DFA Graph from subset construction", result.dfa_text)
+        self.assertIn("D0 = {q0}", result.dfa_text)
+        self.assertIn("State | Input | Next", result.dfa_table_text)
+
+    def test_user_regex_supports_ip_pattern(self):
+        from compiler.log_automata import analyze_log_with_regex
+
+        result = analyze_log_with_regex(
+            "client=172.16.8.31 backup=192.168.1.100",
+            r"(?:\d{1,3}\.){3}\d{1,3}",
+        )
+
+        self.assertEqual(["172.16.8.31", "192.168.1.100"], [match.value for match in result.matches])
+        self.assertIn(r"(?:\d{1,3}\.){3}", result.nfa_text)
+        self.assertIn("Accept:", result.dfa_text)
+
     def test_extracts_common_log_keywords(self):
         from compiler.log_automata import analyze_logs
 
