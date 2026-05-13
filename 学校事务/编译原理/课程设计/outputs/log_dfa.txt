@@ -1,34 +1,114 @@
 DFA for DATE
-  constructed by subset construction from the NFA epsilon-closures.
-  D0 = epsilon-closure(start)
-  accepting states emit token DATE
+  DFA states from NFA subsets:
+    D0 = {DATE_N0}
+    D1 = {DATE_N1}
+    D2 = {DATE_N2}
+    D3 = {DATE_N3}
+    D4 = {DATE_N4}
+    D5 = {DATE_N5}
+  Start: D0
+  Accept: D5 emits DATE
+  Transitions:
+    D0 -- DIGIT{4} --> D1
+    D1 -- '-' --> D2
+    D2 -- DIGIT{2} --> D3
+    D3 -- '-' --> D4
+    D4 -- DIGIT{2} --> D5
+  Construction:
+    each DFA state is the epsilon-closure subset reached from the previous NFA fragment.
 
 DFA for TIME
-  constructed by subset construction from the NFA epsilon-closures.
-  D0 = epsilon-closure(start)
-  accepting states emit token TIME
+  DFA states from NFA subsets:
+    D0 = {TIME_N0}
+    D1 = {TIME_N1}
+    D2 = {TIME_N2}
+    D3 = {TIME_N3}
+    D4 = {TIME_N4}
+    D5 = {TIME_N5}
+  Start: D0
+  Accept: D5 emits TIME
+  Transitions:
+    D0 -- DIGIT{2} --> D1
+    D1 -- ':' --> D2
+    D2 -- DIGIT{2} --> D3
+    D3 -- ':' --> D4
+    D4 -- DIGIT{2} --> D5
+  Construction:
+    each DFA state is the epsilon-closure subset reached from the previous NFA fragment.
 
 DFA for LEVEL
-  constructed by subset construction from the NFA epsilon-closures.
-  D0 = epsilon-closure(start)
-  accepting states emit token LEVEL
+  DFA states from NFA subsets:
+    D0 = {LEVEL_N0}
+    D1 = {LEVEL_N1}
+  Start: D0
+  Accept: D1 emits LEVEL
+  Transitions:
+    D0 -- TRACE|DEBUG|INFO|WARN|WARNING|ERROR|FATAL --> D1
+  Construction:
+    each DFA state is the epsilon-closure subset reached from the previous NFA fragment.
 
 DFA for IP
-  constructed by subset construction from the NFA epsilon-closures.
-  D0 = epsilon-closure(start)
-  accepting states emit token IP
+  DFA states from NFA subsets:
+    D0 = {IP_N0}
+    D1 = {IP_N1}
+    D2 = {IP_N2}
+    D3 = {IP_N3}
+    D4 = {IP_N4}
+    D5 = {IP_N5}
+    D6 = {IP_N6}
+    D7 = {IP_N7}
+  Start: D0
+  Accept: D7 emits IP
+  Transitions:
+    D0 -- DIGIT{1,3} --> D1
+    D1 -- '.' --> D2
+    D2 -- DIGIT{1,3} --> D3
+    D3 -- '.' --> D4
+    D4 -- DIGIT{1,3} --> D5
+    D5 -- '.' --> D6
+    D6 -- DIGIT{1,3} --> D7
+  Construction:
+    each DFA state is the epsilon-closure subset reached from the previous NFA fragment.
 
 DFA for STATUS
-  constructed by subset construction from the NFA epsilon-closures.
-  D0 = epsilon-closure(start)
-  accepting states emit token STATUS
+  DFA states from NFA subsets:
+    D0 = {STATUS_N0}
+    D1 = {STATUS_N1}
+    D2 = {STATUS_N2}
+  Start: D0
+  Accept: D2 emits STATUS
+  Transitions:
+    D0 -- status=|STATUS:|epsilon --> D1
+    D1 -- STATUS_DIGIT{3} --> D2
+  Construction:
+    each DFA state is the epsilon-closure subset reached from the previous NFA fragment.
 
 DFA for USER
-  constructed by subset construction from the NFA epsilon-closures.
-  D0 = epsilon-closure(start)
-  accepting states emit token USER
+  DFA states from NFA subsets:
+    D0 = {USER_N0}
+    D1 = {USER_N1}
+    D2 = {USER_N2}
+    D3 = {USER_N3}
+  Start: D0
+  Accept: D3 emits USER
+  Transitions:
+    D0 -- user=|USER: --> D1
+    D1 -- LETTER|_ --> D2
+    D2 -- (LETTER|DIGIT|_)* --> D3
+  Construction:
+    each DFA state is the epsilon-closure subset reached from the previous NFA fragment.
 
 DFA for ACTION
-  constructed by subset construction from the NFA epsilon-closures.
-  D0 = epsilon-closure(start)
-  accepting states emit token ACTION
+  DFA states from NFA subsets:
+    D0 = {ACTION_N0}
+    D1 = {ACTION_N1}
+    D2 = {ACTION_N2}
+    D3 = {ACTION_N3}
+  Start: D0
+  Accept: D3 emits ACTION
+  Transitions:
+    D0 -- action=|ACTION: --> D1
+    D1 -- LETTER|_ --> D2
+    D2 -- (LETTER|DIGIT|_)* --> D3
+  Construction:
+    each DFA state is the epsilon-closure subset reached from the previous NFA fragment.

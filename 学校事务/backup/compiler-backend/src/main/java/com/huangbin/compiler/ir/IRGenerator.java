@@ -1,11 +1,13 @@
 package com.huangbin.compiler.ir;
 
 import com.huangbin.compiler.model.ASTNode;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class IRGenerator {
 
+    // 内部类：四元式结构
     public static class Quad {
         public String op; public String arg1; public String arg2; public String result;
         public Quad(String op, String arg1, String arg2, String result) {
@@ -36,19 +38,35 @@ public class IRGenerator {
         switch (node.getName()) {
             case "Program":
             case "Compound":
+            case "FuncDecl": // 【新增】支持扒开 main() 函数的外壳，直接解析里面的代码块
                 for (ASTNode child : node.getChildren()) traverse(child);
                 break;
+
             case "VarDecl":
-                String varName = node.getValue().split(" ")[1];
-                if (!node.getChildren().isEmpty()) {
-                    quads.add(new Quad("=", evaluateExpr(node.getChildren().get(0)), "_", varName));
+                // 【升级】支持连续声明，例如 int x, y=3, z;
+                for (ASTNode child : node.getChildren()) {
+                    if (child.getName().equals("Assign")) {
+                        String target = child.getChildren().get(0).getValue();
+                        String val = evaluateExpr(child.getChildren().get(1));
+                        quads.add(new Quad("=", val, "_", target));
+                    }
+                    // 如果只是声明没有赋值（如 int x;），在四元式中可以直接忽略，等待后续赋值
                 }
                 break;
+
+            case "FuncCall":
+                // 【新增】处理函数调用，例如 write(x);
+                String funcName = node.getValue();
+                String arg = evaluateExpr(node.getChildren().get(0));
+                quads.add(new Quad("CALL", funcName, arg, "_"));
+                break;
+
             case "Assign":
                 if (node.getChildren().size() == 2) {
                     quads.add(new Quad("=", evaluateExpr(node.getChildren().get(1)), "_", node.getChildren().get(0).getValue()));
                 }
                 break;
+
             case "IfStmt":
                 // 处理条件
                 ASTNode ifCond = node.getChildren().get(0);

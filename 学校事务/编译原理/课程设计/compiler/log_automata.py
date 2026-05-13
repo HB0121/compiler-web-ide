@@ -61,10 +61,19 @@ def write_log_outputs(result: LogAnalysisResult, output_dir=Path("outputs")) -> 
 def build_nfa_text(rules: Iterable[LogRule]) -> str:
     lines: List[str] = []
     for rule in rules:
+        fragments = _rule_fragments(rule.kind)
+        states = [f"{rule.kind}_N{index}" for index in range(len(fragments) + 1)]
         lines.append(f"NFA for {rule.kind}")
         lines.append(f"  regex: {rule.pattern}")
-        lines.append("  start --regex-fragment--> accept")
-        lines.append("  epsilon transitions connect fragments when alternation or repetition is used.")
+        lines.append(f"  States: {', '.join(states)}")
+        lines.append(f"  Start: {states[0]}")
+        lines.append(f"  Accept: {states[-1]}")
+        lines.append("  Transitions:")
+        for index, fragment in enumerate(fragments):
+            lines.append(f"    {states[index]} -- {fragment} --> {states[index + 1]}")
+        lines.append("  Construction:")
+        lines.append("    regular expression fragments are linked by Thompson-style NFA transitions.")
+        lines.append("    alternatives are represented by character-class or keyword-set edges.")
         lines.append("")
     return "\n".join(lines).rstrip() + "\n"
 
@@ -72,12 +81,33 @@ def build_nfa_text(rules: Iterable[LogRule]) -> str:
 def build_dfa_text(rules: Iterable[LogRule]) -> str:
     lines: List[str] = []
     for rule in rules:
+        fragments = _rule_fragments(rule.kind)
         lines.append(f"DFA for {rule.kind}")
-        lines.append("  constructed by subset construction from the NFA epsilon-closures.")
-        lines.append("  D0 = epsilon-closure(start)")
-        lines.append(f"  accepting states emit token {rule.kind}")
+        lines.append("  DFA states from NFA subsets:")
+        for index in range(len(fragments) + 1):
+            lines.append(f"    D{index} = {{{rule.kind}_N{index}}}")
+        lines.append("  Start: D0")
+        lines.append(f"  Accept: D{len(fragments)} emits {rule.kind}")
+        lines.append("  Transitions:")
+        for index, fragment in enumerate(fragments):
+            lines.append(f"    D{index} -- {fragment} --> D{index + 1}")
+        lines.append("  Construction:")
+        lines.append("    each DFA state is the epsilon-closure subset reached from the previous NFA fragment.")
         lines.append("")
     return "\n".join(lines).rstrip() + "\n"
+
+
+def _rule_fragments(kind: str) -> List[str]:
+    fragments = {
+        "DATE": ["DIGIT{4}", "'-'", "DIGIT{2}", "'-'", "DIGIT{2}"],
+        "TIME": ["DIGIT{2}", "':'", "DIGIT{2}", "':'", "DIGIT{2}"],
+        "LEVEL": ["TRACE|DEBUG|INFO|WARN|WARNING|ERROR|FATAL"],
+        "IP": ["DIGIT{1,3}", "'.'", "DIGIT{1,3}", "'.'", "DIGIT{1,3}", "'.'", "DIGIT{1,3}"],
+        "STATUS": ["status=|STATUS:|epsilon", "STATUS_DIGIT{3}"],
+        "USER": ["user=|USER:", "LETTER|_", "(LETTER|DIGIT|_)*"],
+        "ACTION": ["action=|ACTION:", "LETTER|_", "(LETTER|DIGIT|_)*"],
+    }
+    return fragments.get(kind, [kind])
 
 
 def _scan(source: str, rules: Iterable[LogRule]) -> List[LogMatch]:
