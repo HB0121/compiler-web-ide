@@ -41,18 +41,27 @@ public class IRGenerator {
                     }
                 }
                 break;
+
             case "FuncCall":
                 String funcName = node.getValue();
-                String arg = evaluateExpr(node.getChildren().get(0));
-                quads.add(new Quad("CALL", funcName, arg, "_"));
+                if (funcName.equals("write") && !node.getChildren().isEmpty()) {
+                    ASTNode argNode = node.getChildren().get(0);
+                    if (argNode.getName().equals("String")) {
+                        // 【新增】提取字符串参数
+                        quads.add(new Quad("CALL", "write_str", argNode.getValue(), "_"));
+                    } else {
+                        quads.add(new Quad("CALL", "write", evaluateExpr(argNode), "_"));
+                    }
+                }
                 break;
+
             case "Assign":
                 if (node.getChildren().size() == 2) {
                     quads.add(new Quad("=", evaluateExpr(node.getChildren().get(1)), "_", node.getChildren().get(0).getValue()));
                 }
                 break;
+
             case "IfStmt":
-                // 【精简架构】所有条件都算作一个临时变量，判断 != 0 即可
                 String ifCond = evaluateExpr(node.getChildren().get(0));
                 int jumpTrueIdx = nextQuadIndex();
                 quads.add(new Quad("J!=", ifCond, "0", "_"));
@@ -86,6 +95,26 @@ public class IRGenerator {
                 quads.add(new Quad("J", "_", "_", String.valueOf(startIdx)));
                 backpatch(wJumpEndIdx, nextQuadIndex());
                 break;
+
+            // 【新增】ForStmt：底层完美翻译为类似 While 的跳转架构
+            case "ForStmt":
+                traverse(node.getChildren().get(0)); // 1. 执行 init 初始化
+
+                int fStartIdx = nextQuadIndex();
+                String fCond = evaluateExpr(node.getChildren().get(1)); // 2. 评估 cond 条件
+
+                int fJumpTrueIdx = nextQuadIndex();
+                quads.add(new Quad("J!=", fCond, "0", "_"));
+                int fJumpEndIdx = nextQuadIndex();
+                quads.add(new Quad("J", "_", "_", "_"));
+
+                backpatch(fJumpTrueIdx, nextQuadIndex());
+                traverse(node.getChildren().get(3)); // 3. 执行 body 循环体
+                traverse(node.getChildren().get(2)); // 4. 执行 update 累加器
+                quads.add(new Quad("J", "_", "_", String.valueOf(fStartIdx))); // 无条件跳回评估
+
+                backpatch(fJumpEndIdx, nextQuadIndex());
+                break;
         }
     }
 
@@ -93,15 +122,19 @@ public class IRGenerator {
         if (expr == null) return "_";
         if (expr.getName().equals("Literal") || expr.getName().equals("Identifier")) return expr.getValue();
 
-        // 【新增】处理负数： 0 - arg
+        // 【新增】处理 read() 的求值
+        if (expr.getName().equals("FuncCall") && expr.getValue().equals("read")) {
+            String resultTemp = "t" + (tempCounter++);
+            quads.add(new Quad("READ", "_", "_", resultTemp));
+            return resultTemp;
+        }
+
         if (expr.getName().equals("UnaryOp")) {
             String arg = evaluateExpr(expr.getChildren().get(0));
             String resultTemp = "t" + (tempCounter++);
             quads.add(new Quad("-", "0", arg, resultTemp));
             return resultTemp;
         }
-
-        // 处理二元和关系运算
         if (expr.getName().equals("BinOp") || expr.getName().equals("RelOp")) {
             String arg1 = evaluateExpr(expr.getChildren().get(0));
             String arg2 = evaluateExpr(expr.getChildren().get(1));
