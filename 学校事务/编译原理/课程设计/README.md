@@ -60,13 +60,13 @@ python app.py
 
 ## 课程设计功能对照
 
-| 任务 | 实现内容 | 主要文件 | GUI 入口 | 输出文件 |
-| --- | --- | --- | --- | --- |
-| 3.2 | 中间代码解释器 | `compiler/interpreter.py` | `Interpreter` | `outputs/interpreter.txt` |
-| 4.1 | 四元式到简化目标代码 | `compiler/target_code.py` | `Target Code` | `outputs/target_code.txt` |
-| 4.2 | 四元式到 LLVM IR 风格代码 | `compiler/llvm_ir.py` | `LLVM IR` | `outputs/llvm_ir.txt` |
-| 4.3 | 中间代码优化、编辑器高亮、自动缩进、实时错误提示 | `compiler/optimizer.py`, `compiler/source_format.py`, `app.py` | `Optimized Quads`, 编辑器区域 | `outputs/optimized_quads.txt` |
-| 4.4 | 优化后目标代码生成 | `compiler/pipeline.py`, `compiler/target_code.py` | `Optimized Target Code` | `outputs/optimized_target_code.txt` |
+| 任务  | 实现内容                     | 主要文件                                                           | GUI 入口                   | 输出文件                                |
+| --- | ------------------------ | -------------------------------------------------------------- | ------------------------ | ----------------------------------- |
+| 3.2 | 中间代码解释器                  | `compiler/interpreter.py`                                      | `Interpreter`            | `outputs/interpreter.txt`           |
+| 4.1 | 四元式到简化目标代码               | `compiler/target_code.py`                                      | `Target Code`            | `outputs/target_code.txt`           |
+| 4.2 | 四元式到 LLVM IR 风格代码        | `compiler/llvm_ir.py`                                          | `LLVM IR`                | `outputs/llvm_ir.txt`               |
+| 4.3 | 中间代码优化、编辑器高亮、自动缩进、实时错误提示 | `compiler/optimizer.py`, `compiler/source_format.py`, `app.py` | `Optimized Quads`, 编辑器区域 | `outputs/optimized_quads.txt`       |
+| 4.4 | 优化后目标代码生成                | `compiler/pipeline.py`, `compiler/target_code.py`              | `Optimized Target Code`  | `outputs/optimized_target_code.txt` |
 
 ## 输出文件说明
 
