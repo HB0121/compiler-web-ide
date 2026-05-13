@@ -37,7 +37,7 @@ public class Parser {
             if (curr == null) break;
             String text = curr.getText();
 
-            if (text.equals("const") || text.equals("int") || text.equals("float") || text.equals("char") || text.equals("void") || text.equals("main")) {
+            if (text.equals("const") || text.equals("int") || text.equals("float") || text.equals("char") || text.equals("void")) {
                 boolean isFunc = false;
                 for (int i = pos; i < tokens.size(); i++) {
                     if (tokens.get(i).getText().equals("(")) { isFunc = true; break; }
@@ -50,6 +50,9 @@ public class Parser {
                     ASTNode var = parseVarDecl();
                     if (var != null) programNode.addChild(var);
                 }
+            } else if (text.equals("main")) {
+                ASTNode func = parseFuncDecl();
+                if (func != null) programNode.addChild(func);
             } else {
                 ASTNode stmt = parseStatement();
                 if (stmt != null) programNode.addChild(stmt);
@@ -59,19 +62,27 @@ public class Parser {
         return programNode;
     }
 
+    // 【核心升级】：解析函数定义（支持参数提取）
     private ASTNode parseFuncDecl() {
-        String typeStr = "";
-        if (!current().getText().equals("main")) { typeStr = current().getText() + " "; pos++; }
-
+        String typeStr = current().getText(); pos++;
         Token idToken = current();
         if (idToken != null && (idToken.getKind().equals("identifier") || idToken.getText().equals("main"))) pos++;
 
         expectText("(");
-        while (current() != null && !current().getText().equals(")")) pos++;
+        List<String> params = new ArrayList<>();
+        while (current() != null && !current().getText().equals(")")) {
+            String pType = current().getText(); pos++; // 消耗 int 等类型
+            if (current() != null && current().getKind().equals("identifier")) {
+                params.add(current().getText()); pos++;
+            }
+            if (matchText(",") == null) break;
+        }
         expectText(")");
 
+        if (matchText(";") != null) return null; // 忽略仅声明原型的语句，如 int f(int);
+
         ASTNode funcNode = new ASTNode("FuncDecl");
-        funcNode.setValue(typeStr + (idToken != null ? idToken.getText() : ""));
+        funcNode.setValue((idToken != null ? idToken.getText() : "main") + ":" + String.join(",", params));
 
         if (current() != null && current().getText().equals("{")) {
             funcNode.addChild(parseCompoundStmt());
@@ -120,6 +131,17 @@ public class Parser {
         if (text.equals("continue")) { pos++; expectText(";"); return new ASTNode("ContinueStmt"); }
         if (text.equals("do")) return parseDoWhileStmt();
 
+        // 【核心升级】：解析 Return 语句
+        if (text.equals("return")) {
+            pos++;
+            ASTNode retNode = new ASTNode("ReturnStmt");
+            if (current() != null && !current().getText().equals(";")) {
+                retNode.addChild(parseLogical());
+            }
+            expectText(";");
+            return retNode;
+        }
+
         if (text.equals("const") || text.equals("int") || text.equals("float") || text.equals("char")) return parseVarDecl();
         if (text.equals("if")) return parseIfStmt();
         if (text.equals("while")) return parseWhileStmt();
@@ -127,7 +149,12 @@ public class Parser {
         if (text.equals("{")) return parseCompoundStmt();
 
         if (curr.getKind().equals("identifier") || text.equals("write") || text.equals("read")) {
-            if (pos + 1 < tokens.size() && tokens.get(pos + 1).getText().equals("(")) return parseFuncCall();
+            if (pos + 1 < tokens.size() && tokens.get(pos + 1).getText().equals("(")) {
+                Token idToken = current(); pos++;
+                ASTNode callNode = parseFuncCall(idToken);
+                expectText(";");
+                return callNode;
+            }
             return parseAssignment();
         }
 
@@ -136,142 +163,99 @@ public class Parser {
     }
 
     private ASTNode parseDoWhileStmt() {
-        ASTNode doNode = new ASTNode("DoWhileStmt");
-        expectText("do");
-        doNode.addChild(parseCompoundStmt());
-        expectText("while"); expectText("(");
-        doNode.addChild(parseLogical());
-        expectText(")"); expectText(";");
-        return doNode;
+        ASTNode doNode = new ASTNode("DoWhileStmt"); expectText("do"); doNode.addChild(parseCompoundStmt());
+        expectText("while"); expectText("("); doNode.addChild(parseLogical()); expectText(")"); expectText(";"); return doNode;
     }
 
     private ASTNode parseForStmt() {
-        ASTNode forNode = new ASTNode("ForStmt");
-        expectText("for"); expectText("(");
-        forNode.addChild(parseAssignmentInner()); expectText(";");
-        forNode.addChild(parseLogical()); expectText(";");
-        forNode.addChild(parseAssignmentInner()); expectText(")");
-        forNode.addChild(parseStatement());
-        return forNode;
+        ASTNode forNode = new ASTNode("ForStmt"); expectText("for"); expectText("(");
+        forNode.addChild(parseAssignmentInner()); expectText(";"); forNode.addChild(parseLogical()); expectText(";");
+        forNode.addChild(parseAssignmentInner()); expectText(")"); forNode.addChild(parseStatement()); return forNode;
     }
 
     private ASTNode parseAssignmentInner() {
-        Token idToken = current(); pos++;
-        ASTNode assignNode = new ASTNode("Assign"); assignNode.setValue("=");
-        ASTNode idNode = new ASTNode("Identifier"); idNode.setValue(idToken.getText());
-        assignNode.addChild(idNode);
-        if (expectText("=") != null) assignNode.addChild(parseLogical());
-        return assignNode;
+        Token idToken = current(); pos++; ASTNode assignNode = new ASTNode("Assign"); assignNode.setValue("=");
+        ASTNode idNode = new ASTNode("Identifier"); idNode.setValue(idToken.getText()); assignNode.addChild(idNode);
+        if (expectText("=") != null) assignNode.addChild(parseLogical()); return assignNode;
     }
 
     private ASTNode parseAssignment() {
-        ASTNode node = parseAssignmentInner();
-        expectText(";");
-        return node;
+        ASTNode node = parseAssignmentInner(); expectText(";"); return node;
     }
 
-    private ASTNode parseFuncCall() {
-        Token idToken = current(); pos++;
+    // 【核心升级】：解析函数调用及多参数支持
+    private ASTNode parseFuncCall(Token idToken) {
         ASTNode callNode = new ASTNode("FuncCall"); callNode.setValue(idToken.getText());
         expectText("(");
-        if (current() != null && !current().getText().equals(")")) {
+        while (current() != null && !current().getText().equals(")")) {
             if (current().getText().startsWith("'") || current().getText().startsWith("\"")) {
                 ASTNode strNode = new ASTNode("String"); strNode.setValue(current().getText());
                 callNode.addChild(strNode); pos++;
             } else {
                 callNode.addChild(parseLogical());
             }
+            if (matchText(",") == null) break;
         }
-        expectText(")"); expectText(";");
+        expectText(")");
         return callNode;
     }
 
     private ASTNode parseCompoundStmt() {
-        ASTNode compound = new ASTNode("Compound");
-        expectText("{");
+        ASTNode compound = new ASTNode("Compound"); expectText("{");
         while (current() != null && !current().getText().equals("}")) {
-            ASTNode stmt = parseStatement();
-            if (stmt != null) compound.addChild(stmt); else pos++;
+            ASTNode stmt = parseStatement(); if (stmt != null) compound.addChild(stmt); else pos++;
         }
-        expectText("}");
-        return compound;
+        expectText("}"); return compound;
     }
 
     private ASTNode parseIfStmt() {
-        ASTNode ifNode = new ASTNode("IfStmt");
-        expectText("if"); expectText("("); ifNode.addChild(parseLogical()); expectText(")");
-        ifNode.addChild(parseStatement());
-        if (matchText("else") != null) ifNode.addChild(parseStatement());
-        return ifNode;
+        ASTNode ifNode = new ASTNode("IfStmt"); expectText("if"); expectText("("); ifNode.addChild(parseLogical()); expectText(")");
+        ifNode.addChild(parseStatement()); if (matchText("else") != null) ifNode.addChild(parseStatement()); return ifNode;
     }
 
     private ASTNode parseWhileStmt() {
-        ASTNode whileNode = new ASTNode("WhileStmt");
-        expectText("while"); expectText("("); whileNode.addChild(parseLogical()); expectText(")");
-        whileNode.addChild(parseStatement());
-        return whileNode;
+        ASTNode whileNode = new ASTNode("WhileStmt"); expectText("while"); expectText("("); whileNode.addChild(parseLogical()); expectText(")");
+        whileNode.addChild(parseStatement()); return whileNode;
     }
 
     private ASTNode parseLogical() {
-        ASTNode left = parseRelational();
-        if (left == null) return null;
-        Token curr = current();
+        ASTNode left = parseRelational(); if (left == null) return null; Token curr = current();
         while (curr != null && (curr.getText().equals("&&") || curr.getText().equals("||"))) {
             pos++; ASTNode opNode = new ASTNode("BinOp"); opNode.setValue(curr.getText());
-            ASTNode right = parseRelational(); opNode.addChild(left); opNode.addChild(right);
-            left = opNode; curr = current();
+            ASTNode right = parseRelational(); opNode.addChild(left); opNode.addChild(right); left = opNode; curr = current();
         }
         return left;
     }
 
     private ASTNode parseRelational() {
-        ASTNode left = parseExpression();
-        if (left == null) return null;
-        Token curr = current();
-        while (curr != null && (curr.getText().equals(">") || curr.getText().equals("<") ||
-                curr.getText().equals(">=") || curr.getText().equals("<=") ||
-                curr.getText().equals("==") || curr.getText().equals("!="))) {
+        ASTNode left = parseExpression(); if (left == null) return null; Token curr = current();
+        while (curr != null && (curr.getText().equals(">") || curr.getText().equals("<") || curr.getText().equals(">=") || curr.getText().equals("<=") || curr.getText().equals("==") || curr.getText().equals("!="))) {
             pos++; ASTNode opNode = new ASTNode("RelOp"); opNode.setValue(curr.getText());
-            ASTNode right = parseExpression(); opNode.addChild(left); opNode.addChild(right);
-            left = opNode; curr = current();
+            ASTNode right = parseExpression(); opNode.addChild(left); opNode.addChild(right); left = opNode; curr = current();
         }
         return left;
     }
 
     private ASTNode parseExpression() {
-        ASTNode left = parseTerm();
-        if (left == null) return null;
-        Token curr = current();
+        ASTNode left = parseTerm(); if (left == null) return null; Token curr = current();
         while (curr != null && (curr.getText().equals("+") || curr.getText().equals("-"))) {
             pos++; ASTNode opNode = new ASTNode("BinOp"); opNode.setValue(curr.getText());
-            ASTNode right = parseTerm(); opNode.addChild(left); opNode.addChild(right);
-            left = opNode; curr = current();
+            ASTNode right = parseTerm(); opNode.addChild(left); opNode.addChild(right); left = opNode; curr = current();
         }
         return left;
     }
 
     private ASTNode parseTerm() {
-        ASTNode left = parseFactor();
-        if (left == null) return null;
-        Token curr = current();
+        ASTNode left = parseFactor(); if (left == null) return null; Token curr = current();
         while (curr != null && (curr.getText().equals("*") || curr.getText().equals("/") || curr.getText().equals("%"))) {
             pos++; ASTNode opNode = new ASTNode("BinOp"); opNode.setValue(curr.getText());
-            ASTNode right = parseFactor(); opNode.addChild(left); opNode.addChild(right);
-            left = opNode; curr = current();
+            ASTNode right = parseFactor(); opNode.addChild(left); opNode.addChild(right); left = opNode; curr = current();
         }
         return left;
     }
 
     private ASTNode parseFactor() {
-        Token curr = current();
-        if (curr == null) return null;
-
-        if (curr.getText().equals("read")) {
-            pos++; expectText("("); expectText(")");
-            ASTNode readNode = new ASTNode("FuncCall"); readNode.setValue("read");
-            return readNode;
-        }
-
+        Token curr = current(); if (curr == null) return null;
         if (curr.getText().equals("-")) {
             pos++; ASTNode unaryNode = new ASTNode("UnaryOp"); unaryNode.setValue("-");
             unaryNode.addChild(parseFactor()); return unaryNode;
@@ -279,6 +263,10 @@ public class Parser {
         if (curr.getKind().equals("int_literal") || curr.getKind().equals("float_literal")) {
             ASTNode node = new ASTNode("Literal"); node.setValue(curr.getText()); pos++; return node;
         } else if (curr.getKind().equals("identifier")) {
+            // 支持在表达式内部调用带参数的函数！
+            if (pos < tokens.size() && tokens.get(pos).getText().equals("(")) {
+                Token idToken = current(); pos++; return parseFuncCall(idToken);
+            }
             ASTNode node = new ASTNode("Identifier"); node.setValue(curr.getText()); pos++; return node;
         } else if (matchText("(") != null) {
             ASTNode expr = parseLogical(); expectText(")"); return expr;
