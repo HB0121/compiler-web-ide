@@ -4,7 +4,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
 from compiler.lexer import KEYWORDS, Lexer
-from compiler.log_automata import analyze_logs, write_log_outputs
+from compiler.log_automata import analyze_log_with_regex, write_log_outputs
 from compiler.parser import Parser
 from compiler.pipeline import run_pipeline, write_outputs
 from compiler.semantic import SemanticAnalyzer
@@ -35,8 +35,9 @@ RESULT_GROUPS = (
         "日志自动机(4.1)",
         (
             ("log_extract", "Log Extract"),
-            ("log_nfa", "NFA"),
-            ("log_dfa", "DFA"),
+            ("log_nfa", "NFA Graph"),
+            ("log_dfa", "DFA Graph"),
+            ("log_dfa_table", "DFA Table"),
         ),
     ),
     ("基础分析", (("tokens", "Tokens"), ("ast", "AST"), ("semantic_errors", "Semantic Errors"))),
@@ -55,9 +56,10 @@ RESULT_GROUPS = (
 )
 
 LOG_PLACEHOLDERS = {
-    "log_extract": "Paste log text on the left and click 日志识别.\n\nExample:\n2026-05-10 08:17:42 INFO ip=172.16.8.31 user=root status=200 action=login\n",
-    "log_nfa": "Click 日志识别 to build and display NFA information.\n",
-    "log_dfa": "Click 日志识别 to build and display DFA information.\n",
+    "log_extract": "Paste log text on the left, enter a regex, then click 日志识别.\n\nExample regex:\n\\d{4}-\\d{2}-\\d{2}\n",
+    "log_nfa": "Enter a regex and click 日志识别 to build the NFA graph.\n",
+    "log_dfa": "Enter a regex and click 日志识别 to build the DFA graph.\n",
+    "log_dfa_table": "Enter a regex and click 日志识别 to build the DFA transition table.\n",
 }
 
 
@@ -69,6 +71,7 @@ class CompilerApp:
         self.result_cache: dict[str, str] = {}
         self.tree_items: dict[str, str] = {}
         self.summary_vars: dict[str, tk.StringVar] = {}
+        self.regex_var = tk.StringVar(value=r"\d{4}-\d{2}-\d{2}")
         self.highlight_job = None
         self.diagnostics_job = None
         self.editor_diagnostics = []
@@ -165,6 +168,7 @@ class CompilerApp:
         self.source_text.grid(row=1, column=1, sticky="nsew")
         source_y.grid(row=1, column=2, sticky="ns")
         source_x.grid(row=2, column=1, sticky="ew")
+        self._build_regex_panel(source_frame)
         self._build_diagnostics_panel(source_frame)
         source_frame.rowconfigure(1, weight=1)
         source_frame.columnconfigure(1, weight=1)
@@ -180,8 +184,15 @@ class CompilerApp:
         main.add(source_frame, weight=1)
         main.add(result_frame, weight=1)
 
+    def _build_regex_panel(self, parent: ttk.Frame) -> None:
+        regex_frame = ttk.Frame(parent, style="Panel.TFrame")
+        regex_frame.grid(row=3, column=0, columnspan=3, sticky="ew", pady=(10, 4))
+        regex_frame.columnconfigure(1, weight=1)
+        ttk.Label(regex_frame, text="Regex", style="PanelTitle.TLabel").grid(row=0, column=0, sticky="w", padx=(0, 8))
+        ttk.Entry(regex_frame, textvariable=self.regex_var).grid(row=0, column=1, sticky="ew")
+
     def _build_diagnostics_panel(self, parent: ttk.Frame) -> None:
-        ttk.Label(parent, text="Diagnostics", style="PanelTitle.TLabel").grid(row=3, column=0, columnspan=3, sticky="w", pady=(10, 6))
+        ttk.Label(parent, text="Diagnostics", style="PanelTitle.TLabel").grid(row=4, column=0, columnspan=3, sticky="w", pady=(8, 6))
         columns = ("line", "phase", "code", "message")
         self.diagnostics_tree = ttk.Treeview(parent, columns=columns, show="headings", height=5, style="Diagnostics.Treeview")
         self.diagnostics_tree.heading("line", text="Line")
@@ -194,8 +205,8 @@ class CompilerApp:
         self.diagnostics_tree.column("message", width=360, minwidth=180, stretch=True)
         diagnostics_scroll = ttk.Scrollbar(parent, orient=tk.VERTICAL, command=self.diagnostics_tree.yview)
         self.diagnostics_tree.configure(yscrollcommand=diagnostics_scroll.set)
-        self.diagnostics_tree.grid(row=4, column=0, columnspan=2, sticky="ew")
-        diagnostics_scroll.grid(row=4, column=2, sticky="ns")
+        self.diagnostics_tree.grid(row=5, column=0, columnspan=2, sticky="ew")
+        diagnostics_scroll.grid(row=5, column=2, sticky="ns")
         self.diagnostics_tree.bind("<<TreeviewSelect>>", self._on_diagnostic_selected)
 
     def _build_summary(self, parent: ttk.Frame) -> None:
@@ -386,9 +397,18 @@ class CompilerApp:
         self._set_status("Exported outputs/")
 
     def run_log_automata(self) -> None:
+        pattern = self.regex_var.get().strip()
+        if not pattern:
+            messagebox.showwarning("Regex Required", "Please enter a regular expression first.")
+            self._set_status("Regex required")
+            return
         try:
-            result = analyze_logs(self._source())
+            result = analyze_log_with_regex(self._source(), pattern)
             write_log_outputs(result, Path("outputs"))
+        except re.error as exc:
+            messagebox.showerror("Invalid Regex", str(exc))
+            self._set_status("Invalid regex")
+            return
         except Exception as exc:
             messagebox.showerror("Log Scan Failed", str(exc))
             self._set_status("Log scan failed")
@@ -397,6 +417,7 @@ class CompilerApp:
         self.result_cache["log_extract"] = result.format_matches()
         self.result_cache["log_nfa"] = result.nfa_text
         self.result_cache["log_dfa"] = result.dfa_text
+        self.result_cache["log_dfa_table"] = result.dfa_table_text
         self._select_result("log_extract")
         self._set_status(f"Log scan complete: {len(result.matches)} matches")
 

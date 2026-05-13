@@ -26,10 +26,11 @@ class LogAnalysisResult:
     nfa_text: str
     dfa_text: str
     dfa_table_text: str = ""
+    no_match_message: str = "No log keywords matched. Paste log text on the left and click 日志识别."
 
     def format_matches(self) -> str:
         if not self.matches:
-            return "No log keywords matched. Paste log text on the left and click 日志识别.\n"
+            return f"{self.no_match_message}\n"
         lines = [f"{match.value} {match.kind}" for match in self.matches]
         return "\n".join(lines) + ("\n" if lines else "")
 
@@ -63,7 +64,13 @@ def analyze_logs(source: str, rules: Iterable[LogRule] = LOG_RULES) -> LogAnalys
 def analyze_log_with_regex(source: str, pattern: str) -> LogAnalysisResult:
     automata = build_regex_automata(pattern)
     matches = _scan_with_regex(source, pattern)
-    return LogAnalysisResult(matches, automata.nfa_text, automata.dfa_text, automata.dfa_table_text)
+    return LogAnalysisResult(
+        matches,
+        automata.nfa_text,
+        automata.dfa_text,
+        automata.dfa_table_text,
+        "No regex matches. Check the log text and regular expression.",
+    )
 
 
 def write_log_outputs(result: LogAnalysisResult, output_dir=Path("outputs")) -> None:

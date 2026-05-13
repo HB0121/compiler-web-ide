@@ -15,13 +15,11 @@ public class Parser {
     public List<Diagnostic> getDiagnostics() { return diagnostics; }
 
     private Token current() { return pos < tokens.size() ? tokens.get(pos) : null; }
-
     private Token matchText(String text) {
         Token curr = current();
         if (curr != null && curr.getText().equals(text)) { pos++; return curr; }
         return null;
     }
-
     private Token expectText(String text) {
         Token token = matchText(text);
         if (token == null) {
@@ -63,19 +61,14 @@ public class Parser {
 
     private ASTNode parseFuncDecl() {
         String typeStr = "";
-        if (!current().getText().equals("main")) {
-            typeStr = current().getText() + " "; pos++;
-        }
+        if (!current().getText().equals("main")) { typeStr = current().getText() + " "; pos++; }
         Token idToken = current();
         if (idToken != null && idToken.getKind().equals("identifier")) pos++;
-
         expectText("(");
         while (current() != null && !current().getText().equals(")")) pos++;
         expectText(")");
-
         ASTNode funcNode = new ASTNode("FuncDecl");
         funcNode.setValue(typeStr + (idToken != null ? idToken.getText() : ""));
-
         if (current() != null && current().getText().equals("{")) {
             funcNode.addChild(parseCompoundStmt());
         } else {
@@ -102,7 +95,7 @@ public class Parser {
             if (matchText("=") != null) {
                 ASTNode assign = new ASTNode("Assign");
                 assign.addChild(idNode);
-                assign.addChild(parseLogical()); // 【核心修改】支持在声明时使用逻辑表达式，如 int a = x && y;
+                assign.addChild(parseLogical());
                 varDeclNode.addChild(assign);
             } else {
                 if (isConst) diagnostics.add(new Diagnostic("semantic", idToken.getLine(), "SEM301", "常量必须初始化: " + idToken.getText()));
@@ -125,9 +118,7 @@ public class Parser {
         if (text.equals("{")) return parseCompoundStmt();
 
         if (curr.getKind().equals("identifier")) {
-            if (pos + 1 < tokens.size() && tokens.get(pos + 1).getText().equals("(")) {
-                return parseFuncCall();
-            }
+            if (pos + 1 < tokens.size() && tokens.get(pos + 1).getText().equals("(")) return parseFuncCall();
             return parseAssignment();
         }
 
@@ -137,12 +128,8 @@ public class Parser {
 
     private ASTNode parseFuncCall() {
         Token idToken = current(); pos++;
-        ASTNode callNode = new ASTNode("FuncCall");
-        callNode.setValue(idToken.getText());
-        expectText("(");
-        callNode.addChild(parseLogical()); // 【核心修改】函数传参也支持逻辑表达式
-        expectText(")");
-        expectText(";");
+        ASTNode callNode = new ASTNode("FuncCall"); callNode.setValue(idToken.getText());
+        expectText("("); callNode.addChild(parseLogical()); expectText(")"); expectText(";");
         return callNode;
     }
 
@@ -151,8 +138,7 @@ public class Parser {
         expectText("{");
         while (current() != null && !current().getText().equals("}")) {
             ASTNode stmt = parseStatement();
-            if (stmt != null) compound.addChild(stmt);
-            else pos++;
+            if (stmt != null) compound.addChild(stmt); else pos++;
         }
         expectText("}");
         return compound;
@@ -160,7 +146,7 @@ public class Parser {
 
     private ASTNode parseIfStmt() {
         ASTNode ifNode = new ASTNode("IfStmt");
-        expectText("if"); expectText("("); ifNode.addChild(parseCondition()); expectText(")");
+        expectText("if"); expectText("("); ifNode.addChild(parseLogical()); expectText(")");
         ifNode.addChild(parseStatement());
         if (matchText("else") != null) ifNode.addChild(parseStatement());
         return ifNode;
@@ -168,20 +154,9 @@ public class Parser {
 
     private ASTNode parseWhileStmt() {
         ASTNode whileNode = new ASTNode("WhileStmt");
-        expectText("while"); expectText("("); whileNode.addChild(parseCondition()); expectText(")");
+        expectText("while"); expectText("("); whileNode.addChild(parseLogical()); expectText(")");
         whileNode.addChild(parseStatement());
         return whileNode;
-    }
-
-    private ASTNode parseCondition() {
-        ASTNode left = parseLogical(); // 【核心修改】
-        Token curr = current();
-        if (curr != null && (curr.getText().equals(">") || curr.getText().equals("<") || curr.getText().equals("==") || curr.getText().equals("!="))) {
-            ASTNode opNode = new ASTNode("RelOp");
-            opNode.setValue(curr.getText()); opNode.setLine(curr.getLine()); pos++;
-            opNode.addChild(left); opNode.addChild(parseLogical()); return opNode;
-        }
-        return left;
     }
 
     private ASTNode parseAssignment() {
@@ -189,25 +164,32 @@ public class Parser {
         ASTNode assignNode = new ASTNode("Assign"); assignNode.setValue("=");
         ASTNode idNode = new ASTNode("Identifier"); idNode.setValue(idToken.getText());
         assignNode.addChild(idNode);
-        if (expectText("=") != null) assignNode.addChild(parseLogical()); // 【核心修改】
+        if (expectText("=") != null) assignNode.addChild(parseLogical());
         expectText(";");
         return assignNode;
     }
 
-    // ================= 新增：处理逻辑与 && 和 逻辑或 || =================
+    // ================= 终极表达式层级：逻辑 -> 关系 -> 算术 -> 乘除 -> 基础(含负数) =================
     private ASTNode parseLogical() {
-        ASTNode left = parseExpression();
+        ASTNode left = parseRelational();
         if (left == null) return null;
         Token curr = current();
         while (curr != null && (curr.getText().equals("&&") || curr.getText().equals("||"))) {
-            pos++;
-            ASTNode opNode = new ASTNode("BinOp");
-            opNode.setValue(curr.getText());
-            ASTNode right = parseExpression();
-            opNode.addChild(left);
-            opNode.addChild(right);
-            left = opNode;
-            curr = current();
+            pos++; ASTNode opNode = new ASTNode("BinOp"); opNode.setValue(curr.getText());
+            ASTNode right = parseRelational(); opNode.addChild(left); opNode.addChild(right);
+            left = opNode; curr = current();
+        }
+        return left;
+    }
+
+    private ASTNode parseRelational() {
+        ASTNode left = parseExpression();
+        if (left == null) return null;
+        Token curr = current();
+        while (curr != null && (curr.getText().equals(">") || curr.getText().equals("<") || curr.getText().equals("==") || curr.getText().equals("!="))) {
+            pos++; ASTNode opNode = new ASTNode("RelOp"); opNode.setValue(curr.getText());
+            ASTNode right = parseExpression(); opNode.addChild(left); opNode.addChild(right);
+            left = opNode; curr = current();
         }
         return left;
     }
@@ -239,12 +221,22 @@ public class Parser {
     private ASTNode parseFactor() {
         Token curr = current();
         if (curr == null) return null;
+
+        // 【新增】处理一元负号，例如 -2
+        if (curr.getText().equals("-")) {
+            pos++;
+            ASTNode unaryNode = new ASTNode("UnaryOp");
+            unaryNode.setValue("-");
+            unaryNode.addChild(parseFactor());
+            return unaryNode;
+        }
+
         if (curr.getKind().equals("int_literal") || curr.getKind().equals("float_literal")) {
             ASTNode node = new ASTNode("Literal"); node.setValue(curr.getText()); pos++; return node;
         } else if (curr.getKind().equals("identifier")) {
             ASTNode node = new ASTNode("Identifier"); node.setValue(curr.getText()); pos++; return node;
         } else if (matchText("(") != null) {
-            ASTNode expr = parseLogical(); expectText(")"); return expr; // 【核心修改】支持括号内有逻辑运算
+            ASTNode expr = parseLogical(); expectText(")"); return expr;
         }
         return null;
     }
