@@ -1,0 +1,34 @@
+NFA for DATE
+  regex: \b\d{4}-\d{2}-\d{2}\b
+  start --regex-fragment--> accept
+  epsilon transitions connect fragments when alternation or repetition is used.
+
+NFA for TIME
+  regex: \b\d{2}:\d{2}:\d{2}\b
+  start --regex-fragment--> accept
+  epsilon transitions connect fragments when alternation or repetition is used.
+
+NFA for LEVEL
+  regex: \b(?:TRACE|DEBUG|INFO|WARN|WARNING|ERROR|FATAL)\b
+  start --regex-fragment--> accept
+  epsilon transitions connect fragments when alternation or repetition is used.
+
+NFA for IP
+  regex: \b(?:\d{1,3}\.){3}\d{1,3}\b
+  start --regex-fragment--> accept
+  epsilon transitions connect fragments when alternation or repetition is used.
+
+NFA for STATUS
+  regex: \bstatus=(\d{3})\b|\bSTATUS:\s*(\d{3})\b|(?<![\d.])\b[1-5]\d{2}\b(?![\d.])
+  start --regex-fragment--> accept
+  epsilon transitions connect fragments when alternation or repetition is used.
+
+NFA for USER
+  regex: \buser=([A-Za-z_][A-Za-z0-9_]*)\b|\bUSER:\s*([A-Za-z_][A-Za-z0-9_]*)\b
+  start --regex-fragment--> accept
+  epsilon transitions connect fragments when alternation or repetition is used.
+
+NFA for ACTION
+  regex: \baction=([A-Za-z_][A-Za-z0-9_]*)\b|\bACTION:\s*([A-Za-z_][A-Za-z0-9_]*)\b
+  start --regex-fragment--> accept
+  epsilon transitions connect fragments when alternation or repetition is used.

@@ -1,0 +1,3 @@
+2026-05-10 08:17:42 INFO ip=172.16.8.31 user=root status=200 action=login
+2026-05-10 08:18:03 ERROR 192.168.1.100 user=admin status=403 action=deny
+2026-05-10 08:19:11 WARN USER: guest STATUS: 401 ACTION: logout

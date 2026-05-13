@@ -1,0 +1,34 @@
+DFA for DATE
+  constructed by subset construction from the NFA epsilon-closures.
+  D0 = epsilon-closure(start)
+  accepting states emit token DATE
+
+DFA for TIME
+  constructed by subset construction from the NFA epsilon-closures.
+  D0 = epsilon-closure(start)
+  accepting states emit token TIME
+
+DFA for LEVEL
+  constructed by subset construction from the NFA epsilon-closures.
+  D0 = epsilon-closure(start)
+  accepting states emit token LEVEL
+
+DFA for IP
+  constructed by subset construction from the NFA epsilon-closures.
+  D0 = epsilon-closure(start)
+  accepting states emit token IP
+
+DFA for STATUS
+  constructed by subset construction from the NFA epsilon-closures.
+  D0 = epsilon-closure(start)
+  accepting states emit token STATUS
+
+DFA for USER
+  constructed by subset construction from the NFA epsilon-closures.
+  D0 = epsilon-closure(start)
+  accepting states emit token USER
+
+DFA for ACTION
+  constructed by subset construction from the NFA epsilon-closures.
+  D0 = epsilon-closure(start)
+  accepting states emit token ACTION
