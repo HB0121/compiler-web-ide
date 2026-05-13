@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import List, Optional
 
+from .cfg_dag import analyze_control_flow
 from .interpreter import interpret_quads
 from .ir import format_quads, generate_quads
 from .lexer import Lexer
@@ -21,6 +22,10 @@ OUTPUT_NAMES = {
     "function": "function.txt",
     "quads": "quads.txt",
     "optimized_quads": "optimized_quads.txt",
+    "basic_blocks": "basic_blocks.txt",
+    "cfg": "cfg.txt",
+    "dag": "dag.txt",
+    "dag_optimized_quads": "dag_optimized_quads.txt",
     "interpreter": "interpreter.txt",
     "llvm_ir": "llvm_ir.txt",
     "target_code": "target_code.txt",
@@ -49,6 +54,7 @@ def run_pipeline(source: str) -> PipelineResult:
 
     quads = generate_quads(ast) if ast is not None else []
     optimized_quads = optimize_quads(quads) if quads else []
+    control_flow = analyze_control_flow(quads) if quads else None
     interpreter_text = interpret_quads(quads).format() if quads else ""
     llvm_ir_text = quads_to_llvm_ir(quads) if quads else ""
     target_code_text = quads_to_target_code(quads) if quads else ""
@@ -63,6 +69,10 @@ def run_pipeline(source: str) -> PipelineResult:
         function_symbols,
         quads,
         optimized_quads,
+        control_flow.basic_blocks_text if control_flow else "",
+        control_flow.cfg_text if control_flow else "",
+        control_flow.dag_text if control_flow else "",
+        control_flow.dag_optimized_quads_text if control_flow else "",
         interpreter_text,
         llvm_ir_text,
         target_code_text,
@@ -90,6 +100,10 @@ def build_texts(
     function_symbols: List[SymbolInfo],
     quads,
     optimized_quads,
+    basic_blocks_text: str,
+    cfg_text: str,
+    dag_text: str,
+    dag_optimized_quads_text: str,
     interpreter_text: str,
     llvm_ir_text: str,
     target_code_text: str,
@@ -104,6 +118,10 @@ def build_texts(
         "function": format_symbols(function_symbols, "function"),
         "quads": format_quads(quads),
         "optimized_quads": format_optimized_quads(optimized_quads),
+        "basic_blocks": basic_blocks_text,
+        "cfg": cfg_text,
+        "dag": dag_text,
+        "dag_optimized_quads": dag_optimized_quads_text,
         "interpreter": interpreter_text,
         "llvm_ir": llvm_ir_text,
         "target_code": target_code_text,

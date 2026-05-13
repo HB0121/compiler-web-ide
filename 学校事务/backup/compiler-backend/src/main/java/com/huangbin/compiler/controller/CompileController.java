@@ -1,78 +1,75 @@
 package com.huangbin.compiler.controller;
 
+import com.huangbin.compiler.interpreter.Interpreter;
+import com.huangbin.compiler.ir.IRGenerator;
 import com.huangbin.compiler.lexer.Lexer;
 import com.huangbin.compiler.model.ASTNode;
-import com.huangbin.compiler.model.CompileRequest;
-import com.huangbin.compiler.model.CompileResult;
 import com.huangbin.compiler.model.Diagnostic;
+import com.huangbin.compiler.model.Token;
 import com.huangbin.compiler.parser.Parser;
-import com.huangbin.compiler.ir.IRGenerator;
-import com.huangbin.compiler.interpreter.Interpreter;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "*") // 允许跨域请求，方便前端 Vue 调试调用
+@CrossOrigin // 允许跨域请求
 public class CompileController {
 
     @PostMapping("/compile")
-    public CompileResult compile(@RequestBody CompileRequest request) {
-        CompileResult finalResult = new CompileResult();
-        String source = request.getSourceCode();
-
-        // 1. 基础校验
-        if (source == null || source.trim().isEmpty()) {
-            finalResult.setSuccess(false);
-            return finalResult;
-        }
-
+    public Map<String, Object> compile(@RequestBody Map<String, String> request) {
+        String sourceCode = request.getOrDefault("sourceCode", "");
+        Map<String, Object> response = new HashMap<>();
         List<Diagnostic> allDiagnostics = new ArrayList<>();
 
-        // 2. 第一阶段：词法分析 (Lexical Analysis)
-        Lexer lexer = new Lexer();
-        Lexer.LexerResult lexResult = lexer.tokenize(source);
-        finalResult.setTokens(lexResult.tokens);
-        allDiagnostics.addAll(lexResult.diagnostics);
+        try {
+            // ================= 1. 词法分析 (Lexer) =================
+            Lexer lexer = new Lexer(sourceCode);
+            lexer.tokenize(); // 执行词法扫描
+            List<Token> tokens = lexer.getTokens();
+            allDiagnostics.addAll(lexer.getDiagnostics());
 
-        // 3. 第二阶段：语法分析 (Syntax Analysis / Parsing)
-        // 只要词法分析没有致命错误（有 Token 产出），就尝试解析
-        if (!lexResult.tokens.isEmpty()) {
-            Parser parser = new Parser(lexResult.tokens);
-            ASTNode astRoot = parser.parseProgram();
-            finalResult.setAst(astRoot);
+            // ================= 2. 语法分析 (Parser) =================
+            Parser parser = new Parser(tokens);
+            ASTNode ast = parser.parseProgram(); // 生成抽象语法树
             allDiagnostics.addAll(parser.getDiagnostics());
 
-            // 4. 后续阶段：中间代码生成与解释执行
-            // 只有当词法和语法分析都没有任何错误时，才继续运行
-            if (allDiagnostics.isEmpty() && astRoot != null) {
-
-                // 4.1 生成四元式 (IR Generation)
-                IRGenerator irGen = new IRGenerator();
-                List<IRGenerator.Quad> quadList = irGen.generate(astRoot);
-
-                // 将四元式对象转换为易于前端展示的字符串列表
-                List<String> quadStrings = new ArrayList<>();
-                for (int i = 0; i < quadList.size(); i++) {
-                    quadStrings.add(i + ": " + quadList.get(i).toString());
-                }
-                finalResult.setQuads(quadStrings);
-
-                // 4.2 解释执行 (Interpretation)
-                Interpreter interpreter = new Interpreter(quadList);
-                List<String> runLogs = interpreter.run();
-                finalResult.setInterpreterOutput(runLogs);
+            // ================= 3. 中间代码生成 (IR Generator) =================
+            IRGenerator irGenerator = new IRGenerator();
+            List<IRGenerator.Quad> quads = new ArrayList<>();
+            // 只有当没有严重的词法和语法错误时，才生成中间代码
+            if (allDiagnostics.isEmpty()) {
+                quads = irGenerator.generate(ast);
             }
+
+            // ================= 4. 解释执行 (Interpreter) =================
+            List<String> interpreterOutput = new ArrayList<>();
+            if (allDiagnostics.isEmpty() && !quads.isEmpty()) {
+                Interpreter interpreter = new Interpreter(quads);
+                interpreterOutput = interpreter.run();
+            }
+
+            // ================= 5. 组装发给前端的数据 =================
+            response.put("tokens", tokens);
+            response.put("ast", ast);
+            response.put("quads", quads);
+            response.put("interpreterOutput", interpreterOutput);
+            response.put("diagnostics", allDiagnostics);
+
+            // 如果所有的 diagnostics 报错列表为空，说明编译完美成功！
+            response.put("success", allDiagnostics.isEmpty());
+
+        } catch (Exception e) {
+            // 兜底容错，防止后端崩溃死机
+            e.printStackTrace();
+            response.put("success", false);
+            allDiagnostics.add(new Diagnostic("system", 0, "SYS500", "系统内部异常: " + e.getMessage()));
+            response.put("diagnostics", allDiagnostics);
         }
 
-        // 5. 汇总结果
-        finalResult.setDiagnostics(allDiagnostics);
-        // 如果 diagnostics 列表为空，则 success 标记为 true
-        finalResult.setSuccess(allDiagnostics.isEmpty());
-
-        return finalResult;
+        return response;
     }
 }

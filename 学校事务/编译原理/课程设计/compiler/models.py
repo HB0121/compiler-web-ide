@@ -21,6 +21,10 @@ class OutputTexts(TypedDict):
     function: str
     quads: str
     optimized_quads: str
+    basic_blocks: str
+    cfg: str
+    dag: str
+    dag_optimized_quads: str
     interpreter: str
     llvm_ir: str
     target_code: str

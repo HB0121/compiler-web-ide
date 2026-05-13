@@ -3,6 +3,7 @@ import re
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
+from compiler.cfg_dag import analyze_control_flow
 from compiler.lexer import KEYWORDS, Lexer
 from compiler.log_automata import analyze_log_with_regex, write_log_outputs
 from compiler.parser import Parser
@@ -49,6 +50,12 @@ RESULT_GROUPS = (
         (
             ("quads", "Quadruples"),
             ("optimized_quads", "Optimized Quads"),
+            ("basic_blocks", "Basic Blocks"),
+            ("cfg", "CFG"),
+            ("dag", "DAG"),
+            ("dag_optimized_quads", "DAG Optimized Quads"),
+            ("cfg_visual", "CFG Visual"),
+            ("dag_visual", "DAG Visual"),
             ("interpreter", "Interpreter"),
             ("llvm_ir", "LLVM IR"),
             ("target_code", "Target Code"),
@@ -82,6 +89,7 @@ class CompilerApp:
         self.error_lines: set[int] = set()
         self.log_graph_fragments: list[str] = []
         self.current_visual_key: str | None = None
+        self.control_flow_analysis = None
         self.graph_zoom = 1.0
         self.graph_zoom_var = tk.StringVar(value="100%")
 
@@ -392,6 +400,7 @@ class CompilerApp:
             return False
 
         self.current_result = result
+        self.control_flow_analysis = analyze_control_flow(result.quads) if result.quads else None
         self._fill_results(result)
         self._fill_summary(result)
         self._apply_diagnostics(result.diagnostics)
@@ -475,6 +484,7 @@ class CompilerApp:
         self.result_cache = dict(LOG_PLACEHOLDERS)
         self.log_graph_fragments = []
         self.current_visual_key = None
+        self.control_flow_analysis = None
         self._set_text(self.output_text, "")
         if hasattr(self, "graph_canvas"):
             self.graph_canvas.delete("all")
@@ -505,7 +515,7 @@ class CompilerApp:
         item_id = selected[0]
         for key, known_id in self.tree_items.items():
             if known_id == item_id:
-                if key in {"log_nfa_visual", "log_dfa_visual"}:
+                if key in {"log_nfa_visual", "log_dfa_visual", "cfg_visual", "dag_visual"}:
                     self._show_graph(key)
                     return
                 self._show_text_output()
@@ -519,7 +529,7 @@ class CompilerApp:
         self.result_tree.selection_set(item_id)
         self.result_tree.focus(item_id)
         self.result_tree.see(item_id)
-        if key in {"log_nfa_visual", "log_dfa_visual"}:
+        if key in {"log_nfa_visual", "log_dfa_visual", "cfg_visual", "dag_visual"}:
             self._show_graph(key)
         else:
             self._show_text_output()
@@ -574,6 +584,13 @@ class CompilerApp:
             self._draw_automata_graph(self.current_visual_key)
 
     def _draw_automata_graph(self, key: str) -> None:
+        if key == "cfg_visual":
+            self._draw_cfg_graph()
+            return
+        if key == "dag_visual":
+            self._draw_dag_graph()
+            return
+
         self.graph_canvas.delete("all")
         fragments = self.log_graph_fragments
         if not fragments:
@@ -645,6 +662,142 @@ class CompilerApp:
             label_half_width = max(46, int(46 * zoom))
             self.graph_canvas.create_rectangle((x1 + x2) / 2 - label_half_width, y1 - int(48 * zoom), (x1 + x2) / 2 + label_half_width, y1 - int(24 * zoom), fill="#f8fafc", outline="")
             self.graph_canvas.create_text((x1 + x2) / 2, y1 - int(36 * zoom), text=label, fill="#7c2d12", font=("Consolas", max(8, int(9 * zoom))))
+
+    def _draw_cfg_graph(self) -> None:
+        self.graph_canvas.delete("all")
+        analysis = self.control_flow_analysis
+        if analysis is None or not analysis.basic_blocks:
+            self.graph_canvas.configure(scrollregion=(0, 0, 640, 360))
+            self.graph_canvas.create_text(
+                24,
+                24,
+                anchor="nw",
+                fill="#334155",
+                font=("Microsoft YaHei UI", 11),
+                text="Click 运行 first to generate quadruples and build the CFG.",
+            )
+            return
+
+        zoom = self.graph_zoom
+        blocks = analysis.basic_blocks
+        node_width = int(190 * zoom)
+        node_height = int(86 * zoom)
+        x_gap = int(84 * zoom)
+        y_gap = int(72 * zoom)
+        margin = int(60 * zoom)
+        columns = 2 if len(blocks) > 3 else 1
+        positions = {}
+        for index, block in enumerate(blocks):
+            row = index // columns
+            col = index % columns
+            positions[block.name] = (margin + col * (node_width + x_gap), margin + row * (node_height + y_gap) + int(56 * zoom))
+
+        visible_width = max(self.graph_canvas.winfo_width(), 640)
+        visible_height = max(self.graph_canvas.winfo_height(), 360)
+        graph_width = max(visible_width, margin * 2 + columns * node_width + (columns - 1) * x_gap)
+        graph_height = max(visible_height, max(y for _x, y in positions.values()) + node_height + margin)
+        self.graph_canvas.configure(scrollregion=(0, 0, graph_width, graph_height))
+        self.graph_canvas.create_text(margin, int(28 * zoom), anchor="w", fill="#0f172a", font=("Microsoft YaHei UI", max(10, int(14 * zoom)), "bold"), text="Control Flow Graph")
+
+        for source, targets in analysis.cfg.successors.items():
+            x1, y1 = positions[source]
+            for target in targets:
+                x2, y2 = positions[target]
+                self.graph_canvas.create_line(
+                    x1 + node_width / 2,
+                    y1 + node_height,
+                    x2 + node_width / 2,
+                    y2,
+                    arrow=tk.LAST,
+                    fill="#475569",
+                    width=max(1, int(2 * zoom)),
+                    smooth=True,
+                )
+
+        for block in blocks:
+            x, y = positions[block.name]
+            self.graph_canvas.create_rectangle(x, y, x + node_width, y + node_height, fill="#eff6ff", outline="#2563eb", width=max(1, int(2 * zoom)))
+            self.graph_canvas.create_text(x + int(12 * zoom), y + int(12 * zoom), anchor="nw", fill="#0f172a", font=("Consolas", max(8, int(11 * zoom)), "bold"), text=f"{block.name} [{block.start}..{block.end}]")
+            preview = "; ".join(f"{block.start + offset}:{quad[0]}" for offset, quad in enumerate(block.quads[:3]))
+            if len(block.quads) > 3:
+                preview += " ..."
+            self.graph_canvas.create_text(x + int(12 * zoom), y + int(40 * zoom), anchor="nw", fill="#475569", font=("Consolas", max(8, int(9 * zoom))), text=preview, width=node_width - int(24 * zoom))
+
+    def _draw_dag_graph(self) -> None:
+        self.graph_canvas.delete("all")
+        analysis = self.control_flow_analysis
+        dag_blocks = analysis.dag_blocks if analysis is not None else []
+        dag = next((item for item in dag_blocks if item.nodes), None)
+        if dag is None:
+            self.graph_canvas.configure(scrollregion=(0, 0, 640, 360))
+            self.graph_canvas.create_text(
+                24,
+                24,
+                anchor="nw",
+                fill="#334155",
+                font=("Microsoft YaHei UI", 11),
+                text="Click 运行 first. DAG visual needs a basic block with expressions.",
+            )
+            return
+
+        zoom = self.graph_zoom
+        node_radius = max(20, int(28 * zoom))
+        x_gap = int(120 * zoom)
+        y_gap = int(100 * zoom)
+        margin = int(70 * zoom)
+        levels = self._dag_levels(dag.nodes)
+        positions = {}
+        for level, nodes in levels.items():
+            for index, node_id in enumerate(nodes):
+                positions[node_id] = (margin + index * x_gap, margin + level * y_gap + int(60 * zoom))
+
+        visible_width = max(self.graph_canvas.winfo_width(), 640)
+        visible_height = max(self.graph_canvas.winfo_height(), 360)
+        graph_width = max(visible_width, max(x for x, _y in positions.values()) + margin)
+        graph_height = max(visible_height, max(y for _x, y in positions.values()) + margin)
+        self.graph_canvas.configure(scrollregion=(0, 0, graph_width, graph_height))
+        self.graph_canvas.create_text(margin, int(28 * zoom), anchor="w", fill="#0f172a", font=("Microsoft YaHei UI", max(10, int(14 * zoom)), "bold"), text=f"DAG Visual: {dag.block}")
+
+        node_by_id = {node.id: node for node in dag.nodes}
+        for node in dag.nodes:
+            x1, y1 = positions[node.id]
+            for child_id in node.children:
+                if child_id not in positions:
+                    continue
+                x2, y2 = positions[child_id]
+                self.graph_canvas.create_line(x1, y1 - node_radius, x2, y2 + node_radius, arrow=tk.LAST, fill="#64748b", width=max(1, int(2 * zoom)))
+
+        for node_id, node in node_by_id.items():
+            x, y = positions[node_id]
+            fill = "#fef3c7" if node.children else "#dcfce7"
+            outline = "#d97706" if node.children else "#16a34a"
+            self.graph_canvas.create_oval(x - node_radius, y - node_radius, x + node_radius, y + node_radius, fill=fill, outline=outline, width=max(1, int(2 * zoom)))
+            self.graph_canvas.create_text(x, y, fill="#0f172a", font=("Consolas", max(8, int(11 * zoom)), "bold"), text=node.label)
+            if node.names:
+                self.graph_canvas.create_text(x, y + node_radius + int(14 * zoom), fill="#475569", font=("Consolas", max(8, int(9 * zoom))), text=",".join(node.names[:3]))
+
+    def _dag_levels(self, nodes) -> dict[int, list[str]]:
+        level_by_id = {}
+        node_by_id = {node.id: node for node in nodes}
+
+        def level(node_id: str) -> int:
+            if node_id in level_by_id:
+                return level_by_id[node_id]
+            node = node_by_id[node_id]
+            if not node.children:
+                level_by_id[node_id] = 0
+            else:
+                level_by_id[node_id] = 1 + max(level(child_id) for child_id in node.children if child_id in node_by_id)
+            return level_by_id[node_id]
+
+        for node in nodes:
+            level(node.id)
+
+        grouped: dict[int, list[str]] = {}
+        max_level = max(level_by_id.values(), default=0)
+        for node_id, item_level in level_by_id.items():
+            grouped.setdefault(max_level - item_level, []).append(node_id)
+        return grouped
 
     def _source(self) -> str:
         return self.source_text.get("1.0", "end-1c")
