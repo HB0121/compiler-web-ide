@@ -9,173 +9,170 @@ import java.util.List;
 import java.util.Map;
 
 public class Lexer {
+    private final String sourceCode;
+    private int pos = 0;
+    private int line = 1;
+    private int column = 1;
 
+    private final List<Token> tokens = new ArrayList<>();
+    private final List<Diagnostic> diagnostics = new ArrayList<>();
 
+    // 预定义词法字典
     private static final Map<String, Integer> KEYWORDS = new HashMap<>();
     private static final Map<String, Integer> OPERATORS = new HashMap<>();
-    private static final Map<String, Character> SEPARATORS = new HashMap<>();
-
-    public static final int IDENTIFIER_CODE = 700;
-    public static final int INT_LITERAL_CODE = 401;
-    public static final int FLOAT_LITERAL_CODE = 402;
-    public static final int CHAR_LITERAL_CODE = 403;
 
     static {
         // 初始化关键字
-        String[] keywords = {"const", "int", "float", "char", "void", "return", "if", "else", "while", "do", "for", "break", "continue"};
-        int kwCode = 100;
-        for (String kw : keywords) KEYWORDS.put(kw, kwCode++);
+        KEYWORDS.put("int", 101); KEYWORDS.put("float", 102); KEYWORDS.put("char", 103);
+        KEYWORDS.put("void", 104); KEYWORDS.put("main", 105); KEYWORDS.put("if", 106);
+        KEYWORDS.put("else", 107); KEYWORDS.put("while", 108); KEYWORDS.put("for", 109);
+        KEYWORDS.put("read", 110); KEYWORDS.put("write", 111); KEYWORDS.put("const", 112);
+        KEYWORDS.put("return", 113); KEYWORDS.put("break", 114); KEYWORDS.put("continue", 115);
 
-        // 初始化运算符
-        OPERATORS.put("==", 201); OPERATORS.put("!=", 202);
-        OPERATORS.put("<=", 203); OPERATORS.put(">=", 204);
-        OPERATORS.put("&&", 205); OPERATORS.put("||", 206);
-        OPERATORS.put("=", 207);  OPERATORS.put(">", 208);
-        OPERATORS.put("<", 209);  OPERATORS.put("+", 210);
-        OPERATORS.put("-", 211);  OPERATORS.put("*", 212);
-        OPERATORS.put("/", 213);  OPERATORS.put("!", 214);
-        OPERATORS.put("%", 215);
+        // 初始化双字符和单字符操作符
+        OPERATORS.put("==", 201); OPERATORS.put("!=", 202); OPERATORS.put("<=", 203);
+        OPERATORS.put(">=", 204); OPERATORS.put("&&", 205); OPERATORS.put("||", 206);
+        OPERATORS.put("=", 207);  OPERATORS.put(">", 208);  OPERATORS.put("<", 209);
+        OPERATORS.put("+", 210);  OPERATORS.put("-", 211);  OPERATORS.put("*", 212);
+        OPERATORS.put("/", 213);  OPERATORS.put("%", 214);  OPERATORS.put("!", 215);
 
-        // 初始化分隔符
-        SEPARATORS.put(";", '1'); SEPARATORS.put(",", '2');
-        SEPARATORS.put("(", '3'); SEPARATORS.put(")", '4');
-        SEPARATORS.put("{", '5'); SEPARATORS.put("}", '6');
-
-
+        // 初始化界符
+        OPERATORS.put("(", 301); OPERATORS.put(")", 302); OPERATORS.put("{", 303);
+        OPERATORS.put("}", 304); OPERATORS.put("[", 305); OPERATORS.put("]", 306);
+        OPERATORS.put(";", 307); OPERATORS.put(",", 308);
     }
 
-    // 用于封装返回结果的内部类
-    public static class LexerResult {
-        public List<Token> tokens = new ArrayList<>();
-        public List<Diagnostic> diagnostics = new ArrayList<>();
+    public Lexer(String sourceCode) {
+        this.sourceCode = sourceCode == null ? "" : sourceCode;
     }
 
-    public LexerResult tokenize(String source) {
-        LexerResult result = new LexerResult();
-        int i = 0, line = 1, column = 1;
-        int length = source.length();
+    public List<Token> getTokens() { return tokens; }
+    public List<Diagnostic> getDiagnostics() { return diagnostics; }
 
-        while (i < length) {
-            char ch = source.charAt(i);
+    // 辅助获取字符
+    private char current() { return pos < sourceCode.length() ? sourceCode.charAt(pos) : '\0'; }
+    private char peek() { return pos + 1 < sourceCode.length() ? sourceCode.charAt(pos + 1) : '\0'; }
+
+    // 游标前进并维护行号列号
+    private void advance() {
+        if (current() == '\n') { line++; column = 1; }
+        else { column++; }
+        pos++;
+    }
+
+    // 【兼容性设置】：创建 Token 的工厂方法
+    private void createToken(int startLine, int startCol, String text, String kind, int code) {
+        /*
+         * 注意：如果你的 Token 类是通过 new Token(line, col, text, kind, code) 实例化的，
+         * 请将下面的代码替换为：tokens.add(new Token(startLine, startCol, text, kind, code));
+         */
+        Token t = new Token();
+        t.setLine(startLine);
+        t.setColumn(startCol);
+        t.setText(text);
+        t.setKind(kind);
+        t.setCode(code);
+        tokens.add(t);
+    }
+
+    public void tokenize() {
+        while (pos < sourceCode.length()) {
+            char ch = current();
 
             // 1. 跳过空白字符
-            if (ch == ' ' || ch == '\t' || ch == '\r') {
-                i++; column++; continue;
-            }
-            if (ch == '\n') {
-                i++; line++; column = 1; continue;
-            }
+            if (Character.isWhitespace(ch)) { advance(); continue; }
 
-            // 2. 处理单行注释 //
-            if (source.startsWith("//", i)) {
-                while (i < length && source.charAt(i) != '\n') {
-                    i++; column++;
-                }
+            // 2. 跳过单行注释 //
+            if (ch == '/' && peek() == '/') {
+                while (current() != '\n' && current() != '\0') advance();
                 continue;
             }
 
-            // 3. 处理多行注释 /* ... */
-            if (source.startsWith("/*", i)) {
-                int startLine = line, startColumn = column;
-                i += 2; column += 2;
-                boolean closed = false;
-                while (i < length) {
-                    if (source.startsWith("*/", i)) {
-                        i += 2; column += 2;
-                        closed = true; break;
-                    }
-                    if (source.charAt(i) == '\n') {
-                        i++; line++; column = 1;
-                    } else {
-                        i++; column++;
-                    }
-                }
-                if (!closed) {
-                    result.diagnostics.add(new Diagnostic("lexer", startLine, "L001", "unclosed comment at column " + startColumn));
-                }
+            // 3. 跳过多行注释 /* */
+            if (ch == '/' && peek() == '*') {
+                advance(); advance();
+                while (current() != '\0' && !(current() == '*' && peek() == '/')) advance();
+                if (current() != '\0') { advance(); advance(); }
                 continue;
             }
 
-            // 4. 处理标识符和关键字
-            if (Character.isLetter(ch) || ch == '_') {
-                int start = i, startColumn = column;
-                while (i < length && (Character.isLetterOrDigit(source.charAt(i)) || source.charAt(i) == '_')) {
-                    i++; column++;
+            // 4. 【核心修复】：精准拦截单引号和双引号包裹的字符串！
+            if (ch == '"' || ch == '\'') {
+                char quote = ch;
+                int startCol = column;
+                StringBuilder str = new StringBuilder();
+                str.append(ch); // 存入开头引号
+                advance();
+
+                while (current() != '\0' && current() != quote) {
+                    str.append(current());
+                    advance();
                 }
-                String text = source.substring(start, i);
-                if (KEYWORDS.containsKey(text)) {
-                    result.tokens.add(new Token(text, KEYWORDS.get(text), line, startColumn, "keyword"));
+
+                if (current() == quote) {
+                    str.append(current()); // 存入结尾引号
+                    advance();
                 } else {
-                    result.tokens.add(new Token(text, IDENTIFIER_CODE, line, startColumn, "identifier"));
+                    diagnostics.add(new Diagnostic("lexer", line, "L001", "字符串缺少闭合引号"));
+                }
+
+                createToken(line, startCol, str.toString(), "string_literal", 800);
+                continue;
+            }
+
+            // 5. 识别关键字和标识符
+            if (Character.isLetter(ch) || ch == '_') {
+                int startCol = column;
+                StringBuilder sb = new StringBuilder();
+                while (Character.isLetterOrDigit(current()) || current() == '_') {
+                    sb.append(current());
+                    advance();
+                }
+                String text = sb.toString();
+                if (KEYWORDS.containsKey(text)) {
+                    createToken(line, startCol, text, "keyword", KEYWORDS.get(text));
+                } else {
+                    createToken(line, startCol, text, "identifier", 400);
                 }
                 continue;
             }
 
-            // 5. 处理数字字面量 (整数和浮点数)
+            // 6. 识别数字 (支持小数)
             if (Character.isDigit(ch)) {
-                int start = i, startColumn = column;
+                int startCol = column;
+                StringBuilder sb = new StringBuilder();
                 boolean hasDot = false;
-                while (i < length && (Character.isDigit(source.charAt(i)) || source.charAt(i) == '.')) {
-                    if (source.charAt(i) == '.') {
-                        if (hasDot) break; // 出现第二个小数点则停止
+                while (Character.isDigit(current()) || current() == '.') {
+                    if (current() == '.') {
+                        if (hasDot) break; // 防止 1.2.3 这种非法数字
                         hasDot = true;
                     }
-                    i++; column++;
+                    sb.append(current());
+                    advance();
                 }
-                String text = source.substring(start, i);
-                int code = hasDot ? FLOAT_LITERAL_CODE : INT_LITERAL_CODE;
-                String kind = hasDot ? "float_literal" : "int_literal";
-                result.tokens.add(new Token(text, code, line, startColumn, kind));
+                createToken(line, startCol, sb.toString(), hasDot ? "float_literal" : "int_literal", hasDot ? 501 : 500);
                 continue;
             }
 
-            // 6. 处理字符字面量 'a'
-            if (ch == '\'') {
-                int start = i, startColumn = column;
-                i++; column++;
-                while (i < length && source.charAt(i) != '\'' && source.charAt(i) != '\n') {
-                    i++; column++;
-                }
-                if (i < length && source.charAt(i) == '\'') {
-                    i++; column++;
-                    result.tokens.add(new Token(source.substring(start, i), CHAR_LITERAL_CODE, line, startColumn, "char_literal"));
-                } else {
-                    result.diagnostics.add(new Diagnostic("lexer", line, "L002", "unclosed char literal at column " + startColumn));
-                }
+            // 7. 识别双字符操作符 (如 ==, <=, &&)
+            String twoCharOp = "" + ch + peek();
+            if (OPERATORS.containsKey(twoCharOp)) {
+                createToken(line, column, twoCharOp, "operator", OPERATORS.get(twoCharOp));
+                advance(); advance();
                 continue;
             }
 
-            // 7. 处理双字符运算符 (如 ==, <=)
-            if (i + 1 < length) {
-                String twoChars = source.substring(i, i + 2);
-                if (OPERATORS.containsKey(twoChars)) {
-                    result.tokens.add(new Token(twoChars, OPERATORS.get(twoChars), line, column, "operator"));
-                    i += 2; column += 2;
-                    continue;
-                }
-            }
-
-            // 8. 处理单字符运算符
-            if (OPERATORS.containsKey(String.valueOf(ch))) {
-                result.tokens.add(new Token(String.valueOf(ch), OPERATORS.get(String.valueOf(ch)), line, column, "operator"));
-                i++; column++;
+            // 8. 识别单字符操作符和界符 (如 +, =, ;)
+            String oneCharOp = "" + ch;
+            if (OPERATORS.containsKey(oneCharOp)) {
+                createToken(line, column, oneCharOp, "operator", OPERATORS.get(oneCharOp));
+                advance();
                 continue;
             }
 
-            // 9. 处理分隔符
-            if (SEPARATORS.containsKey(String.valueOf(ch))) {
-                // 借用分隔符的值计算 code，这里为了简单直接给 300+ 分隔符映射
-                int sepCode = 300 + Integer.parseInt(SEPARATORS.get(String.valueOf(ch)).toString());
-                result.tokens.add(new Token(String.valueOf(ch), sepCode, line, column, "separator"));
-                i++; column++;
-                continue;
-            }
-
-            // 10. 未知字符处理
-            result.diagnostics.add(new Diagnostic("lexer", line, "L003", "unknown character '" + ch + "' at column " + column));
-            i++; column++;
+            // 9. 容错处理：未知字符报错并跳过
+            diagnostics.add(new Diagnostic("lexer", line, "L003", "unknown character '" + ch + "' at column " + column));
+            advance();
         }
-
-        return result;
     }
 }

@@ -40,6 +40,10 @@ class PipelineSmokeTests(unittest.TestCase):
         self.assertIn("FUNC main", result.texts["target_code"])
         self.assertIn("optimized", result.texts["optimized_quads"])
         self.assertIn("FUNC main", result.texts["optimized_target_code"])
+        self.assertIn("Basic Blocks", result.texts["basic_blocks"])
+        self.assertIn("Control Flow Graph", result.texts["cfg"])
+        self.assertIn("DAG", result.texts["dag"])
+        self.assertIn("DAG optimized quadruples", result.texts["dag_optimized_quads"])
 
     def test_pipeline_writes_output_files(self):
         from compiler.pipeline import run_pipeline, write_outputs
@@ -57,6 +61,10 @@ class PipelineSmokeTests(unittest.TestCase):
             self.assertTrue((out_dir / "target_code.txt").exists())
             self.assertTrue((out_dir / "optimized_quads.txt").exists())
             self.assertTrue((out_dir / "optimized_target_code.txt").exists())
+            self.assertTrue((out_dir / "basic_blocks.txt").exists())
+            self.assertTrue((out_dir / "cfg.txt").exists())
+            self.assertTrue((out_dir / "dag.txt").exists())
+            self.assertTrue((out_dir / "dag_optimized_quads.txt").exists())
             self.assertIn("main", (out_dir / "tokens.txt").read_text(encoding="utf-8"))
             self.assertIn("FunctionDef(int main)", (out_dir / "ast.txt").read_text(encoding="utf-8"))
             self.assertIn("sys", (out_dir / "quads.txt").read_text(encoding="utf-8"))
@@ -65,6 +73,10 @@ class PipelineSmokeTests(unittest.TestCase):
             self.assertIn("FUNC main", (out_dir / "target_code.txt").read_text(encoding="utf-8"))
             self.assertIn("optimized", (out_dir / "optimized_quads.txt").read_text(encoding="utf-8"))
             self.assertIn("FUNC main", (out_dir / "optimized_target_code.txt").read_text(encoding="utf-8"))
+            self.assertIn("Basic Blocks", (out_dir / "basic_blocks.txt").read_text(encoding="utf-8"))
+            self.assertIn("Control Flow Graph", (out_dir / "cfg.txt").read_text(encoding="utf-8"))
+            self.assertIn("DAG", (out_dir / "dag.txt").read_text(encoding="utf-8"))
+            self.assertIn("DAG optimized quadruples", (out_dir / "dag_optimized_quads.txt").read_text(encoding="utf-8"))
 
     def test_pipeline_returns_parser_diagnostic_for_missing_logical_rhs(self):
         from compiler.pipeline import run_pipeline
@@ -588,6 +600,51 @@ class OptimizedTargetCodeTests(unittest.TestCase):
         self.assertIn("MOV x, 3", result.texts["optimized_target_code"])
         self.assertNotIn("ADD R1, 2", result.texts["optimized_target_code"])
         self.assertIn("RET x", result.texts["optimized_target_code"])
+
+
+class ControlFlowDagTests(unittest.TestCase):
+    def sample_quads(self):
+        return [
+            ("main", "_", "_", "_"),
+            ("+", "a", "b", "t1"),
+            ("+", "a", "b", "t2"),
+            ("=", "t2", "_", "x"),
+            ("J<", "x", "10", 7),
+            ("+", "x", "1", "t3"),
+            ("J", "_", "_", 8),
+            ("=", "0", "_", "x"),
+            ("ret", "_", "_", "x"),
+            ("sys", "_", "_", "_"),
+        ]
+
+    def test_basic_blocks_identify_leaders_and_ranges(self):
+        from compiler.cfg_dag import analyze_control_flow
+
+        analysis = analyze_control_flow(self.sample_quads())
+
+        self.assertEqual([0, 5, 7, 8], [block.start for block in analysis.basic_blocks])
+        self.assertEqual([(0, 4), (5, 6), (7, 7), (8, 9)], [(block.start, block.end) for block in analysis.basic_blocks])
+        self.assertIn("B0 [0..4]", analysis.basic_blocks_text)
+
+    def test_cfg_records_successors_and_predecessors(self):
+        from compiler.cfg_dag import analyze_control_flow
+
+        analysis = analyze_control_flow(self.sample_quads())
+
+        self.assertEqual(["B2", "B1"], analysis.cfg.successors["B0"])
+        self.assertEqual(["B3"], analysis.cfg.successors["B1"])
+        self.assertEqual(["B3"], analysis.cfg.successors["B2"])
+        self.assertEqual(["B1", "B2"], analysis.cfg.predecessors["B3"])
+        self.assertIn("B0 -> B2, B1", analysis.cfg_text)
+
+    def test_dag_merges_common_subexpressions_inside_block(self):
+        from compiler.cfg_dag import analyze_control_flow
+
+        analysis = analyze_control_flow(self.sample_quads())
+
+        self.assertTrue(any(record.expression == "a + b" and record.reused_by == ["t2"] for record in analysis.common_subexpressions))
+        self.assertIn("common: a + b reused by t2", analysis.dag_text)
+        self.assertIn("(=, t1, _, t2)", analysis.dag_optimized_quads_text)
 
 
 class SourceFormatTests(unittest.TestCase):
