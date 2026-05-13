@@ -213,9 +213,11 @@ public class CodeGenerator {
             sb.append(funcName).append(" PROC\n");
             sb.append("    push bp\n    mov  bp, sp\n");
 
-            // 从栈中复制参数到 .DATA 变量（参数在 [bp+4], [bp+6], ...）
+            // 从栈中复制参数到 .DATA 变量（push 顺序: 先x后y → 栈顶是y, 栈底是x）
+            // [bp+4] 是最后 push 的, [bp+4+(n-1)*2] 是最先 push 的
             for (int p = 0; p < params.length; p++) {
-                sb.append("    mov  ax, [bp+").append(4 + p * 2).append("]\n");
+                int offset = 4 + (params.length - 1 - p) * 2;
+                sb.append("    mov  ax, [bp+").append(offset).append("]\n");
                 sb.append("    mov  _v_").append(params[p].trim()).append(", ax\n");
             }
             // 函数体
