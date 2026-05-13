@@ -39,7 +39,6 @@ public class Parser {
             if (curr == null) break;
             String text = curr.getText();
 
-            // 【升级】支持没有类型的 main()
             if (text.equals("const") || text.equals("int") || text.equals("float") || text.equals("char") || text.equals("void") || text.equals("main")) {
                 boolean isFunc = false;
                 for (int i = pos; i < tokens.size(); i++) {
@@ -86,7 +85,6 @@ public class Parser {
         return funcNode;
     }
 
-    // 【升级】支持 int x, y, z; 连续声明
     private ASTNode parseVarDecl() {
         boolean isConst = matchText("const") != null;
         Token typeToken = current(); pos++;
@@ -104,7 +102,7 @@ public class Parser {
             if (matchText("=") != null) {
                 ASTNode assign = new ASTNode("Assign");
                 assign.addChild(idNode);
-                assign.addChild(parseExpression());
+                assign.addChild(parseLogical()); // 【核心修改】支持在声明时使用逻辑表达式，如 int a = x && y;
                 varDeclNode.addChild(assign);
             } else {
                 if (isConst) diagnostics.add(new Diagnostic("semantic", idToken.getLine(), "SEM301", "常量必须初始化: " + idToken.getText()));
@@ -127,7 +125,6 @@ public class Parser {
         if (text.equals("{")) return parseCompoundStmt();
 
         if (curr.getKind().equals("identifier")) {
-            // 【升级】如果是 identifier 后面跟着 ( ，说明是函数调用！
             if (pos + 1 < tokens.size() && tokens.get(pos + 1).getText().equals("(")) {
                 return parseFuncCall();
             }
@@ -138,13 +135,12 @@ public class Parser {
         pos++; return null;
     }
 
-    // 【新增】解析函数调用 write(x);
     private ASTNode parseFuncCall() {
         Token idToken = current(); pos++;
         ASTNode callNode = new ASTNode("FuncCall");
         callNode.setValue(idToken.getText());
         expectText("(");
-        callNode.addChild(parseExpression());
+        callNode.addChild(parseLogical()); // 【核心修改】函数传参也支持逻辑表达式
         expectText(")");
         expectText(";");
         return callNode;
@@ -178,12 +174,12 @@ public class Parser {
     }
 
     private ASTNode parseCondition() {
-        ASTNode left = parseExpression();
+        ASTNode left = parseLogical(); // 【核心修改】
         Token curr = current();
         if (curr != null && (curr.getText().equals(">") || curr.getText().equals("<") || curr.getText().equals("==") || curr.getText().equals("!="))) {
             ASTNode opNode = new ASTNode("RelOp");
             opNode.setValue(curr.getText()); opNode.setLine(curr.getLine()); pos++;
-            opNode.addChild(left); opNode.addChild(parseExpression()); return opNode;
+            opNode.addChild(left); opNode.addChild(parseLogical()); return opNode;
         }
         return left;
     }
@@ -193,9 +189,27 @@ public class Parser {
         ASTNode assignNode = new ASTNode("Assign"); assignNode.setValue("=");
         ASTNode idNode = new ASTNode("Identifier"); idNode.setValue(idToken.getText());
         assignNode.addChild(idNode);
-        if (expectText("=") != null) assignNode.addChild(parseExpression());
+        if (expectText("=") != null) assignNode.addChild(parseLogical()); // 【核心修改】
         expectText(";");
         return assignNode;
+    }
+
+    // ================= 新增：处理逻辑与 && 和 逻辑或 || =================
+    private ASTNode parseLogical() {
+        ASTNode left = parseExpression();
+        if (left == null) return null;
+        Token curr = current();
+        while (curr != null && (curr.getText().equals("&&") || curr.getText().equals("||"))) {
+            pos++;
+            ASTNode opNode = new ASTNode("BinOp");
+            opNode.setValue(curr.getText());
+            ASTNode right = parseExpression();
+            opNode.addChild(left);
+            opNode.addChild(right);
+            left = opNode;
+            curr = current();
+        }
+        return left;
     }
 
     private ASTNode parseExpression() {
@@ -214,7 +228,6 @@ public class Parser {
         ASTNode left = parseFactor();
         if (left == null) return null;
         Token curr = current();
-        // 【升级】把 % 取模运算加到乘除法同一优先级里
         while (curr != null && (curr.getText().equals("*") || curr.getText().equals("/") || curr.getText().equals("%"))) {
             pos++; ASTNode opNode = new ASTNode("BinOp"); opNode.setValue(curr.getText());
             ASTNode right = parseFactor(); opNode.addChild(left); opNode.addChild(right);
@@ -231,7 +244,7 @@ public class Parser {
         } else if (curr.getKind().equals("identifier")) {
             ASTNode node = new ASTNode("Identifier"); node.setValue(curr.getText()); pos++; return node;
         } else if (matchText("(") != null) {
-            ASTNode expr = parseExpression(); expectText(")"); return expr;
+            ASTNode expr = parseLogical(); expectText(")"); return expr; // 【核心修改】支持括号内有逻辑运算
         }
         return null;
     }
