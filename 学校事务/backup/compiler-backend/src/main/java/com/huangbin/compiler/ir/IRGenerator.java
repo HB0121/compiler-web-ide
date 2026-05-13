@@ -3,6 +3,7 @@ package com.huangbin.compiler.ir;
 import com.huangbin.compiler.model.ASTNode;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 public class IRGenerator {
     public static class Quad {
@@ -13,7 +14,15 @@ public class IRGenerator {
         @Override public String toString() { return String.format("(%s, %s, %s, %s)", op, arg1, arg2, result); }
     }
 
+    private static class LoopContext {
+        public int condIdx;
+        public int updateIdx;
+        public List<Integer> breakList = new ArrayList<>();
+        public List<Integer> continueList = new ArrayList<>();
+    }
+
     private final List<Quad> quads = new ArrayList<>();
+    private final Stack<LoopContext> loopStack = new Stack<>();
     private int tempCounter = 1;
 
     private int nextQuadIndex() { return quads.size(); }
@@ -32,6 +41,7 @@ public class IRGenerator {
             case "FuncDecl":
                 for (ASTNode child : node.getChildren()) traverse(child);
                 break;
+
             case "VarDecl":
                 for (ASTNode child : node.getChildren()) {
                     if (child.getName().equals("Assign")) {
@@ -47,7 +57,6 @@ public class IRGenerator {
                 if (funcName.equals("write") && !node.getChildren().isEmpty()) {
                     ASTNode argNode = node.getChildren().get(0);
                     if (argNode.getName().equals("String")) {
-                        // 【新增】提取字符串参数
                         quads.add(new Quad("CALL", "write_str", argNode.getValue(), "_"));
                     } else {
                         quads.add(new Quad("CALL", "write", evaluateExpr(argNode), "_"));
@@ -58,6 +67,22 @@ public class IRGenerator {
             case "Assign":
                 if (node.getChildren().size() == 2) {
                     quads.add(new Quad("=", evaluateExpr(node.getChildren().get(1)), "_", node.getChildren().get(0).getValue()));
+                }
+                break;
+
+            case "BreakStmt":
+                if (!loopStack.isEmpty()) {
+                    int bIdx = nextQuadIndex();
+                    quads.add(new Quad("J", "_", "_", "_"));
+                    loopStack.peek().breakList.add(bIdx);
+                }
+                break;
+
+            case "ContinueStmt":
+                if (!loopStack.isEmpty()) {
+                    int cIdx = nextQuadIndex();
+                    quads.add(new Quad("J", "_", "_", "_"));
+                    loopStack.peek().continueList.add(cIdx);
                 }
                 break;
 
@@ -81,39 +106,72 @@ public class IRGenerator {
                 break;
 
             case "WhileStmt":
-                int startIdx = nextQuadIndex();
-                String wCond = evaluateExpr(node.getChildren().get(0));
+                LoopContext wCtx = new LoopContext();
+                wCtx.condIdx = nextQuadIndex();
+                loopStack.push(wCtx);
 
+                String wCond = evaluateExpr(node.getChildren().get(0));
                 int wJumpTrueIdx = nextQuadIndex();
                 quads.add(new Quad("J!=", wCond, "0", "_"));
-
                 int wJumpEndIdx = nextQuadIndex();
                 quads.add(new Quad("J", "_", "_", "_"));
 
                 backpatch(wJumpTrueIdx, nextQuadIndex());
                 traverse(node.getChildren().get(1));
-                quads.add(new Quad("J", "_", "_", String.valueOf(startIdx)));
+
+                for (int idx : wCtx.continueList) backpatch(idx, wCtx.condIdx);
+
+                quads.add(new Quad("J", "_", "_", String.valueOf(wCtx.condIdx)));
+
                 backpatch(wJumpEndIdx, nextQuadIndex());
+                for (int idx : wCtx.breakList) backpatch(idx, nextQuadIndex());
+
+                loopStack.pop();
                 break;
 
-            // 【新增】ForStmt：底层完美翻译为类似 While 的跳转架构
+            case "DoWhileStmt":
+                LoopContext dwCtx = new LoopContext();
+                int dwStartIdx = nextQuadIndex();
+                loopStack.push(dwCtx);
+
+                traverse(node.getChildren().get(0));
+
+                dwCtx.condIdx = nextQuadIndex();
+                for (int idx : dwCtx.continueList) backpatch(idx, dwCtx.condIdx);
+
+                String dwCond = evaluateExpr(node.getChildren().get(1));
+                quads.add(new Quad("J!=", dwCond, "0", String.valueOf(dwStartIdx)));
+
+                for (int idx : dwCtx.breakList) backpatch(idx, nextQuadIndex());
+
+                loopStack.pop();
+                break;
+
             case "ForStmt":
-                traverse(node.getChildren().get(0)); // 1. 执行 init 初始化
+                traverse(node.getChildren().get(0));
+                LoopContext fCtx = new LoopContext();
+                fCtx.condIdx = nextQuadIndex();
+                loopStack.push(fCtx);
 
-                int fStartIdx = nextQuadIndex();
-                String fCond = evaluateExpr(node.getChildren().get(1)); // 2. 评估 cond 条件
-
+                String fCond = evaluateExpr(node.getChildren().get(1));
                 int fJumpTrueIdx = nextQuadIndex();
                 quads.add(new Quad("J!=", fCond, "0", "_"));
                 int fJumpEndIdx = nextQuadIndex();
                 quads.add(new Quad("J", "_", "_", "_"));
 
                 backpatch(fJumpTrueIdx, nextQuadIndex());
-                traverse(node.getChildren().get(3)); // 3. 执行 body 循环体
-                traverse(node.getChildren().get(2)); // 4. 执行 update 累加器
-                quads.add(new Quad("J", "_", "_", String.valueOf(fStartIdx))); // 无条件跳回评估
+                traverse(node.getChildren().get(3));
+
+                fCtx.updateIdx = nextQuadIndex();
+                for (int idx : fCtx.continueList) backpatch(idx, fCtx.updateIdx);
+
+                traverse(node.getChildren().get(2));
+                quads.add(new Quad("J", "_", "_", String.valueOf(fCtx.condIdx)));
 
                 backpatch(fJumpEndIdx, nextQuadIndex());
+                for (int idx : fCtx.breakList) backpatch(idx, nextQuadIndex());
+
+                loopStack.pop();
                 break;
         }
     }
@@ -122,7 +180,6 @@ public class IRGenerator {
         if (expr == null) return "_";
         if (expr.getName().equals("Literal") || expr.getName().equals("Identifier")) return expr.getValue();
 
-        // 【新增】处理 read() 的求值
         if (expr.getName().equals("FuncCall") && expr.getValue().equals("read")) {
             String resultTemp = "t" + (tempCounter++);
             quads.add(new Quad("READ", "_", "_", resultTemp));

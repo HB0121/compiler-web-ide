@@ -64,7 +64,6 @@ public class Parser {
         if (!current().getText().equals("main")) { typeStr = current().getText() + " "; pos++; }
 
         Token idToken = current();
-        // 【核心修复1】：白名单放行 main
         if (idToken != null && (idToken.getKind().equals("identifier") || idToken.getText().equals("main"))) pos++;
 
         expectText("(");
@@ -117,13 +116,16 @@ public class Parser {
         if (curr == null) return null;
         String text = curr.getText();
 
+        if (text.equals("break")) { pos++; expectText(";"); return new ASTNode("BreakStmt"); }
+        if (text.equals("continue")) { pos++; expectText(";"); return new ASTNode("ContinueStmt"); }
+        if (text.equals("do")) return parseDoWhileStmt();
+
         if (text.equals("const") || text.equals("int") || text.equals("float") || text.equals("char")) return parseVarDecl();
         if (text.equals("if")) return parseIfStmt();
         if (text.equals("while")) return parseWhileStmt();
         if (text.equals("for")) return parseForStmt();
         if (text.equals("{")) return parseCompoundStmt();
 
-        // 【核心修复2】：白名单放行 write 和 read
         if (curr.getKind().equals("identifier") || text.equals("write") || text.equals("read")) {
             if (pos + 1 < tokens.size() && tokens.get(pos + 1).getText().equals("(")) return parseFuncCall();
             return parseAssignment();
@@ -131,6 +133,16 @@ public class Parser {
 
         diagnostics.add(new Diagnostic("parser", curr.getLine(), "P002", "Unexpected token: " + text));
         pos++; return null;
+    }
+
+    private ASTNode parseDoWhileStmt() {
+        ASTNode doNode = new ASTNode("DoWhileStmt");
+        expectText("do");
+        doNode.addChild(parseCompoundStmt());
+        expectText("while"); expectText("(");
+        doNode.addChild(parseLogical());
+        expectText(")"); expectText(";");
+        return doNode;
     }
 
     private ASTNode parseForStmt() {
