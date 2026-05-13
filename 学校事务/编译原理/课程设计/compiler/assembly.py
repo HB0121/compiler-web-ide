@@ -101,7 +101,7 @@ class Masm16Generator:
     def __init__(self, quads: List[Quad], function_params: Dict[str, List[str]]):
         self.quads = quads
         self.function_params = function_params
-        self.functions = self._split_functions()
+        self.global_initializers, self.functions = self._split_functions()
 
     def generate(self) -> str:
         if not self.quads:
@@ -115,20 +115,22 @@ class Masm16Generator:
             ".MODEL SMALL",
             ".STACK 100h",
             ".DATA",
-            ".CODE",
-            "",
         ]
+        for name, value in self.global_initializers.items():
+            lines.append(f"{name} DW {value}")
+        lines.extend([".CODE", ""])
 
         for function in self.functions:
-            lines.extend(Masm16FunctionEmitter(function, self.function_params.get(function.name, [])).emit())
+            lines.extend(Masm16FunctionEmitter(function, self.function_params.get(function.name, []), self.global_initializers).emit())
             lines.append("")
 
         lines.append("END main")
         return "\n".join(lines).rstrip() + "\n"
 
-    def _split_functions(self) -> List["FunctionQuads"]:
+    def _split_functions(self) -> Tuple[Dict[str, object], List["FunctionQuads"]]:
+        global_initializers: Dict[str, object] = {}
         functions: List[FunctionQuads] = []
-        current_name = "main"
+        current_name = ""
         current_start = 0
         current_quads: List[Tuple[int, Quad]] = []
 
@@ -139,18 +141,23 @@ class Masm16Generator:
                 current_name = str(quad[0])
                 current_start = index
                 current_quads = [(index, quad)]
+            elif not current_name:
+                op, arg1, _arg2, result = quad
+                if op == "=" and _is_variable(result):
+                    global_initializers[str(result)] = arg1
             else:
                 current_quads.append((index, quad))
 
         if current_quads:
             functions.append(FunctionQuads(current_name, current_start, current_quads))
-        return functions
+        return global_initializers, functions
 
 
 class Masm16FunctionEmitter:
-    def __init__(self, function: "FunctionQuads", params: List[str]):
+    def __init__(self, function: "FunctionQuads", params: List[str], globals_: Dict[str, object] | None = None):
         self.function = function
         self.params = params
+        self.globals = globals_ or {}
         self.assembly_name = _masm_function_name(function.name)
         self.variables = self._collect_variables()
         self.offsets = {name: (index + 1) * 2 for index, name in enumerate(self.variables)}
@@ -320,6 +327,8 @@ class Masm16FunctionEmitter:
         if _is_integer(value):
             return str(value)
         name = str(value)
+        if name in self.globals:
+            return name
         if name not in self.offsets:
             self.offsets[name] = (len(self.offsets) + 1) * 2
         return f"WORD PTR [bp-{self.offsets[name]}]"
@@ -344,6 +353,8 @@ class Masm16FunctionEmitter:
                 _append_name(ordered, arg1)
                 continue
             for value in (arg1, arg2, result):
+                if value in self.globals:
+                    continue
                 _append_name(ordered, value)
         return ordered
 
