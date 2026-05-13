@@ -62,7 +62,6 @@ public class Parser {
         return programNode;
     }
 
-    // 【核心升级】：解析函数定义（支持参数提取）
     private ASTNode parseFuncDecl() {
         String typeStr = current().getText(); pos++;
         Token idToken = current();
@@ -71,7 +70,7 @@ public class Parser {
         expectText("(");
         List<String> params = new ArrayList<>();
         while (current() != null && !current().getText().equals(")")) {
-            String pType = current().getText(); pos++; // 消耗 int 等类型
+            String pType = current().getText(); pos++;
             if (current() != null && current().getKind().equals("identifier")) {
                 params.add(current().getText()); pos++;
             }
@@ -79,7 +78,7 @@ public class Parser {
         }
         expectText(")");
 
-        if (matchText(";") != null) return null; // 忽略仅声明原型的语句，如 int f(int);
+        if (matchText(";") != null) return null;
 
         ASTNode funcNode = new ASTNode("FuncDecl");
         funcNode.setValue((idToken != null ? idToken.getText() : "main") + ":" + String.join(",", params));
@@ -131,7 +130,6 @@ public class Parser {
         if (text.equals("continue")) { pos++; expectText(";"); return new ASTNode("ContinueStmt"); }
         if (text.equals("do")) return parseDoWhileStmt();
 
-        // 【核心升级】：解析 Return 语句
         if (text.equals("return")) {
             pos++;
             ASTNode retNode = new ASTNode("ReturnStmt");
@@ -148,6 +146,7 @@ public class Parser {
         if (text.equals("for")) return parseForStmt();
         if (text.equals("{")) return parseCompoundStmt();
 
+        // 解析函数调用作为独立语句 (如 chengfabiao(n);)
         if (curr.getKind().equals("identifier") || text.equals("write") || text.equals("read")) {
             if (pos + 1 < tokens.size() && tokens.get(pos + 1).getText().equals("(")) {
                 Token idToken = current(); pos++;
@@ -183,7 +182,6 @@ public class Parser {
         ASTNode node = parseAssignmentInner(); expectText(";"); return node;
     }
 
-    // 【核心升级】：解析函数调用及多参数支持
     private ASTNode parseFuncCall(Token idToken) {
         ASTNode callNode = new ASTNode("FuncCall"); callNode.setValue(idToken.getText());
         expectText("(");
@@ -256,6 +254,13 @@ public class Parser {
 
     private ASTNode parseFactor() {
         Token curr = current(); if (curr == null) return null;
+
+        if (curr.getText().equals("read")) {
+            pos++; expectText("("); expectText(")");
+            ASTNode readNode = new ASTNode("FuncCall"); readNode.setValue("read");
+            return readNode;
+        }
+
         if (curr.getText().equals("-")) {
             pos++; ASTNode unaryNode = new ASTNode("UnaryOp"); unaryNode.setValue("-");
             unaryNode.addChild(parseFactor()); return unaryNode;
@@ -263,8 +268,8 @@ public class Parser {
         if (curr.getKind().equals("int_literal") || curr.getKind().equals("float_literal")) {
             ASTNode node = new ASTNode("Literal"); node.setValue(curr.getText()); pos++; return node;
         } else if (curr.getKind().equals("identifier")) {
-            // 支持在表达式内部调用带参数的函数！
-            if (pos < tokens.size() && tokens.get(pos).getText().equals("(")) {
+            // 【核心修复】：将 pos 改为 pos + 1 预读括号，完美支持 f(n - 1) 和 chengfabiao(n)！
+            if (pos + 1 < tokens.size() && tokens.get(pos + 1).getText().equals("(")) {
                 Token idToken = current(); pos++; return parseFuncCall(idToken);
             }
             ASTNode node = new ASTNode("Identifier"); node.setValue(curr.getText()); pos++; return node;
