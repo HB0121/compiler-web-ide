@@ -30,9 +30,11 @@ public class CompileController {
     @PostMapping("/compile")
     public Map<String, Object> compile(@RequestBody Map<String, String> request) {
         String sourceCode = request.getOrDefault("sourceCode", "");
+        String logText = request.getOrDefault("logText", "");
+        String regex = request.getOrDefault("regex", "");
         Map<String, Object> response = new HashMap<>();
         List<Diagnostic> allDiagnostics = new ArrayList<>();
-        LogScanner logScanner = new LogScanner();
+        PipelineLogger pipeLog = new PipelineLogger();
 
         try {
             // ================= 1. 词法分析 (Lexer) =================
@@ -41,7 +43,7 @@ public class CompileController {
             lexer.tokenize();
             List<Token> tokens = lexer.getTokens();
             allDiagnostics.addAll(lexer.getDiagnostics());
-            logScanner.record("1.词法分析", sourceCode.length() + " 字符",
+            pipeLog.record("1.词法分析", sourceCode.length() + " 字符",
                 tokens.size() + " Token, " + lexer.getDiagnostics().size() + " 错误",
                 System.currentTimeMillis() - t1);
 
@@ -50,7 +52,7 @@ public class CompileController {
             Parser parser = new Parser(tokens);
             ASTNode ast = parser.parseProgram();
             allDiagnostics.addAll(parser.getDiagnostics());
-            logScanner.record("2.语法分析", tokens.size() + " Token",
+            pipeLog.record("2.语法分析", tokens.size() + " Token",
                 "AST 根节点: " + (ast != null ? ast.getName() : "null") + ", " + parser.getDiagnostics().size() + " 错误",
                 System.currentTimeMillis() - t2);
 
@@ -61,7 +63,7 @@ public class CompileController {
             if (allDiagnostics.isEmpty()) {
                 quads = irGenerator.generate(ast);
             }
-            logScanner.record("3.IR生成", ast != null ? ast.getName() : "null",
+            pipeLog.record("3.IR生成", ast != null ? ast.getName() : "null",
                 quads.size() + " 四元式",
                 System.currentTimeMillis() - t3);
 
@@ -71,7 +73,7 @@ public class CompileController {
                 long t31 = System.currentTimeMillis();
                 CodeGenerator codeGen = new CodeGenerator(quads);
                 assemblyCode = codeGen.generate();
-                logScanner.record("3.1 MASM汇编生成", quads.size() + " 四元式",
+                pipeLog.record("3.1 MASM汇编生成", quads.size() + " 四元式",
                     assemblyCode.split("\n").length + " 行汇编",
                     System.currentTimeMillis() - t31);
             }
@@ -82,7 +84,7 @@ public class CompileController {
                 long t32 = System.currentTimeMillis();
                 LLVMGenerator llvmGen = new LLVMGenerator(quads);
                 llvmIR = llvmGen.generate();
-                logScanner.record("3.2 LLVM IR 生成", quads.size() + " 四元式",
+                pipeLog.record("3.2 LLVM IR 生成", quads.size() + " 四元式",
                     llvmIR.split("\n").length + " 行 IR",
                     System.currentTimeMillis() - t32);
             }
@@ -98,7 +100,7 @@ public class CompileController {
                 cfgAnalysis.put("dagSummary", optResult.dagSummary);
                 cfgAnalysis.put("blockCount", optResult.blocks.size());
                 cfgAnalysis.put("eliminatedCount", optResult.eliminatedCount);
-                logScanner.record("3.3 DAG优化+流图", quads.size() + " 四元式",
+                pipeLog.record("3.3 DAG优化+流图", quads.size() + " 四元式",
                     optResult.blocks.size() + " 基本块, 消除 " + optResult.eliminatedCount + " 公共子表达式",
                     System.currentTimeMillis() - t33);
             }
@@ -109,9 +111,45 @@ public class CompileController {
                 long t4 = System.currentTimeMillis();
                 Interpreter interpreter = new Interpreter(quads);
                 interpreterOutput = interpreter.run();
-                logScanner.record("4.解释执行", quads.size() + " 四元式",
+                pipeLog.record("4.解释执行", quads.size() + " 四元式",
                     interpreterOutput.size() + " 行输出",
                     System.currentTimeMillis() - t4);
+            }
+
+            // ================= 4.1 日志扫描: 正则→NFA→DFA (选做 4.1) =================
+            Map<String, Object> logScannerResult = null;
+            if (!logText.isEmpty() && !regex.isEmpty()) {
+                long t41 = System.currentTimeMillis();
+                LogScanner logScanner = new LogScanner(logText, regex);
+                boolean ok = logScanner.execute();
+                logScannerResult = new LinkedHashMap<>();
+                logScannerResult.put("success", ok);
+                logScannerResult.put("regex", regex);
+                logScannerResult.put("logText", logText);
+                logScannerResult.put("ast", logScanner.getASTString());
+                logScannerResult.put("nfa", logScanner.getNFAText());
+                logScannerResult.put("dfa", logScanner.getDFAText());
+                if (ok) {
+                    List<Map<String, Object>> scanResults = new ArrayList<>();
+                    for (LogScanner.ScanResult sr : logScanner.scan()) {
+                        Map<String, Object> item = new LinkedHashMap<>();
+                        item.put("lineNo", sr.lineNo);
+                        item.put("content", sr.content);
+                        List<String> matchTexts = new ArrayList<>();
+                        for (LogScanner.Match m : sr.matches) {
+                            matchTexts.add("[" + m.startCol + "-" + m.endCol + "] " + m.text);
+                        }
+                        item.put("matches", matchTexts);
+                        scanResults.add(item);
+                    }
+                    logScannerResult.put("scanResults", scanResults);
+                } else {
+                    logScannerResult.put("error", logScanner.getError());
+                }
+                pipeLog.record("4.1 日志扫描(NFA/DFA)", logText.length() + "字符 + '" + regex + "'",
+                    ok ? "扫描到 " + (logScannerResult.containsKey("scanResults") ?
+                        ((List<?>)logScannerResult.get("scanResults")).size() : 0) + " 行匹配" : "失败",
+                    System.currentTimeMillis() - t41);
             }
 
             // ================= 5. 组装发给前端的数据 =================
@@ -120,8 +158,9 @@ public class CompileController {
             response.put("quads", quads);
             response.put("assemblyCode", assemblyCode);
             response.put("llvmIR", llvmIR);
-            response.put("compileLog", logScanner.toMap());
+            response.put("compileLog", pipeLog.toMap());
             response.put("cfgAnalysis", cfgAnalysis);
+            response.put("logScanner", logScannerResult);
             response.put("interpreterOutput", interpreterOutput);
             response.put("diagnostics", allDiagnostics);
 

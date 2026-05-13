@@ -15,7 +15,7 @@ public class NFABuilder {
         public int acceptState;
         public final Map<Integer, Map<Character, Set<Integer>>> transitions = new LinkedHashMap<>();
         public final Map<Integer, Set<Integer>> epsilonTransitions = new LinkedHashMap<>();
-        public final int totalStates;
+        public int totalStates;
 
         NFA(int startState, int acceptState, int totalStates) {
             this.startState = startState;
@@ -55,7 +55,9 @@ public class NFABuilder {
 
     public NFA build(RegexParser.Node root) {
         stateCounter = 0;
-        return buildNode(root);
+        NFA nfa = buildNode(root);
+        nfa.totalStates = stateCounter;
+        return nfa;
     }
 
     private NFA buildNode(RegexParser.Node node) {
@@ -77,7 +79,7 @@ public class NFABuilder {
     private NFA buildChar(char ch) {
         int s = newState();
         int a = newState();
-        NFA nfa = new NFA(s, a, 2);
+        NFA nfa = new NFA(s, a, stateCounter);
         if (ch != 0) nfa.addTransition(s, ch, a); // ch==0 means epsilon
         else nfa.addEpsilon(s, a);
         return nfa;

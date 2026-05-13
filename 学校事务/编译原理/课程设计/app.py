@@ -59,6 +59,7 @@ RESULT_GROUPS = (
             ("interpreter", "Interpreter"),
             ("llvm_ir", "LLVM IR"),
             ("target_code", "Target Code"),
+            ("assembly", "Assembly"),
             ("optimized_target_code", "Optimized Target Code"),
         ),
     ),

@@ -28,6 +28,7 @@ class OutputTexts(TypedDict):
     interpreter: str
     llvm_ir: str
     target_code: str
+    assembly: str
     optimized_target_code: str
 
 

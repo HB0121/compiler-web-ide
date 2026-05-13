@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import List, Optional
 
+from .assembly import function_params_from_ast, quads_to_masm16
 from .cfg_dag import analyze_control_flow
 from .interpreter import interpret_quads
 from .ir import format_quads, generate_quads
@@ -29,6 +30,7 @@ OUTPUT_NAMES = {
     "interpreter": "interpreter.txt",
     "llvm_ir": "llvm_ir.txt",
     "target_code": "target_code.txt",
+    "assembly": "assembly.asm",
     "optimized_target_code": "optimized_target_code.txt",
 }
 
@@ -58,6 +60,7 @@ def run_pipeline(source: str) -> PipelineResult:
     interpreter_text = interpret_quads(quads).format() if quads else ""
     llvm_ir_text = quads_to_llvm_ir(quads) if quads else ""
     target_code_text = quads_to_target_code(quads) if quads else ""
+    assembly_text = quads_to_masm16(quads, function_params_from_ast(ast)) if quads else ""
     optimized_target_code_text = quads_to_target_code(optimized_quads) if optimized_quads else ""
     diagnostics = lexer_diagnostics + parser_diagnostics + semantic_diagnostics
     texts = build_texts(
@@ -76,6 +79,7 @@ def run_pipeline(source: str) -> PipelineResult:
         interpreter_text,
         llvm_ir_text,
         target_code_text,
+        assembly_text,
         optimized_target_code_text,
     )
 
@@ -107,6 +111,7 @@ def build_texts(
     interpreter_text: str,
     llvm_ir_text: str,
     target_code_text: str,
+    assembly_text: str,
     optimized_target_code_text: str,
 ) -> OutputTexts:
     return {
@@ -125,6 +130,7 @@ def build_texts(
         "interpreter": interpreter_text,
         "llvm_ir": llvm_ir_text,
         "target_code": target_code_text,
+        "assembly": assembly_text,
         "optimized_target_code": optimized_target_code_text,
     }
 

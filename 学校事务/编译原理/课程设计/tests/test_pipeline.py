@@ -38,6 +38,8 @@ class PipelineSmokeTests(unittest.TestCase):
         self.assertIn("return_value", result.texts["interpreter"])
         self.assertIn("define i32 @main()", result.texts["llvm_ir"])
         self.assertIn("FUNC main", result.texts["target_code"])
+        self.assertIn(".MODEL SMALL", result.texts["assembly"])
+        self.assertIn("main PROC", result.texts["assembly"])
         self.assertIn("optimized", result.texts["optimized_quads"])
         self.assertIn("FUNC main", result.texts["optimized_target_code"])
         self.assertIn("Basic Blocks", result.texts["basic_blocks"])
@@ -59,6 +61,7 @@ class PipelineSmokeTests(unittest.TestCase):
             self.assertTrue((out_dir / "interpreter.txt").exists())
             self.assertTrue((out_dir / "llvm_ir.txt").exists())
             self.assertTrue((out_dir / "target_code.txt").exists())
+            self.assertTrue((out_dir / "assembly.asm").exists())
             self.assertTrue((out_dir / "optimized_quads.txt").exists())
             self.assertTrue((out_dir / "optimized_target_code.txt").exists())
             self.assertTrue((out_dir / "basic_blocks.txt").exists())
@@ -71,6 +74,7 @@ class PipelineSmokeTests(unittest.TestCase):
             self.assertIn("return_value", (out_dir / "interpreter.txt").read_text(encoding="utf-8"))
             self.assertIn("define i32 @main()", (out_dir / "llvm_ir.txt").read_text(encoding="utf-8"))
             self.assertIn("FUNC main", (out_dir / "target_code.txt").read_text(encoding="utf-8"))
+            self.assertIn(".MODEL SMALL", (out_dir / "assembly.asm").read_text(encoding="utf-8"))
             self.assertIn("optimized", (out_dir / "optimized_quads.txt").read_text(encoding="utf-8"))
             self.assertIn("FUNC main", (out_dir / "optimized_target_code.txt").read_text(encoding="utf-8"))
             self.assertIn("Basic Blocks", (out_dir / "basic_blocks.txt").read_text(encoding="utf-8"))
@@ -532,6 +536,49 @@ class TargetCodeTests(unittest.TestCase):
         self.assertIn("JL i, 3, L4", target)
         self.assertIn("JMP L6", target)
         self.assertIn("L6:", target)
+
+
+class AssemblyTests(unittest.TestCase):
+    def test_generates_masm16_for_assignment_arithmetic_and_return(self):
+        from compiler.assembly import quads_to_masm16
+
+        quads = [
+            ("main", "_", "_", "_"),
+            ("+", "1", "2", "t1"),
+            ("=", "t1", "_", "x"),
+            ("ret", "_", "_", "x"),
+            ("sys", "_", "_", "_"),
+        ]
+        assembly = quads_to_masm16(quads)
+
+        self.assertIn(".MODEL SMALL", assembly)
+        self.assertIn("main PROC", assembly)
+        self.assertIn("add ax, 2", assembly)
+        self.assertIn("mov WORD PTR [bp-", assembly)
+        self.assertIn("int 21h", assembly)
+
+    def test_generates_masm16_for_function_call_with_parameters(self):
+        from compiler.assembly import quads_to_masm16
+
+        quads = [
+            ("add", "_", "_", "_"),
+            ("+", "a", "b", "t1"),
+            ("ret", "_", "_", "t1"),
+            ("main", "_", "_", "_"),
+            ("para", "2", "_", "_"),
+            ("para", "3", "_", "_"),
+            ("call", "add", "_", "t2"),
+            ("ret", "_", "_", "t2"),
+            ("sys", "_", "_", "_"),
+        ]
+        assembly = quads_to_masm16(quads, {"add": ["a", "b"], "main": []})
+
+        self.assertIn("fn_add PROC", assembly)
+        self.assertIn("mov WORD PTR [bp-2], ax", assembly)
+        self.assertIn("mov WORD PTR [bp-4], bx", assembly)
+        self.assertIn("call fn_add", assembly)
+        self.assertIn("mov ax, 2", assembly)
+        self.assertIn("mov bx, 3", assembly)
 
 
 class OptimizerTests(unittest.TestCase):

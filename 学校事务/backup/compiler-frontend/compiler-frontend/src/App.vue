@@ -119,6 +119,7 @@
           </div>
 
           <div v-if="activeTab === 'log'" class="tab-panel log-panel">
+            <!-- 编译流水线日志表 -->
             <div v-if="compileLog && compileLog.stages">
               <table class="log-table">
                 <thead><tr><th>阶段</th><th>时间</th><th>耗时</th><th>输入</th><th>输出</th></tr></thead>
@@ -137,6 +138,55 @@
               </div>
             </div>
             <div v-else class="empty-state">暂无编译日志</div>
+
+            <!-- 正则→NFA→DFA 日志扫描器 (选做 4.1) -->
+            <div class="scanner-section">
+              <h3 class="cfg-title">正则表达式日志扫描器 (NFA/DFA)</h3>
+              <div class="scanner-inputs">
+                <div class="scanner-field">
+                  <label>日志文本 (每行一条):</label>
+                  <textarea v-model="logText" class="log-textarea" placeholder="输入待扫描的日志内容...&#10;例如：&#10;2024-01-15 ERROR disk full&#10;2024-01-15 INFO server started&#10;2024-01-15 WARN memory low"></textarea>
+                </div>
+                <div class="scanner-field">
+                  <label>正则表达式:</label>
+                  <input v-model="regexInput" class="regex-input" placeholder="例如: ERROR|WARN" />
+                </div>
+              </div>
+
+              <!-- NFA / DFA 结果 -->
+              <div v-if="logScannerData" class="scanner-results">
+                <div v-if="logScannerData.success === false" class="scanner-error">
+                  ❌ {{ logScannerData.error }}
+                </div>
+                <div v-else>
+                  <div class="cfg-section">
+                    <h4>正则 AST: {{ logScannerData.ast }}</h4>
+                  </div>
+                  <div class="cfg-section">
+                    <h4>NFA</h4>
+                    <pre class="cfg-code">{{ logScannerData.nfa }}</pre>
+                  </div>
+                  <div class="cfg-section">
+                    <h4>DFA</h4>
+                    <pre class="cfg-code">{{ logScannerData.dfa }}</pre>
+                  </div>
+                  <div class="cfg-section">
+                    <h4>扫描结果</h4>
+                    <table class="log-table" v-if="logScannerData.scanResults && logScannerData.scanResults.length > 0">
+                      <thead><tr><th>行号</th><th>内容</th><th>匹配</th></tr></thead>
+                      <tbody>
+                        <tr v-for="(r, idx) in logScannerData.scanResults" :key="idx">
+                          <td>{{ r.lineNo }}</td>
+                          <td>{{ r.content }}</td>
+                          <td>{{ r.matches.join(', ') }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    <div v-else class="empty-state">无匹配行</div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div v-if="activeTab === 'errors'" class="tab-panel">
@@ -181,6 +231,9 @@ const llvmCopied = ref(false)
 const llvmIR = ref('')
 const compileLog = ref(null)
 const cfgAnalysis = ref(null)
+const logScannerData = ref(null)
+const logText = ref('')
+const regexInput = ref('')
 
 const editorOptions = { automaticLayout: true, fontSize: 16, minimap: { enabled: false } }
 
@@ -203,7 +256,11 @@ const runCompile = async () => {
   compileStatus.value = null
   
   try {
-    const response = await axios.post('http://localhost:8080/api/compile', { sourceCode: sourceCode.value })
+    const response = await axios.post('http://localhost:8080/api/compile', {
+      sourceCode: sourceCode.value,
+      logText: logText.value,
+      regex: regexInput.value
+    })
     const data = response.data
     
     tokens.value = data.tokens || []
@@ -215,6 +272,7 @@ const runCompile = async () => {
     llvmIR.value = data.llvmIR || ''
     compileLog.value = data.compileLog || null
     cfgAnalysis.value = data.cfgAnalysis || null
+    logScannerData.value = data.logScanner || null
     compileStatus.value = data.success
     rawJson.value = JSON.stringify(data, null, 2)
     
@@ -323,4 +381,13 @@ const copyLLVMIR = async () => {
 .log-table td { padding: 8px 12px; border-bottom: 1px solid #333; }
 .log-stage { color: #569cd6; font-weight: bold; white-space: nowrap; }
 .log-summary { margin-top: 14px; padding: 10px 14px; background-color: #2d2d2d; border-radius: 4px; font-size: 14px; color: #4ec9b0; text-align: right; }
+
+.scanner-section { margin-top: 24px; padding-top: 16px; border-top: 2px solid #3c3c3c; }
+.scanner-inputs { display: flex; gap: 16px; margin-bottom: 16px; }
+.scanner-field { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.scanner-field label { font-size: 13px; color: #888; }
+.log-textarea { width: 100%; height: 100px; background: #252526; color: #d4d4d4; border: 1px solid #3c3c3c; border-radius: 4px; padding: 8px; font-family: 'Consolas', monospace; font-size: 12px; resize: vertical; }
+.regex-input { width: 100%; background: #252526; color: #d4d4d4; border: 1px solid #3c3c3c; border-radius: 4px; padding: 8px 12px; font-family: 'Consolas', monospace; font-size: 13px; }
+.scanner-results { margin-top: 12px; }
+.scanner-error { padding: 12px; background-color: #3a1d1d; border-left: 4px solid #f48771; color: #f48771; border-radius: 4px; }
 </style>
