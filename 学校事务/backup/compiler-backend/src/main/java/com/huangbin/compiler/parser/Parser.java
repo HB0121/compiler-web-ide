@@ -62,13 +62,18 @@ public class Parser {
     private ASTNode parseFuncDecl() {
         String typeStr = "";
         if (!current().getText().equals("main")) { typeStr = current().getText() + " "; pos++; }
+
         Token idToken = current();
-        if (idToken != null && idToken.getKind().equals("identifier")) pos++;
+        // 【核心修复1】：白名单放行 main
+        if (idToken != null && (idToken.getKind().equals("identifier") || idToken.getText().equals("main"))) pos++;
+
         expectText("(");
         while (current() != null && !current().getText().equals(")")) pos++;
         expectText(")");
+
         ASTNode funcNode = new ASTNode("FuncDecl");
         funcNode.setValue(typeStr + (idToken != null ? idToken.getText() : ""));
+
         if (current() != null && current().getText().equals("{")) {
             funcNode.addChild(parseCompoundStmt());
         } else {
@@ -115,10 +120,11 @@ public class Parser {
         if (text.equals("const") || text.equals("int") || text.equals("float") || text.equals("char")) return parseVarDecl();
         if (text.equals("if")) return parseIfStmt();
         if (text.equals("while")) return parseWhileStmt();
-        if (text.equals("for")) return parseForStmt(); // 【新增】for 循环入口
+        if (text.equals("for")) return parseForStmt();
         if (text.equals("{")) return parseCompoundStmt();
 
-        if (curr.getKind().equals("identifier")) {
+        // 【核心修复2】：白名单放行 write 和 read
+        if (curr.getKind().equals("identifier") || text.equals("write") || text.equals("read")) {
             if (pos + 1 < tokens.size() && tokens.get(pos + 1).getText().equals("(")) return parseFuncCall();
             return parseAssignment();
         }
@@ -127,18 +133,16 @@ public class Parser {
         pos++; return null;
     }
 
-    // 【新增】解析 for 循环结构
     private ASTNode parseForStmt() {
         ASTNode forNode = new ASTNode("ForStmt");
         expectText("for"); expectText("(");
-        forNode.addChild(parseAssignmentInner()); expectText(";"); // init
-        forNode.addChild(parseLogical()); expectText(";");         // cond
-        forNode.addChild(parseAssignmentInner()); expectText(")"); // update
-        forNode.addChild(parseStatement());                        // body
+        forNode.addChild(parseAssignmentInner()); expectText(";");
+        forNode.addChild(parseLogical()); expectText(";");
+        forNode.addChild(parseAssignmentInner()); expectText(")");
+        forNode.addChild(parseStatement());
         return forNode;
     }
 
-    // 辅助解析器：无分号的赋值表达式 (用于 for 括号内)
     private ASTNode parseAssignmentInner() {
         Token idToken = current(); pos++;
         ASTNode assignNode = new ASTNode("Assign"); assignNode.setValue("=");
@@ -159,7 +163,6 @@ public class Parser {
         ASTNode callNode = new ASTNode("FuncCall"); callNode.setValue(idToken.getText());
         expectText("(");
         if (current() != null && !current().getText().equals(")")) {
-            // 【新增】如果是被单引号或双引号包裹的字符串
             if (current().getText().startsWith("'") || current().getText().startsWith("\"")) {
                 ASTNode strNode = new ASTNode("String"); strNode.setValue(current().getText());
                 callNode.addChild(strNode); pos++;
@@ -251,7 +254,6 @@ public class Parser {
         Token curr = current();
         if (curr == null) return null;
 
-        // 【新增】处理 read() 内联函数调用
         if (curr.getText().equals("read")) {
             pos++; expectText("("); expectText(")");
             ASTNode readNode = new ASTNode("FuncCall"); readNode.setValue("read");
