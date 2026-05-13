@@ -21,8 +21,8 @@ public class Interpreter {
     }
 
     public List<String> run() {
-        outputLogs.add("🚀 开始解释执行...");
-        int maxSteps = 1000;
+        outputLogs.add("🚀 开始解释执行中间代码...");
+        int maxSteps = 2000; // 稍微调大一点支持复杂循环
         int steps = 0;
 
         for (int i = 0; i < quads.size() && steps < maxSteps; steps++) {
@@ -54,11 +54,12 @@ public class Interpreter {
                     outputLogs.add(String.format("[%d] 🧠 逻辑: %s = %d %s %d -> %d", i, q.result, b1, q.op, b2, bRes));
                     break;
 
-                // 【新增】处理所有的比较关系运算符！
-                case ">": case "<": case "==": case "!=":
+                case ">": case "<": case ">=": case "<=": case "==": case "!=":
                     int cv1 = getValue(q.arg1), cv2 = getValue(q.arg2), cRes = 0;
                     if (q.op.equals(">")) cRes = cv1 > cv2 ? 1 : 0;
                     if (q.op.equals("<")) cRes = cv1 < cv2 ? 1 : 0;
+                    if (q.op.equals(">=")) cRes = cv1 >= cv2 ? 1 : 0;
+                    if (q.op.equals("<=")) cRes = cv1 <= cv2 ? 1 : 0;
                     if (q.op.equals("==")) cRes = cv1 == cv2 ? 1 : 0;
                     if (q.op.equals("!=")) cRes = cv1 != cv2 ? 1 : 0;
                     memory.put(q.result, cRes);
@@ -76,7 +77,6 @@ public class Interpreter {
                     outputLogs.add(String.format("[%d] 🔀 无条件跳转 -> %d", i, nextI));
                     break;
 
-                // 【统一处理跳转】
                 case "J!=":
                     if (getValue(q.arg1) != getValue(q.arg2)) {
                         nextI = Integer.parseInt(q.result);
@@ -89,8 +89,8 @@ public class Interpreter {
             i = nextI;
         }
 
-        if (steps >= maxSteps) outputLogs.add("⚠️ 触发安全限制：疑似死循环，已中止！");
-        outputLogs.add("✅ 执行完毕！最终内存状态: " + memory.toString());
+        if (steps >= maxSteps) outputLogs.add("⚠️ 警告：检测到疑似无限循环，已自动停止执行。");
+        outputLogs.add("✅ 解释执行完毕！最终符号表状态: " + memory.toString());
         return outputLogs;
     }
 }

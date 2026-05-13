@@ -82,6 +82,8 @@ class CompilerApp:
         self.error_lines: set[int] = set()
         self.log_graph_fragments: list[str] = []
         self.current_visual_key: str | None = None
+        self.graph_zoom = 1.0
+        self.graph_zoom_var = tk.StringVar(value="100%")
 
         self.root.title("Compiler Course Design")
         self.root.geometry("1180x760")
@@ -248,8 +250,17 @@ class CompilerApp:
 
         text_frame = ttk.Frame(parent, style="Panel.TFrame")
         text_frame.grid(row=2, column=1, sticky="nsew")
-        text_frame.rowconfigure(0, weight=1)
+        text_frame.rowconfigure(1, weight=1)
         text_frame.columnconfigure(0, weight=1)
+
+        self.graph_tools = ttk.Frame(text_frame, style="Panel.TFrame")
+        self.graph_tools.grid(row=0, column=0, columnspan=2, sticky="ew", pady=(0, 8))
+        ttk.Button(self.graph_tools, text="缩小", command=lambda: self._zoom_graph(0.8)).pack(side=tk.LEFT, padx=(0, 6))
+        ttk.Button(self.graph_tools, text="重置", command=self._reset_graph_zoom).pack(side=tk.LEFT, padx=(0, 6))
+        ttk.Button(self.graph_tools, text="适应", command=self._fit_graph_zoom).pack(side=tk.LEFT, padx=(0, 6))
+        ttk.Button(self.graph_tools, text="放大", command=lambda: self._zoom_graph(1.25)).pack(side=tk.LEFT, padx=(0, 10))
+        ttk.Label(self.graph_tools, textvariable=self.graph_zoom_var, style="SummaryLabel.TLabel").pack(side=tk.LEFT)
+        self.graph_tools.grid_remove()
 
         self.output_text = tk.Text(
             text_frame,
@@ -263,14 +274,15 @@ class CompilerApp:
             padx=10,
             pady=10,
         )
-        output_y = ttk.Scrollbar(text_frame, orient=tk.VERTICAL, command=self.output_text.yview)
-        output_x = ttk.Scrollbar(text_frame, orient=tk.HORIZONTAL, command=self.output_text.xview)
-        self.output_text.configure(yscrollcommand=output_y.set, xscrollcommand=output_x.set)
-        self.output_text.grid(row=0, column=0, sticky="nsew")
+        self.output_y = ttk.Scrollbar(text_frame, orient=tk.VERTICAL, command=self.output_text.yview)
+        self.output_x = ttk.Scrollbar(text_frame, orient=tk.HORIZONTAL, command=self.output_text.xview)
+        self.output_text.configure(yscrollcommand=self.output_y.set, xscrollcommand=self.output_x.set)
+        self.output_text.grid(row=1, column=0, sticky="nsew")
         self.graph_canvas = tk.Canvas(text_frame, background="#f8fafc", highlightthickness=0)
+        self.graph_canvas.configure(yscrollcommand=self.output_y.set, xscrollcommand=self.output_x.set)
         self.graph_canvas.bind("<Configure>", self._redraw_current_graph)
-        output_y.grid(row=0, column=1, sticky="ns")
-        output_x.grid(row=1, column=0, sticky="ew")
+        self.output_y.grid(row=1, column=1, sticky="ns")
+        self.output_x.grid(row=2, column=0, sticky="ew")
 
     def _build_status_bar(self) -> None:
         self.status_var = tk.StringVar()
@@ -517,13 +529,45 @@ class CompilerApp:
         self.current_visual_key = None
         if hasattr(self, "graph_canvas"):
             self.graph_canvas.grid_remove()
-        self.output_text.grid()
+        if hasattr(self, "graph_tools"):
+            self.graph_tools.grid_remove()
+        self.output_y.configure(command=self.output_text.yview)
+        self.output_x.configure(command=self.output_text.xview)
+        self.output_text.configure(yscrollcommand=self.output_y.set, xscrollcommand=self.output_x.set)
+        self.output_text.grid(row=1, column=0, sticky="nsew")
 
     def _show_graph(self, key: str) -> None:
         self.current_visual_key = key
         self.output_text.grid_remove()
-        self.graph_canvas.grid(row=0, column=0, sticky="nsew")
+        self.graph_tools.grid(row=0, column=0, columnspan=2, sticky="ew", pady=(0, 8))
+        self.output_y.configure(command=self.graph_canvas.yview)
+        self.output_x.configure(command=self.graph_canvas.xview)
+        self.graph_canvas.configure(yscrollcommand=self.output_y.set, xscrollcommand=self.output_x.set)
+        self.graph_canvas.grid(row=1, column=0, sticky="nsew")
         self._draw_automata_graph(key)
+
+    def _zoom_graph(self, factor: float) -> None:
+        self.graph_zoom = min(2.5, max(0.5, self.graph_zoom * factor))
+        self.graph_zoom_var.set(f"{round(self.graph_zoom * 100):.0f}%")
+        if self.current_visual_key:
+            self._draw_automata_graph(self.current_visual_key)
+
+    def _reset_graph_zoom(self) -> None:
+        self.graph_zoom = 1.0
+        self.graph_zoom_var.set("100%")
+        if self.current_visual_key:
+            self._draw_automata_graph(self.current_visual_key)
+
+    def _fit_graph_zoom(self) -> None:
+        fragments = self.log_graph_fragments
+        if not fragments:
+            return
+        available_width = max(self.graph_canvas.winfo_width(), 640)
+        natural_width = 70 * 2 + 150 * len(fragments) + 120
+        self.graph_zoom = min(2.5, max(0.5, available_width / natural_width))
+        self.graph_zoom_var.set(f"{round(self.graph_zoom * 100):.0f}%")
+        if self.current_visual_key:
+            self._draw_automata_graph(self.current_visual_key)
 
     def _redraw_current_graph(self, event=None) -> None:
         if self.current_visual_key:
@@ -533,6 +577,7 @@ class CompilerApp:
         self.graph_canvas.delete("all")
         fragments = self.log_graph_fragments
         if not fragments:
+            self.graph_canvas.configure(scrollregion=(0, 0, 640, 360))
             self.graph_canvas.create_text(
                 24,
                 24,
@@ -545,14 +590,33 @@ class CompilerApp:
 
         prefix = "q" if key == "log_nfa_visual" else "D"
         title = "NFA Graph" if key == "log_nfa_visual" else "DFA Graph"
-        width = max(self.graph_canvas.winfo_width(), 640)
-        y = max(self.graph_canvas.winfo_height() // 2, 180)
-        margin = 70
-        step = max(120, min(180, (width - margin * 2) // max(len(fragments), 1)))
-        radius = 24
+        zoom = self.graph_zoom
+        visible_width = max(self.graph_canvas.winfo_width(), 640)
+        visible_height = max(self.graph_canvas.winfo_height(), 360)
+        margin = int(70 * zoom)
+        step = max(int(100 * zoom), int(150 * zoom))
+        radius = max(14, int(24 * zoom))
+        y = max(visible_height // 2, int(180 * zoom))
+        graph_width = max(visible_width, margin * 2 + step * len(fragments) + int(120 * zoom))
+        graph_height = max(visible_height, y + int(120 * zoom))
+        self.graph_canvas.configure(scrollregion=(0, 0, graph_width, graph_height))
 
-        self.graph_canvas.create_text(margin, 28, anchor="w", fill="#0f172a", font=("Microsoft YaHei UI", 14, "bold"), text=title)
-        self.graph_canvas.create_text(margin, 52, anchor="w", fill="#64748b", font=("Consolas", 10), text=f"Regex: {self.regex_var.get().strip()}")
+        self.graph_canvas.create_text(
+            margin,
+            int(28 * zoom),
+            anchor="w",
+            fill="#0f172a",
+            font=("Microsoft YaHei UI", max(10, int(14 * zoom)), "bold"),
+            text=title,
+        )
+        self.graph_canvas.create_text(
+            margin,
+            int(54 * zoom),
+            anchor="w",
+            fill="#64748b",
+            font=("Consolas", max(8, int(10 * zoom))),
+            text=f"Regex: {self.regex_var.get().strip()}",
+        )
 
         positions = []
         for index in range(len(fragments) + 1):
@@ -562,22 +626,25 @@ class CompilerApp:
             state = f"{prefix}{index}"
             fill = "#dcfce7" if index == len(positions) - 1 else "#e0f2fe"
             outline = "#16a34a" if index == len(positions) - 1 else "#0284c7"
-            self.graph_canvas.create_oval(x - radius, node_y - radius, x + radius, node_y + radius, fill=fill, outline=outline, width=2)
+            self.graph_canvas.create_oval(x - radius, node_y - radius, x + radius, node_y + radius, fill=fill, outline=outline, width=max(1, int(2 * zoom)))
             if index == len(positions) - 1:
-                self.graph_canvas.create_oval(x - radius + 5, node_y - radius + 5, x + radius - 5, node_y + radius - 5, outline=outline, width=2)
-            self.graph_canvas.create_text(x, node_y, text=state, fill="#0f172a", font=("Consolas", 11, "bold"))
+                inset = max(3, int(5 * zoom))
+                self.graph_canvas.create_oval(x - radius + inset, node_y - radius + inset, x + radius - inset, node_y + radius - inset, outline=outline, width=max(1, int(2 * zoom)))
+            self.graph_canvas.create_text(x, node_y, text=state, fill="#0f172a", font=("Consolas", max(8, int(11 * zoom)), "bold"))
 
         start_x, start_y = positions[0]
-        self.graph_canvas.create_line(start_x - 58, start_y, start_x - radius, start_y, arrow=tk.LAST, fill="#334155", width=2)
-        self.graph_canvas.create_text(start_x - 62, start_y - 18, text="start", fill="#334155", font=("Consolas", 9))
+        start_gap = int(58 * zoom)
+        self.graph_canvas.create_line(start_x - start_gap, start_y, start_x - radius, start_y, arrow=tk.LAST, fill="#334155", width=max(1, int(2 * zoom)))
+        self.graph_canvas.create_text(start_x - start_gap - int(4 * zoom), start_y - int(18 * zoom), text="start", fill="#334155", font=("Consolas", max(8, int(9 * zoom))))
 
         for index, fragment in enumerate(fragments):
             x1, y1 = positions[index]
             x2, y2 = positions[index + 1]
-            self.graph_canvas.create_line(x1 + radius, y1, x2 - radius, y2, arrow=tk.LAST, fill="#334155", width=2)
+            self.graph_canvas.create_line(x1 + radius, y1, x2 - radius, y2, arrow=tk.LAST, fill="#334155", width=max(1, int(2 * zoom)))
             label = fragment if len(fragment) <= 24 else fragment[:21] + "..."
-            self.graph_canvas.create_rectangle((x1 + x2) / 2 - 46, y1 - 48, (x1 + x2) / 2 + 46, y1 - 24, fill="#f8fafc", outline="")
-            self.graph_canvas.create_text((x1 + x2) / 2, y1 - 36, text=label, fill="#7c2d12", font=("Consolas", 9))
+            label_half_width = max(46, int(46 * zoom))
+            self.graph_canvas.create_rectangle((x1 + x2) / 2 - label_half_width, y1 - int(48 * zoom), (x1 + x2) / 2 + label_half_width, y1 - int(24 * zoom), fill="#f8fafc", outline="")
+            self.graph_canvas.create_text((x1 + x2) / 2, y1 - int(36 * zoom), text=label, fill="#7c2d12", font=("Consolas", max(8, int(9 * zoom))))
 
     def _source(self) -> str:
         return self.source_text.get("1.0", "end-1c")

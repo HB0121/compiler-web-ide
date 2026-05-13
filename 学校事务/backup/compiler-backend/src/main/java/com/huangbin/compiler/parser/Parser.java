@@ -86,7 +86,7 @@ public class Parser {
 
         while (current() != null) {
             Token idToken = current();
-            if (idToken.getKind().equals("identifier")) pos++;
+            if (idToken != null && idToken.getKind().equals("identifier")) pos++;
             else break;
 
             ASTNode idNode = new ASTNode("Identifier");
@@ -169,7 +169,6 @@ public class Parser {
         return assignNode;
     }
 
-    // ================= 终极表达式层级：逻辑 -> 关系 -> 算术 -> 乘除 -> 基础(含负数) =================
     private ASTNode parseLogical() {
         ASTNode left = parseRelational();
         if (left == null) return null;
@@ -186,7 +185,9 @@ public class Parser {
         ASTNode left = parseExpression();
         if (left == null) return null;
         Token curr = current();
-        while (curr != null && (curr.getText().equals(">") || curr.getText().equals("<") || curr.getText().equals("==") || curr.getText().equals("!="))) {
+        while (curr != null && (curr.getText().equals(">") || curr.getText().equals("<") ||
+                curr.getText().equals(">=") || curr.getText().equals("<=") ||
+                curr.getText().equals("==") || curr.getText().equals("!="))) {
             pos++; ASTNode opNode = new ASTNode("RelOp"); opNode.setValue(curr.getText());
             ASTNode right = parseExpression(); opNode.addChild(left); opNode.addChild(right);
             left = opNode; curr = current();
@@ -221,16 +222,10 @@ public class Parser {
     private ASTNode parseFactor() {
         Token curr = current();
         if (curr == null) return null;
-
-        // 【新增】处理一元负号，例如 -2
         if (curr.getText().equals("-")) {
-            pos++;
-            ASTNode unaryNode = new ASTNode("UnaryOp");
-            unaryNode.setValue("-");
-            unaryNode.addChild(parseFactor());
-            return unaryNode;
+            pos++; ASTNode unaryNode = new ASTNode("UnaryOp"); unaryNode.setValue("-");
+            unaryNode.addChild(parseFactor()); return unaryNode;
         }
-
         if (curr.getKind().equals("int_literal") || curr.getKind().equals("float_literal")) {
             ASTNode node = new ASTNode("Literal"); node.setValue(curr.getText()); pos++; return node;
         } else if (curr.getKind().equals("identifier")) {
