@@ -1,5 +1,6 @@
 package com.huangbin.compiler.controller;
 
+import com.huangbin.compiler.codegen.CodeGenerator;
 import com.huangbin.compiler.interpreter.Interpreter;
 import com.huangbin.compiler.ir.IRGenerator;
 import com.huangbin.compiler.lexer.Lexer;
@@ -45,6 +46,13 @@ public class CompileController {
                 quads = irGenerator.generate(ast);
             }
 
+            // ================= 3.1 汇编代码生成 (Code Generator) =================
+            String assemblyCode = "";
+            if (allDiagnostics.isEmpty() && !quads.isEmpty()) {
+                CodeGenerator codeGen = new CodeGenerator(quads);
+                assemblyCode = codeGen.generate();
+            }
+
             // ================= 4. 解释执行 (Interpreter) =================
             List<String> interpreterOutput = new ArrayList<>();
             if (allDiagnostics.isEmpty() && !quads.isEmpty()) {
@@ -56,6 +64,7 @@ public class CompileController {
             response.put("tokens", tokens);
             response.put("ast", ast);
             response.put("quads", quads);
+            response.put("assemblyCode", assemblyCode);
             response.put("interpreterOutput", interpreterOutput);
             response.put("diagnostics", allDiagnostics);
 

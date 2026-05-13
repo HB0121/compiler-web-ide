@@ -30,6 +30,7 @@
           <button :class="['tab-btn', { active: activeTab === 'ast' }]" @click="activeTab = 'ast'">🌳 语法树</button>
           <button :class="['tab-btn', { active: activeTab === 'quads' }]" @click="activeTab = 'quads'">🔢 四元式 (IR)</button>
           <button :class="['tab-btn', { active: activeTab === 'output' }]" @click="activeTab = 'output'">🚀 运行结果</button>
+          <button :class="['tab-btn', { active: activeTab === 'asm' }]" @click="activeTab = 'asm'">💾 Assembly</button>
           <button :class="['tab-btn', { active: activeTab === 'errors' }]" @click="activeTab = 'errors'">⚠️ 诊断 ({{ diagnostics.length }})</button>
           <button :class="['tab-btn', { active: activeTab === 'raw' }]" @click="activeTab = 'raw'">📄 Raw JSON</button>
         </div>
@@ -79,6 +80,11 @@
             <div v-else class="empty-state">解释器未运行或无输出</div>
           </div>
 
+          <div v-if="activeTab === 'asm'" class="tab-panel asm-panel">
+            <pre class="asm-code" v-if="assemblyCode">{{ assemblyCode }}</pre>
+            <div v-else class="empty-state">暂无汇编代码 (请检查语法是否完全正确)</div>
+          </div>
+
           <div v-if="activeTab === 'errors'" class="tab-panel">
             <div v-if="diagnostics.length > 0" class="error-list">
               <div v-for="(err, index) in diagnostics" :key="index" class="error-item">
@@ -111,8 +117,9 @@ const activeTab = ref('output')
 const tokens = ref([])
 const rawAst = ref(null)
 const diagnostics = ref([])
-const quads = ref([])               
-const interpreterOutput = ref([])   
+const quads = ref([])
+const interpreterOutput = ref([])
+const assemblyCode = ref('')
 const rawJson = ref('点击运行获取结果...')
 const compileStatus = ref(null)
 
@@ -143,8 +150,9 @@ const runCompile = async () => {
     tokens.value = data.tokens || []
     rawAst.value = data.ast || null
     diagnostics.value = data.diagnostics || []
-    quads.value = data.quads || []                                  
-    interpreterOutput.value = data.interpreterOutput || []          
+    quads.value = data.quads || []
+    interpreterOutput.value = data.interpreterOutput || []
+    assemblyCode.value = data.assemblyCode || ''
     compileStatus.value = data.success
     rawJson.value = JSON.stringify(data, null, 2)
     
@@ -202,4 +210,6 @@ const runCompile = async () => {
 .output-panel { padding: 15px; }
 .console-box { background-color: #000; padding: 20px; border-radius: 6px; font-family: 'Consolas', monospace; box-shadow: inset 0 0 10px rgba(0,0,0,0.5); min-height: 300px;}
 .console-line { color: #4af626; font-size: 15px; line-height: 1.6; margin-bottom: 8px; text-shadow: 0 0 5px rgba(74, 246, 38, 0.3);}
+.asm-panel { padding: 0; }
+.asm-code { margin: 0; padding: 15px; font-family: 'Consolas', 'Courier New', monospace; font-size: 13px; line-height: 1.5; color: #d4d4d4; background-color: #1e1e1e; white-space: pre; overflow: auto; height: 100%; }
 </style>
