@@ -1,5 +1,7 @@
 package com.huangbin.compiler.model;
 
+/** @author 黄彬 (12303070250) */
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

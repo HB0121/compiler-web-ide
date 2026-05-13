@@ -1,5 +1,7 @@
 package com.huangbin.compiler.interpreter;
 
+/** @author 黄彬 (12303070250) */
+
 import com.huangbin.compiler.ir.IRGenerator.Quad;
 import java.util.ArrayList;
 import java.util.HashMap;

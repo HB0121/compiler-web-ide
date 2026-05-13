@@ -6,6 +6,8 @@ import java.util.*;
 /**
  * MASM 16-bit 汇编代码生成器
  * 将四元式中间代码转换为可在 DOSBox + MASM 环境下汇编运行的 .ASM 文件
+ *
+ * @author 黄彬 (12303070250)
  */
 public class CodeGenerator {
 

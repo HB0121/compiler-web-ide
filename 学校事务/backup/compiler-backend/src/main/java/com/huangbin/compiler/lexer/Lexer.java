@@ -1,5 +1,7 @@
 package com.huangbin.compiler.lexer;
 
+/** @author 黄彬 (12303070250) */
+
 import com.huangbin.compiler.model.Diagnostic;
 import com.huangbin.compiler.model.Token;
 
