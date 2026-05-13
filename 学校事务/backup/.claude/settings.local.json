@@ -2,7 +2,14 @@
   "permissions": {
     "allow": [
       "Bash(git -C \"/d/Users/28197/Documents/GitHub/bivote_rep/学校事务/backup\" log --oneline -10)",
-      "Bash(grep -v \"^$\")"
+      "Bash(grep -v \"^$\")",
+      "Bash(./mvnw compile *)",
+      "Bash(./mvnw spring-boot:run)",
+      "Bash(curl -s -X POST http://localhost:8080/api/compile -H \"Content-Type: application/json\" -d \"{\\\\\"sourceCode\\\\\":\\\\\"void main\\(\\) { int a; int b; a = 10; b = 20; a = a + b; write\\(a\\); }\\\\\"}\")",
+      "Bash(curl -s -X POST http://localhost:8080/api/compile -H \"Content-Type: application/json\" -d \"{\\\\\"sourceCode\\\\\":\\\\\"int max\\(int x, int y\\) { if \\(x > y\\) { return x; } return y; } void main\\(\\) { int a; int b; int m; a = read\\(\\); b = read\\(\\); m = max\\(a, b\\); write\\(m\\); }\\\\\"}\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('SUCCESS:', d['success']\\); print\\('--- ASSEMBLY ---'\\); print\\(d['assemblyCode']\\); print\\('--- INTERPRETER ---'\\); print\\(d['interpreterOutput']\\)\")",
+      "Bash(curl -s -X POST http://localhost:8080/api/compile -H \"Content-Type: application/json\" -d \"{\\\\\"sourceCode\\\\\":\\\\\"void main\\(\\) { int a; int b; a = 10; b = a + 20; write\\(b\\); }\\\\\"}\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('SUCCESS:', d['success']\\); print\\('--- ASSEMBLY ---'\\); print\\(d['assemblyCode']\\)\")"
     ]
   }
 }

@@ -17,6 +17,7 @@ public class CodeGenerator {
     private final Map<Integer, String[]> funcParams = new LinkedHashMap<>(); // funcStartIdx -> paramNames
     private final Set<Integer> jumpTargets = new LinkedHashSet<>();
     private final Set<String> funcNameSet = new LinkedHashSet<>();
+    private static final Set<String> RESERVED = Set.of("write", "write_str", "read", "main");
     private int labelCounter = 0;
     private int strCounter = 0;
 
@@ -77,7 +78,8 @@ public class CodeGenerator {
     private void collectVar(String s) {
         if (s == null || s.equals("_") || s.isEmpty()) return;
         try { Integer.parseInt(s); return; } catch (NumberFormatException ignored) {}
-        // 收集所有非数字、非空的标识符
+        if (RESERVED.contains(s)) return;
+        // 收集所有非数字、非空的标识符（在上面已经排除了保留字）
         variables.add(s);
     }
 
