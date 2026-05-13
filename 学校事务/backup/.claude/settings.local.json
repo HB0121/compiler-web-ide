@@ -9,7 +9,11 @@
       "Bash(curl -s -X POST http://localhost:8080/api/compile -H \"Content-Type: application/json\" -d \"{\\\\\"sourceCode\\\\\":\\\\\"int max\\(int x, int y\\) { if \\(x > y\\) { return x; } return y; } void main\\(\\) { int a; int b; int m; a = read\\(\\); b = read\\(\\); m = max\\(a, b\\); write\\(m\\); }\\\\\"}\")",
       "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('SUCCESS:', d['success']\\); print\\('--- ASSEMBLY ---'\\); print\\(d['assemblyCode']\\); print\\('--- INTERPRETER ---'\\); print\\(d['interpreterOutput']\\)\")",
       "Bash(curl -s -X POST http://localhost:8080/api/compile -H \"Content-Type: application/json\" -d \"{\\\\\"sourceCode\\\\\":\\\\\"void main\\(\\) { int a; int b; a = 10; b = a + 20; write\\(b\\); }\\\\\"}\")",
-      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('SUCCESS:', d['success']\\); print\\('--- ASSEMBLY ---'\\); print\\(d['assemblyCode']\\)\")"
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('SUCCESS:', d['success']\\); print\\('--- ASSEMBLY ---'\\); print\\(d['assemblyCode']\\)\")",
+      "Bash(curl -s -X POST http://localhost:8080/api/compile -H \"Content-Type: application/json\" -d \"{\\\\\"sourceCode\\\\\":\\\\\"void main\\(\\) { int a; a = 10; write\\(a\\); }\\\\\"}\")",
+      "Bash(curl -s -X POST http://localhost:8080/api/compile -H \"Content-Type: application/json\" -d \"{\\\\\"sourceCode\\\\\":\\\\\"void main\\(\\) { int a; int b; int m; a = 15; b = 10; if \\(a > b\\) { m = a; } else { m = b; } write\\(m\\); }\\\\\"}\")",
+      "Bash(python3 -c ' *)",
+      "Bash(curl -s -X POST http://localhost:8080/api/compile -H \"Content-Type: application/json\" -d \"{\\\\\"sourceCode\\\\\":\\\\\"int add\\(int x, int y\\) { return x + y; } void main\\(\\) { int r; r = add\\(3, 5\\); write\\(r\\); }\\\\\"}\")"
     ]
   }
 }

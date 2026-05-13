@@ -77,9 +77,15 @@ public class CodeGenerator {
 
     private void collectVar(String s) {
         if (s == null || s.equals("_") || s.isEmpty()) return;
+        // 处理逗号分隔的参数列表 (来自 FUNC quad 的 arg2)
+        if (s.contains(",")) {
+            for (String part : s.split(",")) {
+                collectVar(part.trim());
+            }
+            return;
+        }
         try { Integer.parseInt(s); return; } catch (NumberFormatException ignored) {}
         if (RESERVED.contains(s)) return;
-        // 收集所有非数字、非空的标识符（在上面已经排除了保留字）
         variables.add(s);
     }
 
