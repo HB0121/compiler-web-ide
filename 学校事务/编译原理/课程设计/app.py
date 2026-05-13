@@ -4,6 +4,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
 from compiler.lexer import KEYWORDS, Lexer
+from compiler.log_automata import analyze_logs, write_log_outputs
 from compiler.parser import Parser
 from compiler.pipeline import run_pipeline, write_outputs
 from compiler.semantic import SemanticAnalyzer
@@ -30,6 +31,14 @@ int main() {
 
 
 RESULT_GROUPS = (
+    (
+        "日志自动机(4.1)",
+        (
+            ("log_extract", "Log Extract"),
+            ("log_nfa", "NFA"),
+            ("log_dfa", "DFA"),
+        ),
+    ),
     ("基础分析", (("tokens", "Tokens"), ("ast", "AST"), ("semantic_errors", "Semantic Errors"))),
     ("符号表", (("const", "Const Symbols"), ("var", "Var Symbols"), ("function", "Functions"))),
     (
@@ -114,6 +123,7 @@ class CompilerApp:
             ("打开", self.open_file),
             ("保存", self.save_file),
             ("运行", self.run),
+            ("日志识别", self.run_log_automata),
             ("格式化", self.format_current_source),
             ("导出", self.export),
             ("清空", self.clear),
@@ -368,6 +378,21 @@ class CompilerApp:
 
         messagebox.showinfo("Export Complete", "Outputs written to outputs/")
         self._set_status("Exported outputs/")
+
+    def run_log_automata(self) -> None:
+        try:
+            result = analyze_logs(self._source())
+            write_log_outputs(result, Path("outputs"))
+        except Exception as exc:
+            messagebox.showerror("Log Scan Failed", str(exc))
+            self._set_status("Log scan failed")
+            return
+
+        self.result_cache["log_extract"] = result.format_matches()
+        self.result_cache["log_nfa"] = result.nfa_text
+        self.result_cache["log_dfa"] = result.dfa_text
+        self._select_result("log_extract")
+        self._set_status(f"Log scan complete: {len(result.matches)} matches")
 
     def format_current_source(self) -> None:
         cursor = self.source_text.index("insert")

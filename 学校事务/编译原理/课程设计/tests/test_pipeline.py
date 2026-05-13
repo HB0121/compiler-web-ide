@@ -622,5 +622,33 @@ class SourceFormatTests(unittest.TestCase):
         self.assertTrue(formatted.endswith("}\n"))
 
 
+class LogAutomataTests(unittest.TestCase):
+    def test_extracts_common_log_keywords(self):
+        from compiler.log_automata import analyze_logs
+
+        source = "2026-05-10 08:17:42 INFO ip=172.16.8.31 user=root status=200 action=login"
+        result = analyze_logs(source)
+
+        pairs = [(match.value, match.kind) for match in result.matches]
+        self.assertIn(("2026-05-10", "DATE"), pairs)
+        self.assertIn(("08:17:42", "TIME"), pairs)
+        self.assertIn(("INFO", "LEVEL"), pairs)
+        self.assertIn(("172.16.8.31", "IP"), pairs)
+        self.assertIn(("200", "STATUS"), pairs)
+        self.assertIn(("root", "USER"), pairs)
+        self.assertIn(("login", "ACTION"), pairs)
+
+    def test_outputs_nfa_and_dfa_construction_text(self):
+        from compiler.log_automata import analyze_logs
+
+        result = analyze_logs("2026-05-10 08:17:42 INFO 172.16.8.31 root status=200")
+
+        self.assertIn("NFA for DATE", result.nfa_text)
+        self.assertIn("DFA for DATE", result.dfa_text)
+        self.assertIn("LEVEL", result.nfa_text)
+        self.assertIn("IP", result.dfa_text)
+        self.assertIn("2026-05-10 DATE", result.format_matches())
+
+
 if __name__ == "__main__":
     unittest.main()
