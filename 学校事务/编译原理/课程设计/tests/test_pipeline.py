@@ -35,6 +35,11 @@ class PipelineSmokeTests(unittest.TestCase):
         self.assertIn("int total", result.texts["var"])
         self.assertIn("int add(int, int)", result.texts["function"])
         self.assertIn("call", result.texts["quads"])
+        self.assertIn("return_value", result.texts["interpreter"])
+        self.assertIn("define i32 @main()", result.texts["llvm_ir"])
+        self.assertIn("FUNC main", result.texts["target_code"])
+        self.assertIn("optimized", result.texts["optimized_quads"])
+        self.assertIn("FUNC main", result.texts["optimized_target_code"])
 
     def test_pipeline_writes_output_files(self):
         from compiler.pipeline import run_pipeline, write_outputs
@@ -47,9 +52,19 @@ class PipelineSmokeTests(unittest.TestCase):
             self.assertTrue((out_dir / "ast.txt").exists())
             self.assertTrue((out_dir / "semantic_errors.txt").exists())
             self.assertTrue((out_dir / "quads.txt").exists())
+            self.assertTrue((out_dir / "interpreter.txt").exists())
+            self.assertTrue((out_dir / "llvm_ir.txt").exists())
+            self.assertTrue((out_dir / "target_code.txt").exists())
+            self.assertTrue((out_dir / "optimized_quads.txt").exists())
+            self.assertTrue((out_dir / "optimized_target_code.txt").exists())
             self.assertIn("main", (out_dir / "tokens.txt").read_text(encoding="utf-8"))
             self.assertIn("FunctionDef(int main)", (out_dir / "ast.txt").read_text(encoding="utf-8"))
             self.assertIn("sys", (out_dir / "quads.txt").read_text(encoding="utf-8"))
+            self.assertIn("return_value", (out_dir / "interpreter.txt").read_text(encoding="utf-8"))
+            self.assertIn("define i32 @main()", (out_dir / "llvm_ir.txt").read_text(encoding="utf-8"))
+            self.assertIn("FUNC main", (out_dir / "target_code.txt").read_text(encoding="utf-8"))
+            self.assertIn("optimized", (out_dir / "optimized_quads.txt").read_text(encoding="utf-8"))
+            self.assertIn("FUNC main", (out_dir / "optimized_target_code.txt").read_text(encoding="utf-8"))
 
     def test_pipeline_returns_parser_diagnostic_for_missing_logical_rhs(self):
         from compiler.pipeline import run_pipeline
@@ -331,6 +346,280 @@ class IRTests(unittest.TestCase):
         self.assertEqual("ret", quads[false_target][0])
         self.assertNotEqual("main", quads[false_target][0])
         self.assert_no_unresolved_jumps(quads)
+
+
+class InterpreterTests(unittest.TestCase):
+    def test_interprets_assignment_arithmetic_loop_and_return(self):
+        from compiler.interpreter import interpret_quads
+        from compiler.ir import generate_quads
+
+        ast = IRTests().parse_source("int main(){int i=0; int sum=0; while(i<3){sum=sum+i; i=i+1;} return sum;}")
+        result = interpret_quads(generate_quads(ast))
+
+        self.assertEqual(3, result.return_value)
+        self.assertEqual(3, result.variables["i"])
+        self.assertEqual(3, result.variables["sum"])
+        self.assertIn("return_value: 3", result.format())
+
+    def test_interpreter_applies_global_initializers_before_main(self):
+        from compiler.interpreter import interpret_quads
+
+        quads = [
+            ("=", "3", "_", "limit"),
+            ("main", "_", "_", "_"),
+            ("=", "0", "_", "i"),
+            ("J<", "i", "limit", 5),
+            ("J", "_", "_", 8),
+            ("+", "i", "1", "t1"),
+            ("=", "t1", "_", "i"),
+            ("J", "_", "_", 3),
+            ("ret", "_", "_", "i"),
+            ("sys", "_", "_", "_"),
+        ]
+        result = interpret_quads(quads)
+
+        self.assertEqual(3, result.return_value)
+        self.assertEqual(3, result.variables["limit"])
+
+    def test_interpreter_executes_simple_function_call(self):
+        from compiler.interpreter import interpret_quads
+
+        quads = [
+            ("add", "_", "_", "_"),
+            ("+", "a", "b", "t1"),
+            ("ret", "_", "_", "t1"),
+            ("ret", "_", "_", "_"),
+            ("main", "_", "_", "_"),
+            ("=", "1", "_", "x"),
+            ("=", "2", "_", "y"),
+            ("para", "x", "_", "_"),
+            ("para", "y", "_", "_"),
+            ("call", "add", "_", "t2"),
+            ("ret", "_", "_", "t2"),
+            ("sys", "_", "_", "_"),
+        ]
+        result = interpret_quads(quads)
+
+        self.assertEqual(3, result.return_value)
+        self.assertEqual(3, result.variables["t2"])
+
+
+class LLVMIRTests(unittest.TestCase):
+    def test_converts_assignment_arithmetic_and_return(self):
+        from compiler.llvm_ir import quads_to_llvm_ir
+
+        quads = [
+            ("=", "10", "_", "a"),
+            ("=", "20", "_", "b"),
+            ("+", "a", "b", "t1"),
+            ("=", "t1", "_", "c"),
+            ("ret", "_", "_", "c"),
+        ]
+        llvm = quads_to_llvm_ir(quads)
+
+        self.assertIn("define i32 @main()", llvm)
+        self.assertIn("%a = alloca i32", llvm)
+        self.assertIn("store i32 10, ptr %a", llvm)
+        self.assertIn("%t1 = add i32", llvm)
+        self.assertIn("store i32 %t1, ptr %c", llvm)
+        self.assertIn("ret i32", llvm)
+
+    def test_converts_conditional_jumps_to_cmp_and_br(self):
+        from compiler.llvm_ir import quads_to_llvm_ir
+
+        quads = [
+            ("=", "10", "_", "a"),
+            ("=", "20", "_", "b"),
+            ("J>", "a", "b", 4),
+            ("J", "_", "_", 6),
+            ("=", "a", "_", "max"),
+            ("J", "_", "_", 7),
+            ("=", "b", "_", "max"),
+            ("ret", "_", "_", "max"),
+        ]
+        llvm = quads_to_llvm_ir(quads)
+
+        self.assertIn("icmp sgt i32", llvm)
+        self.assertIn("br i1", llvm)
+        self.assertIn("label %L4", llvm)
+        self.assertIn("L6:", llvm)
+
+    def test_llvm_conversion_uses_main_region_when_function_labels_exist(self):
+        from compiler.llvm_ir import quads_to_llvm_ir
+
+        quads = [
+            ("helper", "_", "_", "_"),
+            ("ret", "_", "_", "1"),
+            ("ret", "_", "_", "_"),
+            ("main", "_", "_", "_"),
+            ("=", "2", "_", "x"),
+            ("ret", "_", "_", "x"),
+            ("sys", "_", "_", "_"),
+        ]
+        llvm = quads_to_llvm_ir(quads)
+
+        self.assertNotIn("ret i32 1", llvm)
+        self.assertIn("store i32 2, ptr %x", llvm)
+
+    def test_llvm_conversion_keeps_call_temps_defined(self):
+        from compiler.llvm_ir import quads_to_llvm_ir
+
+        quads = [
+            ("main", "_", "_", "_"),
+            ("para", "x", "_", "_"),
+            ("call", "add", "_", "t1"),
+            ("=", "t1", "_", "x"),
+            ("ret", "_", "_", "x"),
+            ("sys", "_", "_", "_"),
+        ]
+        llvm = quads_to_llvm_ir(quads)
+
+        self.assertNotIn("%add = alloca i32", llvm)
+        self.assertIn("%t1 = add i32 0, 0", llvm)
+        self.assertIn("store i32 %t1, ptr %x", llvm)
+
+
+class TargetCodeTests(unittest.TestCase):
+    def test_converts_assignment_arithmetic_and_return(self):
+        from compiler.target_code import quads_to_target_code
+
+        quads = [
+            ("main", "_", "_", "_"),
+            ("=", "10", "_", "a"),
+            ("+", "a", "2", "t1"),
+            ("=", "t1", "_", "a"),
+            ("ret", "_", "_", "a"),
+            ("sys", "_", "_", "_"),
+        ]
+        target = quads_to_target_code(quads)
+
+        self.assertIn("FUNC main", target)
+        self.assertIn("MOV a, 10", target)
+        self.assertIn("LOAD R1, a", target)
+        self.assertIn("ADD R1, 2", target)
+        self.assertIn("STORE t1, R1", target)
+        self.assertIn("RET a", target)
+        self.assertIn("END", target)
+
+    def test_converts_conditional_and_unconditional_jumps(self):
+        from compiler.target_code import quads_to_target_code
+
+        quads = [
+            ("main", "_", "_", "_"),
+            ("=", "0", "_", "i"),
+            ("J<", "i", "3", 4),
+            ("J", "_", "_", 6),
+            ("+", "i", "1", "t1"),
+            ("J", "_", "_", 2),
+            ("ret", "_", "_", "i"),
+            ("sys", "_", "_", "_"),
+        ]
+        target = quads_to_target_code(quads)
+
+        self.assertIn("L2:", target)
+        self.assertIn("JL i, 3, L4", target)
+        self.assertIn("JMP L6", target)
+        self.assertIn("L6:", target)
+
+
+class OptimizerTests(unittest.TestCase):
+    def test_folds_constants_and_collapses_temporary_assignments(self):
+        from compiler.optimizer import optimize_quads
+
+        quads = [
+            ("main", "_", "_", "_"),
+            ("+", "1", "2", "t1"),
+            ("=", "t1", "_", "x"),
+            ("*", "x", "1", "t2"),
+            ("=", "t2", "_", "y"),
+            ("ret", "_", "_", "y"),
+            ("sys", "_", "_", "_"),
+        ]
+        optimized = optimize_quads(quads)
+
+        self.assertIn(("=", "3", "_", "x"), optimized)
+        self.assertIn(("=", "x", "_", "y"), optimized)
+        self.assertNotIn(("+", "1", "2", "t1"), optimized)
+        self.assertNotIn(("*", "x", "1", "t2"), optimized)
+
+    def test_preserves_control_flow_while_rewriting_known_operands(self):
+        from compiler.optimizer import optimize_quads
+
+        quads = [
+            ("main", "_", "_", "_"),
+            ("=", "0", "_", "i"),
+            ("J<", "i", "3", 4),
+            ("J", "_", "_", 6),
+            ("+", "i", "0", "t1"),
+            ("=", "t1", "_", "i"),
+            ("ret", "_", "_", "i"),
+            ("sys", "_", "_", "_"),
+        ]
+        optimized = optimize_quads(quads)
+
+        self.assertIn(("J<", "i", "3", 4), optimized)
+        self.assertIn(("J", "_", "_", 5), optimized)
+        self.assertIn(("=", "i", "_", "i"), optimized)
+
+    def test_remaps_jump_targets_after_removed_temporary_quads(self):
+        from compiler.optimizer import optimize_quads
+
+        quads = [
+            ("main", "_", "_", "_"),
+            ("+", "1", "2", "t1"),
+            ("=", "t1", "_", "x"),
+            ("J", "_", "_", 5),
+            ("=", "0", "_", "x"),
+            ("ret", "_", "_", "x"),
+            ("sys", "_", "_", "_"),
+        ]
+        optimized = optimize_quads(quads)
+
+        self.assertIn(("=", "3", "_", "x"), optimized)
+        self.assertIn(("J", "_", "_", 4), optimized)
+
+
+class OptimizedTargetCodeTests(unittest.TestCase):
+    def test_pipeline_generates_target_code_from_optimized_quads(self):
+        from compiler.pipeline import run_pipeline
+
+        result = run_pipeline("int main(){int x; x=1+2; return x;}")
+
+        self.assertIn("MOV x, 3", result.texts["optimized_target_code"])
+        self.assertNotIn("ADD R1, 2", result.texts["optimized_target_code"])
+        self.assertIn("RET x", result.texts["optimized_target_code"])
+
+
+class SourceFormatTests(unittest.TestCase):
+    def test_formats_brace_blocks_with_indentation(self):
+        from compiler.source_format import format_source
+
+        source = "int main(){int x=1;if(x){return x;}else{return 0;}}"
+        formatted = format_source(source)
+
+        self.assertEqual(
+            "int main() {\n"
+            "    int x=1;\n"
+            "    if(x) {\n"
+            "        return x;\n"
+            "    }\n"
+            "    else {\n"
+            "        return 0;\n"
+            "    }\n"
+            "}\n",
+            formatted,
+        )
+
+    def test_formats_existing_multiline_code(self):
+        from compiler.source_format import format_source
+
+        source = "int main() {\nint i=0;\nwhile(i<3){\ni=i+1;\n}\nreturn i;\n}"
+        formatted = format_source(source)
+
+        self.assertIn("    int i=0;", formatted)
+        self.assertIn("    while(i<3) {", formatted)
+        self.assertIn("        i=i+1;", formatted)
+        self.assertTrue(formatted.endswith("}\n"))
 
 
 if __name__ == "__main__":

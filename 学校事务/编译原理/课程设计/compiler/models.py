@@ -20,6 +20,11 @@ class OutputTexts(TypedDict):
     var: str
     function: str
     quads: str
+    optimized_quads: str
+    interpreter: str
+    llvm_ir: str
+    target_code: str
+    optimized_target_code: str
 
 
 @dataclass

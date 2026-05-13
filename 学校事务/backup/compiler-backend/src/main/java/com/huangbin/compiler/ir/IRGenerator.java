@@ -1,106 +1,118 @@
 package com.huangbin.compiler.ir;
 
 import com.huangbin.compiler.model.ASTNode;
-
 import java.util.ArrayList;
 import java.util.List;
 
 public class IRGenerator {
 
-    // 内部类：四元式结构
     public static class Quad {
-        public String op;
-        public String arg1;
-        public String arg2;
-        public String result;
-
+        public String op; public String arg1; public String arg2; public String result;
         public Quad(String op, String arg1, String arg2, String result) {
-            this.op = op;
-            this.arg1 = arg1;
-            this.arg2 = arg2;
-            this.result = result;
+            this.op = op; this.arg1 = arg1; this.arg2 = arg2; this.result = result;
         }
-
-        @Override
-        public String toString() {
-            return String.format("(%s, %s, %s, %s)", op, arg1, arg2, result);
-        }
+        @Override public String toString() { return String.format("(%s, %s, %s, %s)", op, arg1, arg2, result); }
     }
 
     private final List<Quad> quads = new ArrayList<>();
-    private int tempCounter = 1; // 用于生成临时变量 t1, t2, t3...
+    private int tempCounter = 1;
 
-    // 暴露给外部调用的主入口
+    // 获取下一条四元式的行号
+    private int nextQuadIndex() { return quads.size(); }
+
+    // 回填技术：把目标行号填入指定的跳转指令中
+    private void backpatch(int quadIndex, int targetIndex) {
+        quads.get(quadIndex).result = String.valueOf(targetIndex);
+    }
+
     public List<Quad> generate(ASTNode root) {
-        if (root != null) {
-            traverse(root);
-        }
+        if (root != null) traverse(root);
         return quads;
     }
 
-    // 递归遍历 AST 树
     private void traverse(ASTNode node) {
         if (node == null) return;
 
         switch (node.getName()) {
             case "Program":
-                for (ASTNode child : node.getChildren()) {
-                    traverse(child);
-                }
+            case "Compound":
+                for (ASTNode child : node.getChildren()) traverse(child);
                 break;
-
             case "VarDecl":
-                // 变量声明，比如 int a = 10; 或 int c = a + b * 2;
-                // node.getValue() 是 "int a"
                 String varName = node.getValue().split(" ")[1];
                 if (!node.getChildren().isEmpty()) {
-                    ASTNode expr = node.getChildren().get(0);
-                    // 核心：调用 evaluateExpr 去处理等号右边的复杂表达式
-                    String val = evaluateExpr(expr);
-                    quads.add(new Quad("=", val, "_", varName));
+                    quads.add(new Quad("=", evaluateExpr(node.getChildren().get(0)), "_", varName));
                 }
                 break;
-
             case "Assign":
-                // 赋值语句，比如 b = a; 或 d = (a + b) * 2;
                 if (node.getChildren().size() == 2) {
-                    String target = node.getChildren().get(0).getValue();
-                    // 核心：调用 evaluateExpr 去处理等号右边的复杂表达式
-                    String val = evaluateExpr(node.getChildren().get(1));
-                    quads.add(new Quad("=", val, "_", target));
+                    quads.add(new Quad("=", evaluateExpr(node.getChildren().get(1)), "_", node.getChildren().get(0).getValue()));
                 }
+                break;
+            case "IfStmt":
+                // 处理条件
+                ASTNode ifCond = node.getChildren().get(0);
+                String ifOp = ifCond.getValue();
+                String ifArg1 = evaluateExpr(ifCond.getChildren().get(0));
+                String ifArg2 = evaluateExpr(ifCond.getChildren().get(1));
+
+                int jumpTrueIdx = nextQuadIndex();
+                quads.add(new Quad("J" + ifOp, ifArg1, ifArg2, "_")); // 满足条件跳向 True分支
+
+                int jumpFalseIdx = nextQuadIndex();
+                quads.add(new Quad("J", "_", "_", "_")); // 否则无条件跳向 False分支
+
+                // True 分支
+                backpatch(jumpTrueIdx, nextQuadIndex());
+                traverse(node.getChildren().get(1));
+
+                int jumpEndIdx = nextQuadIndex();
+                quads.add(new Quad("J", "_", "_", "_")); // True分支执行完跳出 if
+
+                // False 分支 (如果有 else)
+                backpatch(jumpFalseIdx, nextQuadIndex());
+                if (node.getChildren().size() > 2) {
+                    traverse(node.getChildren().get(2));
+                }
+                backpatch(jumpEndIdx, nextQuadIndex()); // 回填跳出位置
+                break;
+
+            case "WhileStmt":
+                int startIdx = nextQuadIndex(); // 记录循环开始的位置
+
+                // 处理条件
+                ASTNode wCond = node.getChildren().get(0);
+                String wOp = wCond.getValue();
+                String wArg1 = evaluateExpr(wCond.getChildren().get(0));
+                String wArg2 = evaluateExpr(wCond.getChildren().get(1));
+
+                int wJumpTrueIdx = nextQuadIndex();
+                quads.add(new Quad("J" + wOp, wArg1, wArg2, "_")); // 满足条件进入循环体
+
+                int wJumpEndIdx = nextQuadIndex();
+                quads.add(new Quad("J", "_", "_", "_")); // 否则跳出循环
+
+                // 循环体
+                backpatch(wJumpTrueIdx, nextQuadIndex());
+                traverse(node.getChildren().get(1));
+                quads.add(new Quad("J", "_", "_", String.valueOf(startIdx))); // 循环体结束，无条件跳回开头
+
+                // 循环结束点
+                backpatch(wJumpEndIdx, nextQuadIndex());
                 break;
         }
     }
 
-    // ================== 增强版：递归处理算术表达式 ==================
-    // 处理表达式并返回结果/变量名
     private String evaluateExpr(ASTNode expr) {
         if (expr == null) return "_";
-
-        // 1. 如果是叶子节点（纯数字或已有的变量名），直接返回它的值
-        if (expr.getName().equals("Literal") || expr.getName().equals("Identifier")) {
-            return expr.getValue();
-        }
-
-        // 2. 如果是二元操作符 (+, -, *, /)
+        if (expr.getName().equals("Literal") || expr.getName().equals("Identifier")) return expr.getValue();
         if (expr.getName().equals("BinOp")) {
-            String op = expr.getValue();
-
-            // 递归算出左边和右边的结果（这会层层深入，优先处理树底层的乘除法或括号里的内容）
             String arg1 = evaluateExpr(expr.getChildren().get(0));
             String arg2 = evaluateExpr(expr.getChildren().get(1));
-
-            // 申请一个新的临时变量存放这次加减乘除的计算结果，比如 t1, t2
             String resultTemp = "t" + (tempCounter++);
-
-            // 生成一条计算用的四元式，例如 (+, a, b, t1)
-            quads.add(new Quad(op, arg1, arg2, resultTemp));
-
-            // 返回这个临时变量名，供更上层的加减乘除继续使用
+            quads.add(new Quad(expr.getValue(), arg1, arg2, resultTemp));
             return resultTemp;
         }
-
         return "_";
     }
 }

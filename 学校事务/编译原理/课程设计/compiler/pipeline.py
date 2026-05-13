@@ -1,11 +1,15 @@
 from pathlib import Path
 from typing import List, Optional
 
+from .interpreter import interpret_quads
 from .ir import format_quads, generate_quads
 from .lexer import Lexer
+from .llvm_ir import quads_to_llvm_ir
 from .models import ASTNode, Diagnostic, OutputTexts, PipelineResult, SymbolInfo, Token, format_ast
+from .optimizer import optimize_quads
 from .parser import Parser
 from .semantic import SemanticAnalyzer
+from .target_code import quads_to_target_code
 
 
 OUTPUT_NAMES = {
@@ -16,6 +20,11 @@ OUTPUT_NAMES = {
     "var": "var.txt",
     "function": "function.txt",
     "quads": "quads.txt",
+    "optimized_quads": "optimized_quads.txt",
+    "interpreter": "interpreter.txt",
+    "llvm_ir": "llvm_ir.txt",
+    "target_code": "target_code.txt",
+    "optimized_target_code": "optimized_target_code.txt",
 }
 
 
@@ -39,8 +48,26 @@ def run_pipeline(source: str) -> PipelineResult:
         function_symbols = analyzer.history_symbols["func"]
 
     quads = generate_quads(ast) if ast is not None else []
+    optimized_quads = optimize_quads(quads) if quads else []
+    interpreter_text = interpret_quads(quads).format() if quads else ""
+    llvm_ir_text = quads_to_llvm_ir(quads) if quads else ""
+    target_code_text = quads_to_target_code(quads) if quads else ""
+    optimized_target_code_text = quads_to_target_code(optimized_quads) if optimized_quads else ""
     diagnostics = lexer_diagnostics + parser_diagnostics + semantic_diagnostics
-    texts = build_texts(tokens, ast, semantic_diagnostics, const_symbols, var_symbols, function_symbols, quads)
+    texts = build_texts(
+        tokens,
+        ast,
+        semantic_diagnostics,
+        const_symbols,
+        var_symbols,
+        function_symbols,
+        quads,
+        optimized_quads,
+        interpreter_text,
+        llvm_ir_text,
+        target_code_text,
+        optimized_target_code_text,
+    )
 
     return PipelineResult(
         tokens=tokens,
@@ -62,6 +89,11 @@ def build_texts(
     var_symbols: List[SymbolInfo],
     function_symbols: List[SymbolInfo],
     quads,
+    optimized_quads,
+    interpreter_text: str,
+    llvm_ir_text: str,
+    target_code_text: str,
+    optimized_target_code_text: str,
 ) -> OutputTexts:
     return {
         "tokens": format_tokens(tokens),
@@ -71,12 +103,23 @@ def build_texts(
         "var": format_symbols(var_symbols, "var"),
         "function": format_symbols(function_symbols, "function"),
         "quads": format_quads(quads),
+        "optimized_quads": format_optimized_quads(optimized_quads),
+        "interpreter": interpreter_text,
+        "llvm_ir": llvm_ir_text,
+        "target_code": target_code_text,
+        "optimized_target_code": optimized_target_code_text,
     }
 
 
 def format_tokens(tokens: List[Token]) -> str:
     lines = [f"{token.text} {token.code} {token.line}" for token in tokens]
     return "\n".join(lines) + ("\n" if lines else "")
+
+
+def format_optimized_quads(quads) -> str:
+    if not quads:
+        return ""
+    return "optimized quadruples\n" + format_quads(quads)
 
 
 def format_semantic_errors(diagnostics: List[Diagnostic]) -> str:

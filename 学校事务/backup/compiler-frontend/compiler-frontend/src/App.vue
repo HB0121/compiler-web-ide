@@ -82,7 +82,10 @@
           <div v-if="activeTab === 'errors'" class="tab-panel">
             <div v-if="diagnostics.length > 0" class="error-list">
               <div v-for="(err, index) in diagnostics" :key="index" class="error-item">
-                <strong>[{{ err.code }}]</strong> Line {{ err.line }}: {{ err.message }} 
+                <strong>[{{ err.code }}]</strong>
+                <span v-if="err.line && err.line > 0"> Line {{ err.line }}: </span>
+                <span v-else> </span>
+                {{ err.message }} 
               </div>
             </div>
             <div v-else class="success-state">🎉 完美！没有发现任何语法或词法错误。</div>
@@ -101,15 +104,15 @@ import { ref, computed } from 'vue'
 import axios from 'axios'
 import { VueMonacoEditor } from '@guolao/vue-monaco-editor'
 
-const sourceCode = ref('int a = 10;\nb = a;\n')
+const sourceCode = ref('//IDE test\nconst int x;\nvoid main()\n')
 const loading = ref(false)
-const activeTab = ref('output') // 运行后默认跳转到“运行结果”面板！
+const activeTab = ref('output')
 
 const tokens = ref([])
 const rawAst = ref(null)
 const diagnostics = ref([])
-const quads = ref([])               // 新增：接收四元式
-const interpreterOutput = ref([])   // 新增：接收运行输出
+const quads = ref([])               
+const interpreterOutput = ref([])   
 const rawJson = ref('点击运行获取结果...')
 const compileStatus = ref(null)
 
@@ -140,15 +143,15 @@ const runCompile = async () => {
     tokens.value = data.tokens || []
     rawAst.value = data.ast || null
     diagnostics.value = data.diagnostics || []
-    quads.value = data.quads || []                                  // 绑定四元式
-    interpreterOutput.value = data.interpreterOutput || []          // 绑定运行输出
+    quads.value = data.quads || []                                  
+    interpreterOutput.value = data.interpreterOutput || []          
     compileStatus.value = data.success
     rawJson.value = JSON.stringify(data, null, 2)
     
     if (!data.success) {
       activeTab.value = 'errors'
     } else {
-      activeTab.value = 'output' // 成功就直接看酷炫的运行结果
+      activeTab.value = 'output' 
     }
   } catch (error) {
     rawJson.value = '请求失败: ' + error.message
@@ -161,7 +164,6 @@ const runCompile = async () => {
 </script>
 
 <style scoped>
-/* (前面的样式保持不变) */
 .ide-container { display: flex; flex-direction: column; height: 100vh; font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #1e1e1e; }
 .header { display: flex; justify-content: space-between; align-items: center; padding: 0 20px; background-color: #252526; color: white; height: 60px; border-bottom: 1px solid #3c3c3c; }
 .logo { font-size: 20px; font-weight: bold; }
@@ -195,7 +197,6 @@ const runCompile = async () => {
 .empty-state { padding: 50px; text-align: center; color: #666; }
 .raw-json { padding: 15px; margin: 0; font-family: 'Consolas', monospace; font-size: 13px; color: #9cdcfe;}
 
-/* === 新增样式 === */
 .quad-panel { padding: 15px; font-family: 'Consolas', monospace; font-size: 16px; color: #dcdcaa; line-height: 1.8;}
 .quad-item { background-color: #2d2d2d; padding: 8px 12px; margin-bottom: 5px; border-radius: 4px; border-left: 3px solid #dcdcaa;}
 .output-panel { padding: 15px; }
