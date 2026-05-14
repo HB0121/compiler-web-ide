@@ -1,27 +1,27 @@
-FUNC main
-; call read _ t1
-MOV n, t1
-; para n _ _
-; call factor _ t2
-; para t2 _ _
-; call write _ t3
-END
-FUNC factor
-JLE m, 1, L11
-JMP L13
-L11:
-MOV fa, 1
-JMP L18
-L13:
-LOAD R1, m
-SUB R1, 1
-STORE t4, R1
-; para t4 _ _
-; call factor _ t5
-LOAD R1, m
-MUL R1, t5
-STORE t6, R1
-MOV fa, t6
-L18:
-RET fa
+MOV limit, 3
+FUNC add
+LOAD R1, a
+ADD R1, b
+STORE t1, R1
+MOV c, t1
+RET c
 RET 0
+FUNC main
+MOV i, 0
+MOV total, 0
+L9:
+JL i, limit, L11
+JMP L18
+L11:
+; para total _ _
+; para i _ _
+; call add _ t2
+MOV total, t2
+LOAD R1, i
+ADD R1, 1
+STORE t3, R1
+MOV i, t3
+JMP L9
+L18:
+RET total
+END

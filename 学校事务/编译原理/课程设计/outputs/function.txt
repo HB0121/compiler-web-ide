@@ -1,4 +1,2 @@
-int factor(int)
-int read(void)
-void write(int)
-void main(void)
+int add(int, int)
+int main(void)
