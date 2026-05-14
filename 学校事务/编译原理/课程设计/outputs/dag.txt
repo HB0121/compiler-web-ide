@@ -3,11 +3,10 @@ B0
 B1
 B2
 B3
-  N0: i {i}
-  N1: 1 {1}
-  N2: + {t2, i} <- N0, N1
 B4
-  N0: sum {sum}
-  N1: i {i}
-  N2: + {t3, sum} <- N0, N1
+  N0: m {m}
+  N1: 1 {1}
+  N2: - {t4} <- N0, N1
+  N3: t5 {t5}
+  N4: * {t6, fa} <- N0, N3
 B5
