@@ -72,11 +72,11 @@ class QuadInterpreter:
                 continue
 
             if str(op).startswith("J") and op != "J":
-                pc = int(result) if self._jump_condition(str(op)[1:], self._value(arg1, self.values), self._value(arg2, self.values)) else pc + 1
+                pc = self._jump_target(result, pc + 1) if self._jump_condition(str(op)[1:], self._value(arg1, self.values), self._value(arg2, self.values)) else pc + 1
                 continue
 
             if op == "J":
-                pc = int(result)
+                pc = self._jump_target(result, pc + 1)
                 continue
 
             if op == "para":
@@ -163,11 +163,11 @@ class QuadInterpreter:
                 continue
 
             if str(op).startswith("J") and op != "J":
-                pc = int(result) if self._jump_condition(str(op)[1:], self._value(arg1, values), self._value(arg2, values)) else pc + 1
+                pc = self._jump_target(result, pc + 1) if self._jump_condition(str(op)[1:], self._value(arg1, values), self._value(arg2, values)) else pc + 1
                 continue
 
             if op == "J":
-                pc = int(result)
+                pc = self._jump_target(result, pc + 1)
                 continue
 
             pc += 1
@@ -235,8 +235,14 @@ class QuadInterpreter:
         if op == "*":
             return left * right
         if op == "/":
+            if right == 0:
+                self.trace.append("runtime warning: division by zero, result forced to 0")
+                return 0
             return int(left / right)
         if op == "%":
+            if right == 0:
+                self.trace.append("runtime warning: modulo by zero, result forced to 0")
+                return 0
             return int(left % right)
         if op == ">":
             return int(left > right)
@@ -258,6 +264,13 @@ class QuadInterpreter:
 
     def _jump_condition(self, op: str, left, right) -> bool:
         return bool(self._apply_binary(op, left, right))
+
+    def _jump_target(self, value, fallback: int) -> int:
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            self.trace.append(f"runtime warning: invalid jump target {value}, continuing")
+            return fallback
 
     def _is_label(self, op, arg1, arg2, result) -> bool:
         return (

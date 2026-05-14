@@ -403,6 +403,34 @@ class InterpreterTests(unittest.TestCase):
         self.assertIn("builtin read() -> 0", result.trace)
         self.assertIn("builtin write(0)", result.trace)
 
+    def test_interpreter_does_not_crash_on_division_by_zero(self):
+        from compiler.interpreter import interpret_quads
+
+        quads = [
+            ("main", "_", "_", "_"),
+            ("/", 1, 0, "t1"),
+            ("%", 1, 0, "t2"),
+            ("sys", "_", "_", "_"),
+        ]
+        result = interpret_quads(quads)
+
+        self.assertEqual(0, result.variables["t1"])
+        self.assertEqual(0, result.variables["t2"])
+        self.assertIn("runtime warning: division by zero, result forced to 0", result.trace)
+        self.assertIn("runtime warning: modulo by zero, result forced to 0", result.trace)
+
+    def test_interpreter_does_not_crash_on_invalid_jump_target(self):
+        from compiler.interpreter import interpret_quads
+
+        quads = [
+            ("main", "_", "_", "_"),
+            ("J", "_", "_", "_"),
+            ("sys", "_", "_", "_"),
+        ]
+        result = interpret_quads(quads)
+
+        self.assertIn("runtime warning: invalid jump target _, continuing", result.trace)
+
     def test_interprets_assignment_arithmetic_loop_and_return(self):
         from compiler.interpreter import interpret_quads
         from compiler.ir import generate_quads
