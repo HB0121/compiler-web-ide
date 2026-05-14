@@ -1,0 +1,22 @@
+FUNC square
+LOAD R1, x
+MUL R1, x
+STORE t1, R1
+RET t1
+RET 0
+FUNC main
+MOV a, 4
+; para a _ _
+; call square _ t2
+MOV b, t2
+JG b, 10, L11
+JMP L14
+L11:
+; para b _ _
+; call write _ t3
+JMP L16
+L14:
+; para 0 _ _
+; call write _ t4
+L16:
+END

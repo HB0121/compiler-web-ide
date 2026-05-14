@@ -1,0 +1,20 @@
+return_value: None
+variables:
+  a = 4
+  b = 16
+  t2 = 16
+  t3 = 0
+trace:
+  5: (=, 4, _, a)
+  6: (para, a, _, _)
+  7: (call, square, _, t2)
+  call square(4)
+  1: fn (*, x, x, t1)
+  2: fn (ret, _, _, t1)
+  8: (=, t2, _, b)
+  9: (J>, b, 10, 11)
+  11: (para, b, _, _)
+  12: (call, write, _, t3)
+  builtin write(16)
+  13: (J, _, _, 16)
+  16: (sys, _, _, _)

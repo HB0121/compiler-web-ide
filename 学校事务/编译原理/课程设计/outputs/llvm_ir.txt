@@ -1,0 +1,18 @@
+define i32 @main() {
+entry:
+%a = alloca i32
+%b = alloca i32
+store i32 4, ptr %a
+%t2 = add i32 0, 0
+store i32 %t2, ptr %b
+%v1 = load i32, ptr %b
+%cmp1 = icmp sgt i32 %v1, 10
+br i1 %cmp1, label %L11, label %L14
+L11:
+%t3 = add i32 0, 0
+br label %L16
+L14:
+%t4 = add i32 0, 0
+L16:
+ret i32 0
+}
