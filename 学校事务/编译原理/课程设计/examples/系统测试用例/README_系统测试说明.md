@@ -137,19 +137,25 @@ GUI 操作：
 
 文件：
 - `07_LLVM_IR生成/llvm_branch_call.c`
+- `07_LLVM_IR生成/llvm_modulo_loop.c`
 
 覆盖点：
 - `define`
 - 局部变量 `alloca`
+- `load/store`
 - `br`
 - `ret`
 - 条件分支
+- `LLVM Verify` 内部验证和外部工具链验证命令
 
 预期：
 - `LLVM IR` 中包含 `define i32 @main`。
 - 包含局部变量分配 `alloca i32`。
+- 包含 typed pointer 风格的 `load i32, i32*` 和 `store i32 ..., i32*`。
 - 包含条件跳转 `br i1`。
 - 包含返回语句 `ret i32`。
+- `LLVM Verify` 显示 `Internal verifier: PASS`。
+- 如果本机安装了 LLVM 工具链，可使用 `llvm-as outputs/llvm_ir.ll -o outputs/llvm_ir.bc` 和 `lli outputs/llvm_ir.ll` 做外部验证。
 
 ## 08 CFG 与 DAG 优化
 
