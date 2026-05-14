@@ -39,10 +39,14 @@ def function_params_from_ast(ast: ASTNode | None) -> Dict[str, List[str]]:
     if ast is None:
         return params
 
+    def param_name(value: str) -> str:
+        parts = value.split()
+        return parts[-1] if len(parts) > 1 else ""
+
     def walk(node: ASTNode) -> None:
         if node.name == "FunctionDef":
             name = _decl_name(node.value or "")
-            params[name] = [_decl_name(child.value or "") for child in node.children if child.name == "Param"]
+            params[name] = [name for child in node.children if child.name == "Param" and (name := param_name(child.value or ""))]
         for child in node.children:
             walk(child)
 

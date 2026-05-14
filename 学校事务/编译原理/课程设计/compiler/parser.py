@@ -171,10 +171,11 @@ class Parser:
                     self.pos += 1
 
                     p_id = self.current_token()
-                    if not p_id:
-                        break
-                    self.pos += 1
-                    params.append(ASTNode("Param", line=p_id.line, value=f"{p_type.text} {p_id.text}"))
+                    if p_id and p_id.text not in {",", ")"}:
+                        self.pos += 1
+                        params.append(ASTNode("Param", line=p_id.line, value=f"{p_type.text} {p_id.text}"))
+                    else:
+                        params.append(ASTNode("Param", line=p_type.line, value=p_type.text))
 
                     if self.current_token() and self.current_token().text == ",":
                         self.pos += 1

@@ -248,6 +248,11 @@ class SemanticTests(unittest.TestCase):
 
         self.assertNotIn("304", [diagnostic.code for diagnostic in analyzer.diagnostics])
 
+    def test_course_style_void_return_value_is_accepted(self):
+        analyzer = self.analyze_source("void f(){return 0;} main(){f();}")
+
+        self.assertNotIn("307", [diagnostic.code for diagnostic in analyzer.diagnostics])
+
     def test_forward_declared_later_defined_function_call_is_allowed(self):
         analyzer = self.analyze_source("int f(); int main(){return f();} int f(){return 1;}")
 

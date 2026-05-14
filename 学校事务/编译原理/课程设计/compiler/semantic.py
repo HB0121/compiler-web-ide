@@ -223,8 +223,8 @@ class SemanticAnalyzer:
         for child in node.children:
             if child.name == "Param":
                 param_type, param_name = self.split_decl_value(child.value)
+                params.append(param_type)
                 if param_name:
-                    params.append(param_type)
                     param_symbols.append((param_name, param_type, child.line))
 
         is_definition = node.name == "FunctionDef" or any(child.name == "Compound" for child in node.children)
@@ -254,7 +254,8 @@ class SemanticAnalyzer:
 
         end_line = max_line(node)
         if self.current_func_ret_type != "void":
-            if not self.current_func_has_return or self.current_func_has_mismatch_return:
+            allow_implicit_main_return = func_name == "main" and not self.current_func_has_return
+            if (not self.current_func_has_return and not allow_implicit_main_return) or self.current_func_has_mismatch_return:
                 self.report_error(end_line, 307)
         elif self.current_func_has_mismatch_return:
             self.report_error(end_line, 307)
@@ -286,7 +287,7 @@ class SemanticAnalyzer:
 
         ret_type = self.evaluate_expression(node.children[0])
         if self.current_func_ret_type == "void":
-            self.current_func_has_mismatch_return = True
+            return
         elif ret_type != "unknown" and ret_type != self.current_func_ret_type:
             self.current_func_has_mismatch_return = True
 
