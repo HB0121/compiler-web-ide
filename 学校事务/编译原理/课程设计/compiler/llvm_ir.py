@@ -358,7 +358,7 @@ def _internal_verify(llvm_ir: str) -> List[str]:
         if line.endswith(":"):
             continue
         next_line = lines[index + 1]
-        if next_line.endswith(":") and not line.strip().startswith(TERMINATOR_PREFIXES):
+        if next_line.endswith(":") and not line.startswith("define ") and not line.strip().startswith(TERMINATOR_PREFIXES):
             errors.append(f"block before {next_line[:-1]} has no terminator")
     if not any(line.strip().startswith("ret ") for line in lines):
         errors.append("missing ret instruction")
