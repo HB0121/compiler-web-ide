@@ -12,12 +12,85 @@ class ExecutionResult:
     trace: List[str]
 
     def format(self) -> str:
-        lines = [f"return_value: {self.return_value}", "variables:"]
+        lines = [
+            "Execution Result",
+            "Item | Value | Meaning",
+            "--- | --- | ---",
+            f"return_value | {self._cell(self.return_value)} | 程序最终返回值",
+            "",
+            "Variables",
+            "Name | Value",
+            "--- | ---",
+        ]
         for name in sorted(self.variables):
-            lines.append(f"  {name} = {self.variables[name]}")
-        lines.append("trace:")
-        lines.extend(f"  {item}" for item in self.trace)
+            lines.append(f"{self._cell(name)} | {self._cell(self.variables[name])}")
+        lines.extend([
+            "",
+            "Execution Trace",
+            "Step | Quad / Event | Meaning",
+            "--- | --- | ---",
+        ])
+        for step, item in enumerate(self.trace, start=1):
+            lines.append(f"{step} | {self._cell(item)} | {self._cell(self._explain_trace_item(item))}")
+
+        warnings = [item for item in self.trace if item.startswith("runtime warning") or item.startswith("stopped:")]
+        lines.extend(["", "Runtime Warnings", "Warning", "---"])
+        if warnings:
+            lines.extend(self._cell(item) for item in warnings)
+        else:
+            lines.append("None")
         return "\n".join(lines) + "\n"
+
+    def _explain_trace_item(self, item: str) -> str:
+        if item.startswith("builtin read"):
+            return "模拟内置输入函数 read，默认读入 0"
+        if item.startswith("builtin write"):
+            return "模拟内置输出函数 write"
+        if item.startswith("call "):
+            return "调用用户自定义函数"
+        if item.startswith("runtime warning"):
+            return "解释执行阶段的运行时警告"
+        if item.startswith("stopped:"):
+            return "执行保护停止，通常用于避免死循环"
+        quad = self._trace_quad(item)
+        if quad is None:
+            return "执行事件"
+        op, arg1, arg2, result = quad
+        if op == "=":
+            return f"{result} = {arg1}"
+        if op == "=[]":
+            return f"{result} = {arg1}[{arg2}]"
+        if op == "[]=":
+            return f"{result}[{arg2}] = {arg1}"
+        if op in {"+", "-", "*", "/", "%", ">", "<", ">=", "<=", "==", "!=", "&&", "||"}:
+            return f"{result} = {arg1} {op} {arg2}"
+        if op in {"!", "neg"}:
+            return f"{result} = {op}{arg1}"
+        if op == "para":
+            return f"准备函数参数 {arg1}"
+        if op == "call":
+            return f"调用函数 {arg1}，结果保存到 {result}"
+        if op == "J":
+            return f"无条件跳转到四元式 {result}"
+        if str(op).startswith("J"):
+            return f"条件成立时跳转到四元式 {result}"
+        if op in {"ret", "return"}:
+            return f"返回 {result}"
+        if op == "sys":
+            return "程序结束"
+        return f"进入函数或标签 {op}"
+
+    def _trace_quad(self, item: str) -> Optional[Quad]:
+        if "(" not in item or ")" not in item:
+            return None
+        content = item[item.find("(") + 1 : item.rfind(")")]
+        parts = [part.strip() for part in content.split(",")]
+        if len(parts) != 4:
+            return None
+        return parts[0], parts[1], parts[2], parts[3]
+
+    def _cell(self, value: object) -> str:
+        return str(value).replace("|", "\\|").replace("\n", " ")
 
 
 class QuadInterpreter:

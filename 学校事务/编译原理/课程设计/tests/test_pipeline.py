@@ -104,7 +104,7 @@ class PipelineSmokeTests(unittest.TestCase):
         self.assertEqual([], result.diagnostics)
         self.assertIn("('%'", result.texts["quads"])
         self.assertIn("builtin write(ok)", result.texts["interpreter"])
-        self.assertIn("return_value: 1", result.texts["interpreter"])
+        self.assertIn("return_value | 1", result.texts["interpreter"])
 
     def test_pipeline_accepts_course_style_arrays(self):
         from compiler.pipeline import run_pipeline
@@ -470,7 +470,13 @@ class InterpreterTests(unittest.TestCase):
         self.assertEqual(3, result.return_value)
         self.assertEqual(3, result.variables["i"])
         self.assertEqual(3, result.variables["sum"])
-        self.assertIn("return_value: 3", result.format())
+        formatted = result.format()
+        self.assertIn("Execution Result", formatted)
+        self.assertIn("Variables", formatted)
+        self.assertIn("Execution Trace", formatted)
+        self.assertIn("return_value | 3", formatted)
+        self.assertIn("sum | 3", formatted)
+        self.assertIn("程序最终返回值", formatted)
 
     def test_interpreter_applies_global_initializers_before_main(self):
         from compiler.interpreter import interpret_quads
