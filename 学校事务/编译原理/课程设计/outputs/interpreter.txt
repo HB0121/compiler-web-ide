@@ -1,21 +1,20 @@
 return_value: None
 variables:
-  n = 0
-  t1 = 0
-  t2 = 1
+  a = 4
+  b = 16
+  t2 = 16
   t3 = 0
 trace:
-  1: (call, read, _, t1)
-  builtin read() -> 0
-  2: (=, t1, _, n)
-  3: (para, n, _, _)
-  4: (call, seq, _, t2)
-  call seq(0)
-  9: fn (J<=, m, 2, 11)
-  11: fn (=, 1, _, s)
-  12: fn (J, _, _, 21)
-  21: fn (ret, _, _, s)
-  5: (para, t2, _, _)
-  6: (call, write, _, t3)
-  builtin write(1)
-  7: (sys, _, _, _)
+  5: (=, 4, _, a)
+  6: (para, a, _, _)
+  7: (call, square, _, t2)
+  call square(4)
+  1: fn (*, x, x, t1)
+  2: fn (ret, _, _, t1)
+  8: (=, t2, _, b)
+  9: (J>, b, 10, 11)
+  11: (para, b, _, _)
+  12: (call, write, _, t3)
+  builtin write(16)
+  13: (J, _, _, 16)
+  16: (sys, _, _, _)

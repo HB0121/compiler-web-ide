@@ -1,46 +1,33 @@
 Program
-  FunctionDecl(int seq)[2]
-    Param(int a)[2]
-  FunctionDecl(int read)[3]
-  FunctionDecl(void write)[4]
-    Param(int a)[4]
-  FunctionDef(void main)[5]
+  FunctionDef(int square)[1]
+    Param(int x)[1]
     Compound
-      VarDecl(int n)[7]
+      ReturnStmt[2]
+        *
+          x[2]
+          x[2]
+  FunctionDef(int main)[5]
+    Compound
+      VarDecl(int a)[6]
+      VarDecl(int b)[7]
       ExprStmt
         =
-          n[8]
-          Call(read)[8]
+          a[8]
+          4[8]
       ExprStmt
-        Call(write)[9]
-          Call(seq)[9]
-            n[9]
-  FunctionDef(int seq)[12]
-    Param(int m)[12]
-    Compound
-      VarDecl(int s)[14]
-      VarDecl(int a)[14]
-      VarDecl(int b)[14]
+        =
+          b[9]
+          Call(square)[9]
+            a[9]
       IfStmt
-        <=
-          m[15]
-          2[15]
-        ExprStmt
-          =
-            s[16]
-            1[16]
+        >
+          b[10]
+          10[10]
         Compound
           ExprStmt
-            =
-              s[21]
-              +
-                Call(seq)[21]
-                  -
-                    m[21]
-                    1[21]
-                Call(seq)[21]
-                  -
-                    m[21]
-                    2[21]
-      ReturnStmt[23]
-        s[23]
+            Call(write)[11]
+              b[11]
+        Compound
+          ExprStmt
+            Call(write)[13]
+              0[13]

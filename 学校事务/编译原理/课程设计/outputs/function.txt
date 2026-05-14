@@ -1,4 +1,2 @@
-int seq(int)
-int read(void)
-void write(int)
-void main(void)
+int square(int)
+int main(void)

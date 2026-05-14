@@ -29,63 +29,50 @@ start:
     mov ax,data
     mov ds,ax
 
-main:
+square:
     PUSH BP
     MOV BP,SP
-    SUB SP,8
-    CALL read
-    MOV ss:[bp-2],AX
-    MOV AX,ss:[bp-2]
-    MOV ss:[bp-4],AX
-    MOV AX,ss:[bp-4]
-    PUSH AX
-    CALL seq
-    MOV ss:[bp-6],AX
-    MOV AX,ss:[bp-6]
-    PUSH AX
-    CALL write
-    MOV ss:[bp-8],AX
-    MOV AX,0
-    mov ah,4ch
-    int 21h
-
-seq:
-    PUSH BP
-    MOV BP,SP
-    SUB SP,12
+    SUB SP,2
     MOV AX,ss:[bp+4]
-    CMP AX,2
-    JLE _11
-    JMP far ptr _13
-_11:
-    MOV AX,1
+    MOV BX,ss:[bp+4]
+    MUL BX
     MOV ss:[bp-2],AX
-    JMP far ptr _21
-_13:
-    MOV AX,ss:[bp+4]
-    SUB AX,1
-    MOV ss:[bp-4],AX
-    MOV AX,ss:[bp-4]
-    PUSH AX
-    CALL seq
-    MOV ss:[bp-6],AX
-    MOV AX,ss:[bp+4]
-    SUB AX,2
-    MOV ss:[bp-8],AX
-    MOV AX,ss:[bp-8]
-    PUSH AX
-    CALL seq
-    MOV ss:[bp-10],AX
-    MOV AX,ss:[bp-6]
-    ADD AX,ss:[bp-10]
-    MOV ss:[bp-12],AX
-    MOV AX,ss:[bp-12]
-    MOV ss:[bp-2],AX
-_21:
     MOV AX,ss:[bp-2]
     MOV SP,BP
     POP BP
     RET
+
+main:
+    PUSH BP
+    MOV BP,SP
+    SUB SP,10
+    MOV AX,4
+    MOV ss:[bp-2],AX
+    MOV AX,ss:[bp-2]
+    PUSH AX
+    CALL square
+    MOV ss:[bp-4],AX
+    MOV AX,ss:[bp-4]
+    MOV ss:[bp-6],AX
+    MOV AX,ss:[bp-6]
+    CMP AX,10
+    JG _11
+    JMP far ptr _14
+_11:
+    MOV AX,ss:[bp-6]
+    PUSH AX
+    CALL write
+    MOV ss:[bp-8],AX
+    JMP far ptr _16
+_14:
+    MOV AX,0
+    PUSH AX
+    CALL write
+    MOV ss:[bp-10],AX
+_16:
+    MOV AX,0
+    mov ah,4ch
+    int 21h
 
 
 read proc near

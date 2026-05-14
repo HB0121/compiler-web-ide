@@ -1,32 +1,22 @@
-FUNC main
-; call read _ t1
-MOV n, t1
-; para n _ _
-; call seq _ t2
-; para t2 _ _
-; call write _ t3
-END
-FUNC seq
-JLE m, 2, L11
-JMP L13
-L11:
-MOV s, 1
-JMP L21
-L13:
-LOAD R1, m
-SUB R1, 1
-STORE t4, R1
-; para t4 _ _
-; call seq _ t5
-LOAD R1, m
-SUB R1, 2
-STORE t6, R1
-; para t6 _ _
-; call seq _ t7
-LOAD R1, t5
-ADD R1, t7
-STORE t8, R1
-MOV s, t8
-L21:
-RET s
+FUNC square
+LOAD R1, x
+MUL R1, x
+STORE t1, R1
+RET t1
 RET 0
+FUNC main
+MOV a, 4
+; para a _ _
+; call square _ t2
+MOV b, t2
+JG b, 10, L11
+JMP L14
+L11:
+; para b _ _
+; call write _ t3
+JMP L16
+L14:
+; para 0 _ _
+; call write _ t4
+L16:
+END
