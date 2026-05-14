@@ -33,7 +33,9 @@ class LogAnalysisResult:
     def format_matches(self) -> str:
         if not self.matches:
             return f"{self.no_match_message}\n"
-        lines = [f"{match.value} {match.kind}" for match in self.matches]
+        lines = ["Line | Column | Kind | Value", "--- | --- | --- | ---"]
+        for match in self.matches:
+            lines.append(f"{match.line} | {match.start}-{match.end} | {match.kind} | {match.value}")
         return "\n".join(lines) + ("\n" if lines else "")
 
 

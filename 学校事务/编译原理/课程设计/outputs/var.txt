@@ -1,11 +1,7 @@
-int base
-int exp
-int res
-int i
-int a
-int b
-int c
-int x
-int y
-int z
-int result
+Variable Name | Type
+--- | ---
+a | int
+b | int
+c | int
+i | int
+total | int

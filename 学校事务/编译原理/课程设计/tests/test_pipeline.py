@@ -31,9 +31,12 @@ class PipelineSmokeTests(unittest.TestCase):
 
         self.assertIn("const", result.texts["tokens"])
         self.assertIn("FunctionDef(int main)", result.texts["ast"])
-        self.assertIn("int limit", result.texts["const"])
-        self.assertIn("int total", result.texts["var"])
-        self.assertIn("int add(int, int)", result.texts["function"])
+        self.assertIn("Const Name | Type", result.texts["const"])
+        self.assertIn("limit | int", result.texts["const"])
+        self.assertIn("Variable Name | Type", result.texts["var"])
+        self.assertIn("total | int", result.texts["var"])
+        self.assertIn("Name | Return Type | Parameters", result.texts["function"])
+        self.assertIn("add | int | int, int", result.texts["function"])
         self.assertIn("call", result.texts["quads"])
         self.assertIn("return_value", result.texts["interpreter"])
         self.assertIn("define i32 @main()", result.texts["llvm_ir"])
@@ -806,7 +809,7 @@ class ControlFlowDagTests(unittest.TestCase):
         self.assertEqual(["B3"], analysis.cfg.successors["B1"])
         self.assertEqual(["B3"], analysis.cfg.successors["B2"])
         self.assertEqual(["B1", "B2"], analysis.cfg.predecessors["B3"])
-        self.assertIn("B0 -> B2, B1", analysis.cfg_text)
+        self.assertIn("B0 | B2, B1 | -", analysis.cfg_text)
 
     def test_dag_merges_common_subexpressions_inside_block(self):
         from compiler.cfg_dag import analyze_control_flow
@@ -910,7 +913,9 @@ class LogAutomataTests(unittest.TestCase):
         self.assertRegex(result.dfa_text, r"D\d+ --")
         self.assertIn("LEVEL", result.nfa_text)
         self.assertIn("IP", result.dfa_text)
-        self.assertIn("2026-05-10 DATE", result.format_matches())
+        formatted = result.format_matches()
+        self.assertIn("Line | Column | Kind | Value", formatted)
+        self.assertIn("1 | 1-11 | DATE | 2026-05-10", formatted)
 
     def test_no_log_matches_returns_actionable_message(self):
         from compiler.log_automata import analyze_logs

@@ -59,9 +59,9 @@ def run_pipeline(source: str) -> PipelineResult:
     control_flow = analyze_control_flow(quads) if quads else None
     interpreter_text = interpret_quads(quads).format() if quads else ""
     llvm_ir_text = quads_to_llvm_ir(quads) if quads else ""
-    target_code_text = quads_to_target_code(quads) if quads else ""
+    target_code_text = number_lines(quads_to_target_code(quads)) if quads else ""
     assembly_text = quads_to_masm16(quads, function_params_from_ast(ast)) if quads else ""
-    optimized_target_code_text = quads_to_target_code(optimized_quads) if optimized_quads else ""
+    optimized_target_code_text = number_lines(quads_to_target_code(optimized_quads)) if optimized_quads else ""
     diagnostics = lexer_diagnostics + parser_diagnostics + semantic_diagnostics
     texts = build_texts(
         tokens,
@@ -147,19 +147,35 @@ def format_optimized_quads(quads) -> str:
 
 
 def format_semantic_errors(diagnostics: List[Diagnostic]) -> str:
-    lines = [f"{diagnostic.line} {diagnostic.code}" for diagnostic in diagnostics if diagnostic.phase == "semantic"]
+    semantic_diagnostics = [diagnostic for diagnostic in diagnostics if diagnostic.phase == "semantic"]
+    if not semantic_diagnostics:
+        return "Line | Phase | Code | Message\n--- | --- | --- | ---\n"
+    lines = ["Line | Phase | Code | Message", "--- | --- | --- | ---"]
+    for diagnostic in semantic_diagnostics:
+        lines.append(f"{diagnostic.line} | {diagnostic.phase} | {diagnostic.code} | {diagnostic.message}")
     return "\n".join(lines) + ("\n" if lines else "")
 
 
 def format_symbols(symbols: List[SymbolInfo], kind: str) -> str:
     if kind == "function":
-        lines = [
-            f"{symbol.get('type', 'unknown')} {symbol.get('name', '')}({', '.join(symbol.get('params', []) or ['void'])})"
-            for symbol in symbols
-        ]
+        lines = ["Name | Return Type | Parameters", "--- | --- | ---"]
+        for symbol in symbols:
+            params = ", ".join(symbol.get("params", []) or ["void"])
+            lines.append(f"{symbol.get('name', '')} | {symbol.get('type', 'unknown')} | {params}")
     else:
-        lines = [f"{symbol.get('type', 'unknown')} {symbol.get('name', '')}" for symbol in symbols]
+        title = "Const" if kind == "const" else "Variable"
+        lines = [f"{title} Name | Type", "--- | ---"]
+        for symbol in symbols:
+            lines.append(f"{symbol.get('name', '')} | {symbol.get('type', 'unknown')}")
     return "\n".join(lines) + ("\n" if lines else "")
+
+
+def number_lines(text: str) -> str:
+    lines = text.splitlines()
+    if not lines:
+        return ""
+    width = len(str(len(lines)))
+    return "\n".join(f"{index:>{width}} | {line}" for index, line in enumerate(lines, start=1)) + "\n"
 
 
 def write_outputs(result: PipelineResult, output_dir=Path("outputs")) -> None:

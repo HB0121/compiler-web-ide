@@ -13,6 +13,7 @@ class BasicBlock:
     start: int
     end: int
     quads: List[Quad]
+    leader_reasons: List[str] = field(default_factory=list)
 
 
 @dataclass
@@ -79,24 +80,24 @@ def build_basic_blocks(quads: List[Quad]) -> List[BasicBlock]:
     if not quads:
         return []
 
-    leaders = {0}
+    leader_reasons: Dict[int, List[str]] = {0: ["entry"]}
     for index, quad in enumerate(quads):
         op = str(quad[0])
         target = quad[3]
         if _is_function_label(quad):
-            leaders.add(index)
+            leader_reasons.setdefault(index, []).append(f"function entry {op}")
         if op.startswith("J"):
             if isinstance(target, int) and 0 <= target < len(quads):
-                leaders.add(target)
+                leader_reasons.setdefault(target, []).append(f"jump target from {index}")
             if index + 1 < len(quads):
-                leaders.add(index + 1)
+                leader_reasons.setdefault(index + 1, []).append(f"fall-through after jump {index}")
 
-    ordered = sorted(leaders)
+    ordered = sorted(leader_reasons)
     blocks: List[BasicBlock] = []
     for block_index, start in enumerate(ordered):
         next_start = ordered[block_index + 1] if block_index + 1 < len(ordered) else len(quads)
         end = next_start - 1
-        blocks.append(BasicBlock(f"B{block_index}", start, end, quads[start : end + 1]))
+        blocks.append(BasicBlock(f"B{block_index}", start, end, quads[start : end + 1], leader_reasons.get(start, [])))
     return blocks
 
 
@@ -228,7 +229,10 @@ class LocalDagOptimizer:
 def format_basic_blocks(blocks: List[BasicBlock]) -> str:
     if not blocks:
         return "Basic Blocks\n\n(no quadruples)\n"
-    lines = ["Basic Blocks"]
+    lines = ["Basic Blocks", "", "Leaders", "Index | Block | Reason", "--- | --- | ---"]
+    for block in blocks:
+        lines.append(f"{block.start} | {block.name} | {'; '.join(block.leader_reasons) or '-'}")
+    lines.extend(["", "Blocks"])
     for block in blocks:
         lines.append(f"{block.name} [{block.start}..{block.end}]")
         for offset, quad in enumerate(block.quads, block.start):
@@ -237,11 +241,11 @@ def format_basic_blocks(blocks: List[BasicBlock]) -> str:
 
 
 def format_cfg(cfg: ControlFlowGraph) -> str:
-    lines = ["Control Flow Graph"]
+    lines = ["Control Flow Graph", "Block | Successors | Predecessors", "--- | --- | ---"]
     for block, edges in cfg.successors.items():
         target_text = ", ".join(edges) if edges else "-"
         pred_text = ", ".join(cfg.predecessors.get(block, [])) or "-"
-        lines.append(f"{block} -> {target_text}    pred: {pred_text}")
+        lines.append(f"{block} | {target_text} | {pred_text}")
     return "\n".join(lines) + "\n"
 
 
@@ -260,7 +264,7 @@ def format_dags(dag_blocks: List[DagBlock], common_subexpressions: List[CommonSu
 
 
 def format_dag_optimized_quads(quads: List[Quad]) -> str:
-    lines = ["DAG optimized quadruples"]
+    lines = ["DAG optimized quadruples", f"Optimized instruction count: {len(quads)}", ""]
     lines.extend(f"{index}: {_format_quad(quad)}" for index, quad in enumerate(quads))
     return "\n".join(lines) + "\n"
 

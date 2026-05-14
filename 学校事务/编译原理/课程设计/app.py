@@ -88,6 +88,16 @@ LOG_PLACEHOLDERS = {
     "log_dfa_visual": "Enter a regex and click 日志识别 to draw the DFA graph.\n",
 }
 
+COMMON_REGEX_PATTERNS = (
+    ("日期 DATE", r"\d{4}-\d{2}-\d{2}"),
+    ("时间 TIME", r"\d{2}:\d{2}:\d{2}"),
+    ("IP 地址", r"(?:\d{1,3}\.){3}\d{1,3}"),
+    ("日志级别", r"\b(?:INFO|WARN|ERROR|DEBUG|FATAL)\b"),
+    ("状态码", r"status=\d{3}"),
+    ("用户", r"user=[A-Za-z_][A-Za-z0-9_]*"),
+    ("动作", r"action=[A-Za-z_][A-Za-z0-9_]*"),
+)
+
 
 class CompilerApp:
     def __init__(self, root: tk.Tk) -> None:
@@ -98,6 +108,7 @@ class CompilerApp:
         self.tree_items: dict[str, str] = {}
         self.summary_vars: dict[str, tk.StringVar] = {}
         self.regex_var = tk.StringVar(value=r"\d{4}-\d{2}-\d{2}")
+        self.regex_preset_var = tk.StringVar(value="常用")
         self.highlight_job = None
         self.diagnostics_job = None
         self.editor_diagnostics = []
@@ -225,7 +236,24 @@ class CompilerApp:
         regex_frame.columnconfigure(1, weight=1)
         ttk.Label(regex_frame, text="Regex", style="PanelTitle.TLabel").grid(row=0, column=0, sticky="w", padx=(0, 8))
         ttk.Entry(regex_frame, textvariable=self.regex_var).grid(row=0, column=1, sticky="ew")
-        ttk.Button(regex_frame, text="日志识别", command=self.run_log_automata, style="Subtle.TButton").grid(row=0, column=2, padx=(8, 0))
+        self.regex_preset = ttk.Combobox(
+            regex_frame,
+            textvariable=self.regex_preset_var,
+            values=[name for name, _pattern in COMMON_REGEX_PATTERNS],
+            state="readonly",
+            width=10,
+        )
+        self.regex_preset.grid(row=0, column=2, sticky="ew", padx=(8, 0))
+        self.regex_preset.bind("<<ComboboxSelected>>", self._on_regex_preset_selected)
+        ttk.Button(regex_frame, text="日志识别", command=self.run_log_automata, style="Subtle.TButton").grid(row=0, column=3, padx=(8, 0))
+
+    def _on_regex_preset_selected(self, event=None) -> None:
+        selected = self.regex_preset_var.get()
+        for name, pattern in COMMON_REGEX_PATTERNS:
+            if name == selected:
+                self.regex_var.set(pattern)
+                self._set_status(f"Regex preset: {name}")
+                break
 
     def _build_diagnostics_panel(self, parent: ttk.Frame) -> None:
         ttk.Label(parent, text="Diagnostics", style="PanelTitle.TLabel").grid(row=4, column=0, columnspan=3, sticky="w", pady=(8, 6))
@@ -642,7 +670,7 @@ class CompilerApp:
             return
 
         self.graph_canvas.delete("all")
-        fragments = self.log_graph_fragments
+        fragments = self._expanded_regex_fragments(self.log_graph_fragments)
         if not fragments:
             self.graph_canvas.configure(scrollregion=(0, 0, 640, 360))
             self.graph_canvas.create_text(
@@ -655,17 +683,21 @@ class CompilerApp:
             )
             return
 
-        prefix = "q" if key == "log_nfa_visual" else "D"
-        title = "NFA Graph" if key == "log_nfa_visual" else "DFA Graph"
+        if key == "log_nfa_visual":
+            self._draw_log_nfa_graph(fragments)
+        else:
+            self._draw_log_dfa_graph(fragments)
+
+    def _draw_log_nfa_graph(self, fragments: list[str]) -> None:
         zoom = self.graph_zoom
         visible_width = max(self.graph_canvas.winfo_width(), 640)
         visible_height = max(self.graph_canvas.winfo_height(), 360)
         margin = int(70 * zoom)
-        step = max(int(100 * zoom), int(150 * zoom))
+        step = max(int(130 * zoom), int(165 * zoom))
         radius = max(14, int(24 * zoom))
         y = max(visible_height // 2, int(180 * zoom))
         graph_width = max(visible_width, margin * 2 + step * len(fragments) + int(120 * zoom))
-        graph_height = max(visible_height, y + int(120 * zoom))
+        graph_height = max(visible_height, y + int(170 * zoom))
         self.graph_canvas.configure(scrollregion=(0, 0, graph_width, graph_height))
 
         self.graph_canvas.create_text(
@@ -674,7 +706,7 @@ class CompilerApp:
             anchor="w",
             fill="#0f172a",
             font=("Microsoft YaHei UI", max(10, int(14 * zoom)), "bold"),
-            text=title,
+            text="NFA Visual - Thompson Style",
         )
         self.graph_canvas.create_text(
             margin,
@@ -690,14 +722,10 @@ class CompilerApp:
             positions.append((margin + index * step, y))
 
         for index, (x, node_y) in enumerate(positions):
-            state = f"{prefix}{index}"
+            state = f"q{index}"
             fill = "#dcfce7" if index == len(positions) - 1 else "#e0f2fe"
             outline = "#16a34a" if index == len(positions) - 1 else "#0284c7"
-            self.graph_canvas.create_oval(x - radius, node_y - radius, x + radius, node_y + radius, fill=fill, outline=outline, width=max(1, int(2 * zoom)))
-            if index == len(positions) - 1:
-                inset = max(3, int(5 * zoom))
-                self.graph_canvas.create_oval(x - radius + inset, node_y - radius + inset, x + radius - inset, node_y + radius - inset, outline=outline, width=max(1, int(2 * zoom)))
-            self.graph_canvas.create_text(x, node_y, text=state, fill="#0f172a", font=("Consolas", max(8, int(11 * zoom)), "bold"))
+            self._draw_state(x, node_y, radius, state, fill, outline, index == len(positions) - 1, zoom)
 
         start_x, start_y = positions[0]
         start_gap = int(58 * zoom)
@@ -708,10 +736,154 @@ class CompilerApp:
             x1, y1 = positions[index]
             x2, y2 = positions[index + 1]
             self.graph_canvas.create_line(x1 + radius, y1, x2 - radius, y2, arrow=tk.LAST, fill="#334155", width=max(1, int(2 * zoom)))
-            label = fragment if len(fragment) <= 24 else fragment[:21] + "..."
-            label_half_width = max(46, int(46 * zoom))
-            self.graph_canvas.create_rectangle((x1 + x2) / 2 - label_half_width, y1 - int(48 * zoom), (x1 + x2) / 2 + label_half_width, y1 - int(24 * zoom), fill="#f8fafc", outline="")
-            self.graph_canvas.create_text((x1 + x2) / 2, y1 - int(36 * zoom), text=label, fill="#7c2d12", font=("Consolas", max(8, int(9 * zoom))))
+            self._draw_edge_label((x1 + x2) / 2, y1 - int(38 * zoom), self._short_label(fragment), zoom)
+            self._draw_nfa_operator_hint(index, fragment, positions, radius, zoom)
+
+    def _draw_log_dfa_graph(self, fragments: list[str]) -> None:
+        zoom = self.graph_zoom
+        visible_width = max(self.graph_canvas.winfo_width(), 640)
+        visible_height = max(self.graph_canvas.winfo_height(), 360)
+        margin = int(80 * zoom)
+        col_step = int(190 * zoom)
+        row_step = int(120 * zoom)
+        radius = max(18, int(30 * zoom))
+        columns = max(1, min(4, len(fragments) + 1))
+        rows = (len(fragments) + columns) // columns
+        graph_width = max(visible_width, margin * 2 + columns * col_step)
+        graph_height = max(visible_height, int(130 * zoom) + rows * row_step + int(120 * zoom))
+        self.graph_canvas.configure(scrollregion=(0, 0, graph_width, graph_height))
+
+        self.graph_canvas.create_text(
+            margin,
+            int(28 * zoom),
+            anchor="w",
+            fill="#0f172a",
+            font=("Microsoft YaHei UI", max(10, int(14 * zoom)), "bold"),
+            text="DFA Visual - Subset Construction",
+        )
+        self.graph_canvas.create_text(
+            margin,
+            int(54 * zoom),
+            anchor="w",
+            fill="#64748b",
+            font=("Consolas", max(8, int(10 * zoom))),
+            text=f"Regex: {self.regex_var.get().strip()}",
+        )
+
+        positions = []
+        for index in range(len(fragments) + 1):
+            row = index // columns
+            col = index % columns
+            if row % 2 == 1:
+                col = columns - 1 - col
+            positions.append((margin + col * col_step, int(140 * zoom) + row * row_step))
+
+        for index, (x, y) in enumerate(positions):
+            label = f"D{index}\n{{q{index}}}"
+            fill = "#dcfce7" if index == len(positions) - 1 else "#fef3c7"
+            outline = "#16a34a" if index == len(positions) - 1 else "#d97706"
+            self._draw_state(x, y, radius, label, fill, outline, index == len(positions) - 1, zoom)
+
+        start_x, start_y = positions[0]
+        self.graph_canvas.create_line(start_x - int(62 * zoom), start_y, start_x - radius, start_y, arrow=tk.LAST, fill="#334155", width=max(1, int(2 * zoom)))
+        self.graph_canvas.create_text(start_x - int(70 * zoom), start_y - int(20 * zoom), text="start", fill="#334155", font=("Consolas", max(8, int(9 * zoom))))
+
+        for index, fragment in enumerate(fragments):
+            x1, y1 = positions[index]
+            x2, y2 = positions[index + 1]
+            self._draw_directed_edge(x1, y1, x2, y2, radius, zoom)
+            self._draw_edge_label((x1 + x2) / 2, (y1 + y2) / 2 - int(22 * zoom), self._short_label(fragment), zoom)
+            if any(mark in fragment for mark in ("*", "+")):
+                self._draw_self_loop(x2, y2, radius, self._short_label(fragment), zoom)
+
+    def _draw_state(self, x: int, y: int, radius: int, label: str, fill: str, outline: str, accepting: bool, zoom: float) -> None:
+        width = max(1, int(2 * zoom))
+        self.graph_canvas.create_oval(x - radius, y - radius, x + radius, y + radius, fill=fill, outline=outline, width=width)
+        if accepting:
+            inset = max(4, int(6 * zoom))
+            self.graph_canvas.create_oval(x - radius + inset, y - radius + inset, x + radius - inset, y + radius - inset, outline=outline, width=width)
+        self.graph_canvas.create_text(x, y, text=label, fill="#0f172a", font=("Consolas", max(8, int(10 * zoom)), "bold"), justify=tk.CENTER)
+
+    def _draw_directed_edge(self, x1: int, y1: int, x2: int, y2: int, radius: int, zoom: float) -> None:
+        dx = x2 - x1
+        dy = y2 - y1
+        distance = max((dx * dx + dy * dy) ** 0.5, 1)
+        sx = x1 + radius * dx / distance
+        sy = y1 + radius * dy / distance
+        ex = x2 - radius * dx / distance
+        ey = y2 - radius * dy / distance
+        self.graph_canvas.create_line(sx, sy, ex, ey, arrow=tk.LAST, fill="#334155", width=max(1, int(2 * zoom)))
+
+    def _draw_edge_label(self, x: float, y: float, label: str, zoom: float) -> None:
+        half_width = max(34, int((len(label) * 4 + 18) * zoom))
+        half_height = max(10, int(12 * zoom))
+        self.graph_canvas.create_rectangle(x - half_width, y - half_height, x + half_width, y + half_height, fill="#f8fafc", outline="#cbd5e1")
+        self.graph_canvas.create_text(x, y, text=label, fill="#7c2d12", font=("Consolas", max(8, int(9 * zoom))))
+
+    def _draw_nfa_operator_hint(self, index: int, fragment: str, positions: list[tuple[int, int]], radius: int, zoom: float) -> None:
+        x1, y1 = positions[index]
+        x2, y2 = positions[index + 1]
+        if "|" in fragment or "?:" in fragment:
+            top = y1 - int(84 * zoom)
+            self.graph_canvas.create_line(x1, y1 - radius, x1 + int(38 * zoom), top, x2 - int(38 * zoom), top, x2, y2 - radius, smooth=True, arrow=tk.LAST, fill="#64748b", dash=(4, 3), width=max(1, int(1.5 * zoom)))
+            self._draw_edge_label((x1 + x2) / 2, top - int(14 * zoom), "ε branch", zoom)
+        if "*" in fragment or "+" in fragment:
+            self._draw_self_loop(x2, y2, radius, "ε / repeat", zoom)
+        if "?" in fragment and "?:" not in fragment:
+            bottom = y1 + int(74 * zoom)
+            self.graph_canvas.create_line(x1, y1 + radius, x1 + int(38 * zoom), bottom, x2 - int(38 * zoom), bottom, x2, y2 + radius, smooth=True, arrow=tk.LAST, fill="#64748b", dash=(4, 3), width=max(1, int(1.5 * zoom)))
+            self._draw_edge_label((x1 + x2) / 2, bottom + int(14 * zoom), "ε skip", zoom)
+
+    def _draw_self_loop(self, x: int, y: int, radius: int, label: str, zoom: float) -> None:
+        loop_r = int(28 * zoom)
+        self.graph_canvas.create_arc(x - loop_r, y - radius - loop_r, x + loop_r, y - radius + loop_r, start=20, extent=300, style=tk.ARC, outline="#64748b", width=max(1, int(2 * zoom)))
+        self.graph_canvas.create_line(x + int(18 * zoom), y - radius - int(7 * zoom), x + int(8 * zoom), y - radius + int(2 * zoom), arrow=tk.LAST, fill="#64748b", width=max(1, int(2 * zoom)))
+        self.graph_canvas.create_text(x, y - radius - int(38 * zoom), text=label, fill="#475569", font=("Consolas", max(8, int(8 * zoom))))
+
+    def _short_label(self, text: str) -> str:
+        return text if len(text) <= 18 else text[:15] + "..."
+
+    def _expanded_regex_fragments(self, fragments: list[str]) -> list[str]:
+        expanded: list[str] = []
+        for fragment in fragments:
+            expanded.extend(self._expand_regex_fragment(fragment))
+        return expanded or ["ε"]
+
+    def _expand_regex_fragment(self, fragment: str) -> list[str]:
+        count_match = re.fullmatch(r"(.+)\{(\d+)\}", fragment)
+        range_match = re.fullmatch(r"(.+)\{(\d+),(\d+)\}", fragment)
+        if count_match:
+            atom = self._display_regex_atom(count_match.group(1))
+            return [atom for _ in range(int(count_match.group(2)))]
+        if range_match:
+            atom = self._display_regex_atom(range_match.group(1))
+            lower = int(range_match.group(2))
+            upper = int(range_match.group(3))
+            items = [atom for _ in range(lower)]
+            for _index in range(max(0, upper - lower)):
+                items.append(f"{atom}?")
+            return items
+        return [self._display_regex_atom(fragment)]
+
+    def _display_regex_atom(self, atom: str) -> str:
+        replacements = {
+            r"\d": "digit",
+            r"\w": "word",
+            r"\s": "space",
+            r"\.": ".",
+            r"\-": "-",
+            r"\:": ":",
+            r"\b": "word-boundary",
+        }
+        if atom in replacements:
+            return replacements[atom]
+        if atom.startswith("[") and atom.endswith("]"):
+            return atom
+        if atom.startswith("(?:") and atom.endswith(")"):
+            return atom[3:-1]
+        if atom.startswith("(") and atom.endswith(")"):
+            return atom[1:-1]
+        return atom
 
     def _draw_cfg_graph(self) -> None:
         self.graph_canvas.delete("all")
@@ -730,22 +902,31 @@ class CompilerApp:
 
         zoom = self.graph_zoom
         blocks = analysis.basic_blocks
-        node_width = int(190 * zoom)
-        node_height = int(86 * zoom)
-        x_gap = int(84 * zoom)
-        y_gap = int(72 * zoom)
+        node_width = int(240 * zoom)
+        x_gap = int(100 * zoom)
+        y_gap = int(90 * zoom)
         margin = int(60 * zoom)
         columns = 2 if len(blocks) > 3 else 1
+        heights = {block.name: max(int(92 * zoom), int((3 + len(block.quads)) * 18 * zoom)) for block in blocks}
         positions = {}
+        row_heights: dict[int, int] = {}
+        for index, block in enumerate(blocks):
+            row = index // columns
+            row_heights[row] = max(row_heights.get(row, 0), heights[block.name])
+        row_tops: dict[int, int] = {}
+        current_y = margin + int(56 * zoom)
+        for row in range(max(row_heights, default=-1) + 1):
+            row_tops[row] = current_y
+            current_y += row_heights[row] + y_gap
         for index, block in enumerate(blocks):
             row = index // columns
             col = index % columns
-            positions[block.name] = (margin + col * (node_width + x_gap), margin + row * (node_height + y_gap) + int(56 * zoom))
+            positions[block.name] = (margin + col * (node_width + x_gap), row_tops[row])
 
         visible_width = max(self.graph_canvas.winfo_width(), 640)
         visible_height = max(self.graph_canvas.winfo_height(), 360)
         graph_width = max(visible_width, margin * 2 + columns * node_width + (columns - 1) * x_gap)
-        graph_height = max(visible_height, max(y for _x, y in positions.values()) + node_height + margin)
+        graph_height = max(visible_height, current_y + margin)
         self.graph_canvas.configure(scrollregion=(0, 0, graph_width, graph_height))
         self.graph_canvas.create_text(margin, int(28 * zoom), anchor="w", fill="#0f172a", font=("Microsoft YaHei UI", max(10, int(14 * zoom)), "bold"), text="Control Flow Graph")
 
@@ -753,9 +934,10 @@ class CompilerApp:
             x1, y1 = positions[source]
             for target in targets:
                 x2, y2 = positions[target]
+                source_height = heights[source]
                 self.graph_canvas.create_line(
                     x1 + node_width / 2,
-                    y1 + node_height,
+                    y1 + source_height,
                     x2 + node_width / 2,
                     y2,
                     arrow=tk.LAST,
@@ -766,19 +948,19 @@ class CompilerApp:
 
         for block in blocks:
             x, y = positions[block.name]
+            node_height = heights[block.name]
             self.graph_canvas.create_rectangle(x, y, x + node_width, y + node_height, fill="#eff6ff", outline="#2563eb", width=max(1, int(2 * zoom)))
             self.graph_canvas.create_text(x + int(12 * zoom), y + int(12 * zoom), anchor="nw", fill="#0f172a", font=("Consolas", max(8, int(11 * zoom)), "bold"), text=f"{block.name} [{block.start}..{block.end}]")
-            preview = "; ".join(f"{block.start + offset}:{quad[0]}" for offset, quad in enumerate(block.quads[:3]))
-            if len(block.quads) > 3:
-                preview += " ..."
-            self.graph_canvas.create_text(x + int(12 * zoom), y + int(40 * zoom), anchor="nw", fill="#475569", font=("Consolas", max(8, int(9 * zoom))), text=preview, width=node_width - int(24 * zoom))
+            reason = "; ".join(block.leader_reasons) or "-"
+            self.graph_canvas.create_text(x + int(12 * zoom), y + int(34 * zoom), anchor="nw", fill="#64748b", font=("Consolas", max(8, int(8 * zoom))), text=f"leader: {reason}", width=node_width - int(24 * zoom))
+            quad_lines = [f"{block.start + offset}: {self._format_quad_short(quad)}" for offset, quad in enumerate(block.quads)]
+            self.graph_canvas.create_text(x + int(12 * zoom), y + int(58 * zoom), anchor="nw", fill="#334155", font=("Consolas", max(8, int(8 * zoom))), text="\n".join(quad_lines), width=node_width - int(24 * zoom))
 
     def _draw_dag_graph(self) -> None:
         self.graph_canvas.delete("all")
         analysis = self.control_flow_analysis
-        dag_blocks = analysis.dag_blocks if analysis is not None else []
-        dag = next((item for item in dag_blocks if item.nodes), None)
-        if dag is None:
+        dag_blocks = [item for item in (analysis.dag_blocks if analysis is not None else []) if item.nodes]
+        if not dag_blocks:
             self.graph_canvas.configure(scrollregion=(0, 0, 640, 360))
             self.graph_canvas.create_text(
                 24,
@@ -795,36 +977,47 @@ class CompilerApp:
         x_gap = int(120 * zoom)
         y_gap = int(100 * zoom)
         margin = int(70 * zoom)
-        levels = self._dag_levels(dag.nodes)
-        positions = {}
-        for level, nodes in levels.items():
-            for index, node_id in enumerate(nodes):
-                positions[node_id] = (margin + index * x_gap, margin + level * y_gap + int(60 * zoom))
-
         visible_width = max(self.graph_canvas.winfo_width(), 640)
         visible_height = max(self.graph_canvas.winfo_height(), 360)
-        graph_width = max(visible_width, max(x for x, _y in positions.values()) + margin)
-        graph_height = max(visible_height, max(y for _x, y in positions.values()) + margin)
+        all_positions = {}
+        block_offsets = {}
+        current_y = margin + int(60 * zoom)
+        graph_width = visible_width
+        for dag in dag_blocks:
+            levels = self._dag_levels(dag.nodes)
+            max_nodes = max((len(nodes) for nodes in levels.values()), default=1)
+            block_height = (max(levels.keys(), default=0) + 1) * y_gap + int(90 * zoom)
+            block_offsets[dag.block] = current_y
+            for level, nodes in levels.items():
+                for index, node_id in enumerate(nodes):
+                    all_positions[(dag.block, node_id)] = (margin + index * x_gap, current_y + level * y_gap + int(50 * zoom))
+            graph_width = max(graph_width, margin * 2 + max_nodes * x_gap)
+            current_y += block_height + int(52 * zoom)
+        graph_height = max(visible_height, current_y + margin)
         self.graph_canvas.configure(scrollregion=(0, 0, graph_width, graph_height))
-        self.graph_canvas.create_text(margin, int(28 * zoom), anchor="w", fill="#0f172a", font=("Microsoft YaHei UI", max(10, int(14 * zoom)), "bold"), text=f"DAG Visual: {dag.block}")
+        self.graph_canvas.create_text(margin, int(28 * zoom), anchor="w", fill="#0f172a", font=("Microsoft YaHei UI", max(10, int(14 * zoom)), "bold"), text="DAG Visual - all basic blocks")
 
-        node_by_id = {node.id: node for node in dag.nodes}
-        for node in dag.nodes:
-            x1, y1 = positions[node.id]
-            for child_id in node.children:
-                if child_id not in positions:
-                    continue
-                x2, y2 = positions[child_id]
-                self.graph_canvas.create_line(x1, y1 - node_radius, x2, y2 + node_radius, arrow=tk.LAST, fill="#64748b", width=max(1, int(2 * zoom)))
+        for dag in dag_blocks:
+            top_y = block_offsets[dag.block]
+            self.graph_canvas.create_text(margin, top_y - int(26 * zoom), anchor="w", fill="#0f172a", font=("Consolas", max(9, int(11 * zoom)), "bold"), text=f"{dag.block}")
+            node_by_id = {node.id: node for node in dag.nodes}
+            for node in dag.nodes:
+                x1, y1 = all_positions[(dag.block, node.id)]
+                for child_id in node.children:
+                    key = (dag.block, child_id)
+                    if key not in all_positions:
+                        continue
+                    x2, y2 = all_positions[key]
+                    self.graph_canvas.create_line(x1, y1 + node_radius, x2, y2 - node_radius, arrow=tk.LAST, fill="#64748b", width=max(1, int(2 * zoom)))
 
-        for node_id, node in node_by_id.items():
-            x, y = positions[node_id]
-            fill = "#fef3c7" if node.children else "#dcfce7"
-            outline = "#d97706" if node.children else "#16a34a"
-            self.graph_canvas.create_oval(x - node_radius, y - node_radius, x + node_radius, y + node_radius, fill=fill, outline=outline, width=max(1, int(2 * zoom)))
-            self.graph_canvas.create_text(x, y, fill="#0f172a", font=("Consolas", max(8, int(11 * zoom)), "bold"), text=node.label)
-            if node.names:
-                self.graph_canvas.create_text(x, y + node_radius + int(14 * zoom), fill="#475569", font=("Consolas", max(8, int(9 * zoom))), text=",".join(node.names[:3]))
+            for node_id, node in node_by_id.items():
+                x, y = all_positions[(dag.block, node_id)]
+                common = len(node.names) > 1
+                fill = "#fee2e2" if common and node.children else ("#fef3c7" if node.children else "#dcfce7")
+                outline = "#dc2626" if common and node.children else ("#d97706" if node.children else "#16a34a")
+                self.graph_canvas.create_rectangle(x - int(42 * zoom), y - node_radius, x + int(42 * zoom), y + node_radius, fill=fill, outline=outline, width=max(1, int(2 * zoom)))
+                label = f"{node.label}\n{','.join(node.names[:4])}" if node.names else node.label
+                self.graph_canvas.create_text(x, y, fill="#0f172a", font=("Consolas", max(8, int(9 * zoom)), "bold"), text=label, justify=tk.CENTER)
 
     def _dag_levels(self, nodes) -> dict[int, list[str]]:
         level_by_id = {}
@@ -848,6 +1041,10 @@ class CompilerApp:
         for node_id, item_level in level_by_id.items():
             grouped.setdefault(max_level - item_level, []).append(node_id)
         return grouped
+
+    def _format_quad_short(self, quad) -> str:
+        op, arg1, arg2, result = quad
+        return f"({op},{arg1},{arg2},{result})"
 
     def _source(self) -> str:
         return self.source_text.get("1.0", "end-1c")

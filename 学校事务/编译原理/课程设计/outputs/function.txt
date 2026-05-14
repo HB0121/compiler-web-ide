@@ -1,2 +1,4 @@
-int calculate_power(int, int)
-void main(void)
+Name | Return Type | Parameters
+--- | --- | ---
+add | int | int, int
+main | int | void

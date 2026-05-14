@@ -17,6 +17,7 @@ data segment
   _msg_s db 0ah,'Input:',0
   next_row db 0dh,0ah,'$'
   error db 'input error, please re-enter: ','$'
+  limit dw 3
 data ends
 code segment
 start:
@@ -29,34 +30,16 @@ start:
     mov ax,data
     mov ds,ax
 
-calculate_power:
+add:
     PUSH BP
     MOV BP,SP
-    SUB SP,8
-    MOV AX,1
+    SUB SP,4
+    MOV AX,ss:[bp+4]
+    ADD AX,ss:[bp+6]
     MOV ss:[bp-2],AX
-    MOV AX,0
-    MOV ss:[bp-4],AX
-_3:
-    MOV AX,ss:[bp-4]
-    CMP AX,ss:[bp+6]
-    JL _5
-    JMP far ptr _10
-_5:
     MOV AX,ss:[bp-2]
-    MOV BX,ss:[bp+4]
-    MUL BX
-    MOV ss:[bp-6],AX
-    MOV AX,ss:[bp-6]
-    MOV ss:[bp-2],AX
-    MOV AX,ss:[bp-4]
-    ADD AX,1
-    MOV ss:[bp-8],AX
-    MOV AX,ss:[bp-8]
     MOV ss:[bp-4],AX
-    JMP far ptr _3
-_10:
-    MOV AX,ss:[bp-2]
+    MOV AX,ss:[bp-4]
     MOV SP,BP
     POP BP
     RET
@@ -64,107 +47,33 @@ _10:
 main:
     PUSH BP
     MOV BP,SP
-    SUB SP,46
-    MOV AX,10
+    SUB SP,8
+    MOV AX,0
     MOV ss:[bp-2],AX
-    MOV AX,5
+    MOV AX,0
     MOV ss:[bp-4],AX
-    MOV AX,2
-    MOV ss:[bp-6],AX
+_9:
     MOV AX,ss:[bp-2]
-    ADD AX,ss:[bp-4]
+    CMP AX,limit
+    JL _11
+    JMP far ptr _18
+_11:
+    MOV AX,ss:[bp-2]
+    PUSH AX
+    MOV AX,ss:[bp-4]
+    PUSH AX
+    CALL add
+    MOV ss:[bp-6],AX
+    MOV AX,ss:[bp-6]
+    MOV ss:[bp-4],AX
+    MOV AX,ss:[bp-2]
+    ADD AX,1
     MOV ss:[bp-8],AX
     MOV AX,ss:[bp-8]
-    MOV ss:[bp-10],AX
-    MOV AX,ss:[bp-4]
-    MOV BX,ss:[bp-6]
-    MUL BX
-    MOV ss:[bp-12],AX
-    MOV AX,ss:[bp-12]
-    MOV ss:[bp-14],AX
-    MOV AX,ss:[bp-2]
-    ADD AX,ss:[bp-4]
-    MOV ss:[bp-16],AX
-    MOV AX,ss:[bp-16]
-    MOV ss:[bp-18],AX
-    MOV AX,ss:[bp-2]
-    ADD AX,ss:[bp-4]
-    MOV ss:[bp-20],AX
-    MOV AX,ss:[bp-10]
-    MOV BX,ss:[bp-20]
-    MUL BX
-    MOV ss:[bp-22],AX
-    MOV AX,ss:[bp-22]
-    MOV ss:[bp-24],AX
-    MOV AX,ss:[bp-4]
-    MOV BX,ss:[bp-6]
-    MUL BX
-    MOV ss:[bp-26],AX
-    MOV AX,ss:[bp-24]
-    ADD AX,ss:[bp-26]
-    MOV ss:[bp-28],AX
-    MOV AX,ss:[bp-28]
-    MOV ss:[bp-24],AX
-    MOV AX,ss:[bp-24]
-    CMP AX,100
-    JG _30
-    JMP far ptr _38
-_30:
-    MOV AX,ss:[bp-14]
-    ADD AX,ss:[bp-18]
-    MOV ss:[bp-30],AX
-    MOV AX,ss:[bp-30]
-    MOV ss:[bp-10],AX
-    MOV AX,ss:[bp-14]
-    ADD AX,ss:[bp-18]
-    MOV ss:[bp-32],AX
-    MOV AX,ss:[bp-32]
-    MOV ss:[bp-14],AX
-    MOV AX,2
-    PUSH AX
-    MOV AX,ss:[bp-10]
-    PUSH AX
-    CALL calculate_power
-    MOV ss:[bp-34],AX
-    JMP far ptr _42
-_38:
-    MOV AX,ss:[bp-2]
-    SUB AX,ss:[bp-4]
-    MOV ss:[bp-36],AX
-    MOV AX,ss:[bp-36]
-    MOV ss:[bp-10],AX
-    MOV AX,ss:[bp-2]
-    SUB AX,ss:[bp-4]
-    MOV ss:[bp-38],AX
-    MOV AX,ss:[bp-38]
-    MOV ss:[bp-18],AX
-_42:
-    MOV AX,ss:[bp-2]
-    ADD AX,0
-    MOV ss:[bp-40],AX
-    MOV AX,ss:[bp-40]
     MOV ss:[bp-2],AX
+    JMP far ptr _9
+_18:
     MOV AX,ss:[bp-4]
-    MOV BX,1
-    MUL BX
-    MOV ss:[bp-42],AX
-    MOV AX,ss:[bp-42]
-    MOV ss:[bp-4],AX
-    MOV AX,ss:[bp-6]
-    MOV BX,0
-    MUL BX
-    MOV ss:[bp-44],AX
-    MOV AX,ss:[bp-44]
-    MOV ss:[bp-6],AX
-    MOV AX,ss:[bp-6]
-    PUSH AX
-    MOV AX,ss:[bp-4]
-    PUSH AX
-    CALL calculate_power
-    MOV ss:[bp-46],AX
-    MOV AX,ss:[bp-46]
-    MOV ss:[bp-24],AX
-    MOV AX,0
     mov ah,4ch
     int 21h
 
