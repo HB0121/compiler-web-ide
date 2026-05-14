@@ -129,7 +129,15 @@ class Parser:
                 break
             self.pos += 1
 
-            node = ASTNode("VarDecl", line=id_token.line, value=f"{type_token.text} {id_token.text}")
+            value = f"{type_token.text} {id_token.text}"
+            if self.current_token() and self.current_token().text == "[":
+                self.pos += 1
+                size_node = self.parse_assignment_or_expr()
+                size_text = self.node_text(size_node) if size_node else ""
+                self.expect_text("]")
+                value = f"{value}[{size_text}]"
+
+            node = ASTNode("VarDecl", line=id_token.line, value=value)
             if self.current_token() and self.current_token().text == "=":
                 self.pos += 1
                 node.add_child(self.parse_expr_stmt())
@@ -355,18 +363,34 @@ class Parser:
 
     def parse_assignment_or_expr(self) -> Optional[ASTNode]:
         token = self.current_token()
-        if token and token.code == IDENTIFIER_CODE and self.peek(1) and self.peek(1).text == "=":
-            id_token = token
-            self.pos += 1
-            eq_token = self.current_token()
-            self.pos += 1
+        if token and token.code == IDENTIFIER_CODE:
+            saved_pos = self.pos
+            target_node = self.parse_lvalue()
+            if target_node and self.current_token() and self.current_token().text == "=":
+                eq_token = self.current_token()
+                self.pos += 1
 
-            expr_node = self.parse_assignment_or_expr()
-            assign_node = ASTNode("=", line=eq_token.line)
-            assign_node.add_child(ASTNode(id_token.text, line=id_token.line))
-            assign_node.add_child(expr_node)
-            return assign_node
+                expr_node = self.parse_assignment_or_expr()
+                assign_node = ASTNode("=", line=eq_token.line)
+                assign_node.add_child(target_node)
+                assign_node.add_child(expr_node)
+                return assign_node
+            self.pos = saved_pos
         return self.parse_logical_expression()
+
+    def parse_lvalue(self) -> Optional[ASTNode]:
+        token = self.current_token()
+        if not token or token.code != IDENTIFIER_CODE:
+            return None
+        self.pos += 1
+        if self.current_token() and self.current_token().text == "[":
+            self.pos += 1
+            node = ASTNode("ArrayAccess", line=token.line, value=token.text)
+            index_node = self.parse_assignment_or_expr()
+            node.add_child(index_node)
+            self.expect_text("]")
+            return node
+        return ASTNode(token.text, line=token.line)
 
     def parse_assignment_expr(self) -> Optional[ASTNode]:
         return self.parse_assignment_or_expr()
@@ -469,6 +493,9 @@ class Parser:
                 self.expect_text(")")
                 return call_node
 
+            if next_token and next_token.text == "[":
+                return self.parse_lvalue()
+
             self.pos += 1
             return ASTNode(token.text, line=token.line)
 
@@ -491,6 +518,11 @@ class Parser:
             return node
 
         return None
+
+    def node_text(self, node: Optional[ASTNode]) -> str:
+        if node is None:
+            return ""
+        return node.value if node.value is not None else node.name
 
     @staticmethod
     def add_statement(parent: ASTNode, stmt: Optional[Union[ASTNode, List[ASTNode]]]) -> None:

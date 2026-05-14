@@ -1,30 +1,19 @@
 return_value: None
 variables:
-  a = 2
-  b = 3
-  c = 5
-  d = 5
-  t1 = 5
-  t2 = 5
-  t3 = 25
-  t4 = 24
-  t6 = 0
-  x = 25
-  y = 24
+  N = 0
+  i = 1
+  sum = 0
+  t1 = 0
+  t4 = 0
 trace:
-  1: (=, 2, _, a)
-  2: (=, 3, _, b)
-  3: (+, a, b, t1)
-  4: (=, t1, _, c)
-  5: (+, a, b, t2)
-  6: (=, t2, _, d)
-  7: (*, c, d, t3)
-  8: (=, t3, _, x)
-  9: (J>, x, 20, 11)
-  11: (-, x, 1, t4)
-  12: (=, t4, _, y)
-  13: (J, _, _, 16)
-  16: (para, y, _, _)
-  17: (call, write, _, t6)
-  builtin write(24)
-  18: (sys, _, _, _)
+  1: (=, 0, _, sum)
+  2: (call, read, _, t1)
+  builtin read() -> 0
+  3: (=, t1, _, N)
+  4: (=, 1, _, i)
+  5: (J<=, i, N, 10)
+  6: (J, _, _, 13)
+  13: (para, sum, _, _)
+  14: (call, write, _, t4)
+  builtin write(0)
+  15: (sys, _, _, _)

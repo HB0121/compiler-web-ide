@@ -60,6 +60,18 @@ class QuadInterpreter:
                 pc += 1
                 continue
 
+            if op == "=[]":
+                index = self._value(arg2, self.values)
+                self.values[str(result)] = self.values.get(f"{arg1}[{index}]", 0)
+                pc += 1
+                continue
+
+            if op == "[]=":
+                index = self._value(arg2, self.values)
+                self.values[f"{result}[{index}]"] = self._value(arg1, self.values)
+                pc += 1
+                continue
+
             if op in {"+", "-", "*", "/", "%", ">", "<", ">=", "<=", "==", "!=", "&&", "||"}:
                 self.values[str(result)] = self._apply_binary(str(op), self._value(arg1, self.values), self._value(arg2, self.values))
                 pc += 1
@@ -151,6 +163,18 @@ class QuadInterpreter:
                 pc += 1
                 continue
 
+            if op == "=[]":
+                index = self._value(arg2, values)
+                values[str(result)] = values.get(f"{arg1}[{index}]", 0)
+                pc += 1
+                continue
+
+            if op == "[]=":
+                index = self._value(arg2, values)
+                values[f"{result}[{index}]"] = self._value(arg1, values)
+                pc += 1
+                continue
+
             if op in {"+", "-", "*", "/", "%", ">", "<", ">=", "<=", "==", "!=", "&&", "||"}:
                 values[str(result)] = self._apply_binary(str(op), self._value(arg1, values), self._value(arg2, values))
                 pc += 1
@@ -201,6 +225,10 @@ class QuadInterpreter:
             return [result]
         if op == "=":
             return [arg1]
+        if op == "=[]":
+            return [arg1, arg2]
+        if op == "[]=":
+            return [arg1, arg2]
         if op in {"+", "-", "*", "/", "%", ">", "<", ">=", "<=", "==", "!=", "&&", "||"} or str(op).startswith("J"):
             return [arg1, arg2]
         if op in {"!", "neg", "para"}:

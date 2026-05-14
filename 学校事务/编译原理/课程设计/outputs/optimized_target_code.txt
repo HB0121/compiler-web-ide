@@ -1,32 +1,24 @@
 FUNC main
-MOV a, 2
-MOV b, 3
-LOAD R1, a
-ADD R1, b
-STORE t1, R1
-MOV c, t1
-LOAD R1, a
-ADD R1, b
-STORE t2, R1
-MOV d, t2
-LOAD R1, c
-MUL R1, d
-STORE t3, R1
-MOV x, t3
-JG x, 20, L11
-JMP L14
-L11:
-LOAD R1, x
-SUB R1, 1
-STORE t4, R1
-MOV y, t4
-JMP L16
-L14:
-LOAD R1, x
+MOV sum, 0
+; call read _ t1
+MOV N, t1
+MOV i, 1
+L5:
+JLE i, N, L10
+JMP L13
+L7:
+LOAD R1, i
 ADD R1, 1
-STORE t5, R1
-MOV y, t5
-L16:
-; para y _ _
-; call write _ t6
+STORE t2, R1
+MOV i, t2
+JMP L5
+L10:
+LOAD R1, sum
+ADD R1, i
+STORE t3, R1
+MOV sum, t3
+JMP L7
+L13:
+; para sum _ _
+; call write _ t4
 END

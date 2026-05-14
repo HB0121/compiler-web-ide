@@ -1,18 +1,13 @@
 DAG
 B0
-  N0: 2 {2}
-  N1: 3 {3}
-  N2: + {t1, c, d} <- N0, N1
-  N3: t1 {t1}
-  N4: * {t3, x} <- N3, N3
-  common: 2 + 3 reused by t2
 B1
 B2
-  N0: x {x}
-  N1: 1 {1}
-  N2: - {t4, y} <- N0, N1
 B3
-  N0: x {x}
+  N0: i {i}
   N1: 1 {1}
-  N2: + {t5, y} <- N0, N1
+  N2: + {t2, i} <- N0, N1
 B4
+  N0: sum {sum}
+  N1: i {i}
+  N2: + {t3, sum} <- N0, N1
+B5

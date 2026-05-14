@@ -78,6 +78,12 @@ class Identifier(IRNode):
         self.name = name
 
 
+class ArrayAccess(IRNode):
+    def __init__(self, name, index):
+        self.name = name
+        self.index = index
+
+
 class Constant(IRNode):
     def __init__(self, val):
         self.val = str(val)
@@ -209,6 +215,10 @@ class QuadGenerator:
 
         elif isinstance(node, Assign):
             value = self.visit(node.expr)
+            if isinstance(node.var, ArrayAccess):
+                index = self.visit(node.var.index)
+                self.emit("[]=", value, index, node.var.name)
+                return node.var.name
             self.emit("=", value, "_", node.var)
             return node.var
 
@@ -242,10 +252,21 @@ class QuadGenerator:
         elif isinstance(node, Identifier):
             return node.name
 
+        elif isinstance(node, ArrayAccess):
+            index = self.visit(node.index)
+            result = self.new_temp()
+            self.emit("=[]", node.name, index, result)
+            return result
+
         elif isinstance(node, Constant):
             return node.val
 
         elif isinstance(node, FuncCall):
+            if node.name == "read" and len(node.args) == 1 and isinstance(node.args[0], Identifier):
+                result = self.new_temp()
+                self.emit("call", node.name, "_", result)
+                self.emit("=", result, "_", node.args[0].name)
+                return result
             for arg in node.args:
                 arg_value = self.visit(arg)
                 self.emit("para", arg_value, "_", "_")
@@ -365,9 +386,13 @@ def convert_ast(node: Optional[SharedASTNode]):
         return Block(_convert_statements(node.children))
 
     if node.name == "=":
-        var_name = _assignment_target(node.children[0]) if node.children else ""
+        var_name = convert_ast(node.children[0]) if node.children and node.children[0].name == "ArrayAccess" else (_assignment_target(node.children[0]) if node.children else "")
         expr = convert_ast(node.children[1]) if len(node.children) > 1 else None
         return Assign(var_name, expr)
+
+    if node.name == "ArrayAccess":
+        index = convert_ast(node.children[0]) if node.children else Constant(0)
+        return ArrayAccess(node.value, index)
 
     if node.name in {"+", "-", "*", "/", "%"}:
         if node.name == "-" and len(node.children) == 1:
@@ -473,7 +498,7 @@ def _body_from_children(children):
 
 def _decl_name(value):
     parts = value.split() if value else []
-    return parts[-1].replace(",", "") if parts else ""
+    return re.sub(r"\[.*\]$", "", parts[-1].replace(",", "")) if parts else ""
 
 
 def _assignment_target(node):

@@ -13,68 +13,89 @@ endm
 data segment
   _buff_p db 256 dup (24h)
   _buff_s db 256 dup (0)
-  _msg_p db 0ah,'Output:',0
-  _msg_s db 0ah,'Input:',0
+_msg_p db 0ah,'Output:',0
+_msg_s db 0ah,'Input:',0
   next_row db 0dh,0ah,'$'
   error db 'input error, please re-enter: ','$'
+
 data ends
 code segment
-start:
-    mov ax,extended
-    mov es,ax
-    mov ax,stack
-    mov ss,ax
-    mov sp,1024
-    mov bp,sp
-    mov ax,data
-    mov ds,ax
+start:	mov ax,extended
+	mov es,ax
+	mov ax,stack
+	mov ss,ax
+	mov sp,1024
+	mov bp,sp
+	mov ax,data
+	mov ds,ax
 
 main:
-    PUSH BP
-    MOV BP,SP
-    SUB SP,14
-    MOV AX,0
-    MOV ss:[bp-2],AX
-    CALL read
-    MOV ss:[bp-4],AX
-    MOV AX,ss:[bp-4]
-    MOV ss:[bp-6],AX
-    MOV AX,1
-    MOV ss:[bp-8],AX
+	PUSH BP
+	MOV BP,SP
+	SUB SP,6
+_2:
+	CALL read
+	MOV ss:[bp-2],AX
+_3:
+	MOV AX,ss:[bp-2]
+	PUSH AX
+_4:
+	CALL factor
+	MOV ss:[bp-4],AX
 _5:
-    MOV AX,ss:[bp-8]
-    CMP AX,ss:[bp-6]
-    JLE _10
-    JMP far ptr _13
+	MOV AX,ss:[bp-4]
+	PUSH AX
+_6:
+	CALL write
+	MOV ss:[bp-6],AX
 _7:
-    MOV AX,ss:[bp-8]
-    ADD AX,1
-    MOV ss:[bp-10],AX
-    MOV AX,ss:[bp-10]
-    MOV ss:[bp-8],AX
-    JMP far ptr _5
+	mov ah,4ch
+	int 21h
+factor:
+	PUSH BP
+	MOV BP,SP
+	SUB SP,8
+_9:
+	MOV AX,ss:[bp+4]
+	CMP AX,1
+	JLE _11
+	NOP
 _10:
-    MOV AX,ss:[bp-2]
-    ADD AX,ss:[bp-8]
-    MOV ss:[bp-12],AX
-    MOV AX,ss:[bp-12]
-    MOV ss:[bp-2],AX
-    JMP far ptr _7
+	JMP far ptr _13
+_11:
+	MOV AX,1
+	MOV ss:[bp-2], AX
+_12:
+	JMP far ptr _18
 _13:
-    MOV AX,ss:[bp-2]
-    PUSH AX
-    CALL write
-    MOV ss:[bp-14],AX
-    MOV AX,0
-    mov ah,4ch
-    int 21h
-
+	MOV AX,ss:[bp+4]
+	SUB AX,1
+	MOV ss:[bp-4],AX
+_14:
+	MOV AX,ss:[bp-4]
+	PUSH AX
+_15:
+	CALL factor
+	MOV ss:[bp-6],AX
+_16:
+	MOV AX,ss:[bp+4]
+	MOV BX,ss:[bp-6]
+	MUL BX
+	MOV ss:[bp-8],AX
+_17:
+	MOV AX,ss:[bp-8]
+	MOV ss:[bp-2], AX
+_18:
+	MOV AX,ss:[bp-2]
+	MOV SP,BP
+	POP BP
+	RET
 
 read proc near
     push bp
     mov bp, sp
     mov bx,offset _msg_s
-    call _print
+call _print
     push bx
     push cx
     push dx
@@ -107,6 +128,7 @@ proc_digit_in:
     mov ah, 1
     int 21h
     jmp proc_next
+
 proc_save:
     cmp dx, 0ffffh
     jne proc_result_save
@@ -114,12 +136,14 @@ proc_save:
 proc_result_save:
     mov ax, bx
     jmp proc_input_done
+
 proc_unexpected:
     cmp al, 0dh
     je proc_save
     dispmsg next_row
     dispmsg error
     jmp proc_pre_start
+
 proc_input_done:
     pop dx
     pop cx
@@ -136,7 +160,7 @@ write proc near
     push cx
     push dx
     mov bx,offset _msg_p
-    call _print
+	call _print
     xor cx, cx
     mov bx, [bp+4]
     test bx, 8000h
@@ -153,7 +177,7 @@ proc_div_again:
     xor dx, dx
     div bx
     add dl, 30h
-    push dx
+    push dX
     inc cx
     cmp ax, 0
     jne proc_div_again
@@ -171,28 +195,24 @@ proc_output_done:
     ret 2
 write endp
 
-_print:
-    mov si,0
-    mov di,offset _buff_p
-_p_lp_1:
-    mov al,ds:[bx+si]
-    cmp al,0
-    je _p_brk_1
-    mov ds:[di],al
-    inc si
-    inc di
-    jmp short _p_lp_1
-_p_brk_1:
-    mov dx,offset _buff_p
-    mov ah,09h
-    int 21h
-    mov cx,si
-    mov di,offset _buff_p
-_p_lp_2:
-    mov al,24h
-    mov ds:[di],al
-    inc di
-    loop _p_lp_2
-    ret
+_print:	mov si,0
+	mov di,offset _buff_p
+_p_lp_1:	mov al,ds:[bx+si]
+	cmp al,0
+	je _p_brk_1
+	mov ds:[di],al
+	inc si
+	inc di
+	jmp short _p_lp_1
+_p_brk_1:	mov dx,offset _buff_p
+	mov ah,09h
+	int 21h
+	mov cx,si
+	mov di,offset _buff_p
+_p_lp_2:	mov al,24h
+	mov ds:[di],al
+	inc di
+	loop _p_lp_2
+	ret
 code ends
 end start

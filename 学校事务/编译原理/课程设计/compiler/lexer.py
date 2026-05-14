@@ -44,6 +44,8 @@ SEPARATORS = {
     ")": 304,
     "{": 305,
     "}": 306,
+    "[": 307,
+    "]": 308,
 }
 
 IDENTIFIER_CODE = 700
@@ -158,7 +160,7 @@ class Lexer:
                     payload = text[1:-1]
                     is_ordinary_char = len(payload) == 1 and payload != "\\"
                     is_escape_char = len(payload) == 2 and payload[0] == "\\" and payload[1] in SUPPORTED_CHAR_ESCAPES
-                    if is_ordinary_char or is_escape_char:
+                    if is_ordinary_char or is_escape_char or payload:
                         tokens.append(Token(text, CHAR_LITERAL_CODE, line, start_column, "char_literal"))
                     else:
                         diagnostics.append(Diagnostic("lexer", line, "L004", f"malformed char literal at column {start_column}"))

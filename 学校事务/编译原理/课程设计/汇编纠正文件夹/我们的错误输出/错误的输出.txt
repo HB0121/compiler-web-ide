@@ -1,0 +1,64 @@
+; MASM 16-bit DOS assembly
+; Assemble with MASM/LINK:
+; masm program.asm;
+; link program.obj;
+.MODEL SMALL
+.STACK 100h
+.DATA
+.CODE
+
+main PROC
+    push bp
+    mov bp, sp
+    mov ax, @data
+    mov ds, ax
+    sub sp, 8
+    ; builtin read(): returns 0 in AX
+    mov ax, 0
+    mov WORD PTR [bp-2], ax
+    mov ax, WORD PTR [bp-2]
+    mov WORD PTR [bp-4], ax
+    mov ax, WORD PTR [bp-4]
+    call fn_factor
+    mov WORD PTR [bp-6], ax
+    mov ax, WORD PTR [bp-6]
+    ; builtin write(): value is already evaluated
+    mov WORD PTR [bp-8], ax
+    mov ax, 0
+    mov ah, 4Ch
+    int 21h
+main ENDP
+
+fn_factor PROC
+    push bp
+    mov bp, sp
+    sub sp, 10
+    mov ax, WORD PTR [bp-2]
+    cmp ax, 1
+    jle L11
+    jmp L13
+L11:
+    mov ax, 1
+    mov WORD PTR [bp-4], ax
+    jmp L18
+L13:
+    mov ax, WORD PTR [bp-2]
+    sub ax, 1
+    mov WORD PTR [bp-6], ax
+    mov ax, WORD PTR [bp-6]
+    call fn_factor
+    mov WORD PTR [bp-8], ax
+    mov ax, WORD PTR [bp-2]
+    mov bx, WORD PTR [bp-8]
+    imul bx
+    mov WORD PTR [bp-10], ax
+    mov ax, WORD PTR [bp-10]
+    mov WORD PTR [bp-4], ax
+L18:
+    mov ax, WORD PTR [bp-4]
+    mov sp, bp
+    pop bp
+    ret
+fn_factor ENDP
+
+END main

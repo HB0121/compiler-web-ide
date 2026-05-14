@@ -315,6 +315,9 @@ class SemanticAnalyzer:
         if node.name == "Call":
             return self.evaluate_call(node)
 
+        if node.name == "ArrayAccess":
+            return self.evaluate_array_access(node)
+
         if not node.children:
             return self.evaluate_leaf(node)
 
@@ -328,7 +331,7 @@ class SemanticAnalyzer:
             return "unknown"
 
         target = node.children[0]
-        var_name = self.node_text(target).replace(",", "")
+        var_name = self.array_base_name(target) if target.name == "ArrayAccess" else self.node_text(target).replace(",", "")
         symbol = self.lookup_symbol(var_name)
         left_type = "unknown"
 
@@ -348,6 +351,18 @@ class SemanticAnalyzer:
             return "unknown"
         return left_type
 
+    def evaluate_array_access(self, node: ASTNode) -> str:
+        array_name = self.node_text(node).replace(",", "")
+        symbol = self.lookup_symbol(array_name)
+        if not symbol:
+            self.report_error(node.line, 302)
+            return "unknown"
+        if node.children:
+            index_type = self.evaluate_expression(node.children[0])
+            if index_type != "unknown" and index_type != "int":
+                self.report_error(node.line, 310)
+        return symbol.get("type", "unknown")
+
     def evaluate_binary_expression(self, node: ASTNode, require_same_type: bool) -> str:
         if len(node.children) < 2:
             return "unknown"
@@ -364,6 +379,11 @@ class SemanticAnalyzer:
         symbol = self.lookup_symbol(func_name)
         actual_params = node.children
         builtin = BUILTIN_FUNCTIONS.get(func_name)
+
+        if func_name == "read" and builtin is not None and len(actual_params) <= 1:
+            for param in actual_params:
+                self.evaluate_expression(param)
+            return "int"
 
         if not symbol or symbol.get("kind") != "func":
             if builtin is None:
@@ -425,10 +445,13 @@ class SemanticAnalyzer:
     def split_decl_value(self, value: Optional[str]) -> Tuple[str, str]:
         parts = value.split() if value else []
         if len(parts) >= 2:
-            return parts[0], parts[1].replace(",", "")
+            return parts[0], re.sub(r"\[.*\]$", "", parts[1].replace(",", ""))
         if len(parts) == 1:
             return parts[0], ""
         return "unknown", "unknown"
 
     def node_text(self, node: ASTNode) -> str:
         return node.value if node.value is not None else node.name
+
+    def array_base_name(self, node: ASTNode) -> str:
+        return self.node_text(node).replace(",", "")

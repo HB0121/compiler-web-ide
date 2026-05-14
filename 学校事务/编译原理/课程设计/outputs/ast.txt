@@ -1,56 +1,33 @@
 Program
-  FunctionDef(int main)[1]
+  FunctionDef(int main)[2]
     Compound
-      VarDecl(int a)[2]
-      VarDecl(int b)[3]
-      VarDecl(int c)[4]
-      VarDecl(int d)[5]
-      VarDecl(int x)[6]
-      VarDecl(int y)[7]
+      VarDecl(int i)[5]
+      VarDecl(int N)[5]
+      VarDecl(int sum)[5]
+        0[5]
       ExprStmt
         =
-          a[8]
-          2[8]
-      ExprStmt
+          N[6]
+          Call(read)[6]
+      ForStmt
         =
-          b[9]
-          3[9]
-      ExprStmt
+          i[7]
+          1[7]
+        <=
+          i[7]
+          N[7]
         =
-          c[10]
+          i[7]
           +
-            a[10]
-            b[10]
-      ExprStmt
-        =
-          d[11]
-          +
-            a[11]
-            b[11]
-      ExprStmt
-        =
-          x[12]
-          *
-            c[12]
-            d[12]
-      IfStmt
-        >
-          x[13]
-          20[13]
+            i[7]
+            1[7]
         Compound
           ExprStmt
             =
-              y[14]
-              -
-                x[14]
-                1[14]
-        Compound
-          ExprStmt
-            =
-              y[16]
+              sum[10]
               +
-                x[16]
-                1[16]
+                sum[10]
+                i[10]
       ExprStmt
-        Call(write)[18]
-          y[18]
+        Call(write)[13]
+          sum[13]

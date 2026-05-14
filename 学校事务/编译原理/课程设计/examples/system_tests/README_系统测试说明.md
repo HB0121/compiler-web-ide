@@ -96,16 +96,18 @@ covered: lexical, syntax, semantic, IR/interpreter, MASM16, log regex NFA/DFA, L
 - `05_assembly_masm16/assembly_read_write.c`
 
 覆盖点：
-- `.MODEL SMALL`、`.DATA`、`.CODE`
-- `main PROC`
-- 用户函数 `fn_add PROC`
+- `assume cs:code,ds:data,ss:stack,es:extended`
+- `data segment`、`code segment`
+- `main:` 函数入口
+- 用户函数标签，如 `add:`
 - 条件跳转、循环跳转
-- `read/write` 内置函数汇编注释
+- `read/write` DOS 输入输出过程
 
 预期：
-- `Assembly` 中只有一个 `main PROC`。
-- 全局常量出现在 `.DATA`。
-- `read/write` 不生成外部 `call fn_read` 或 `call fn_write`。
+- `Assembly` 中只有一个 `main:`。
+- 全局常量出现在 `data segment`。
+- 函数调用前使用 `PUSH AX` 传参，被调用函数通过 `ss:[bp+4]` 等位置读取形参。
+- 输出包含 `read proc near` 和 `write proc near`，可在 MASM16 环境中完成键盘输入和数字输出。
 
 ## 06 日志正则与 NFA/DFA
 

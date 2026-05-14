@@ -38,8 +38,8 @@ class PipelineSmokeTests(unittest.TestCase):
         self.assertIn("return_value", result.texts["interpreter"])
         self.assertIn("define i32 @main()", result.texts["llvm_ir"])
         self.assertIn("FUNC main", result.texts["target_code"])
-        self.assertIn(".MODEL SMALL", result.texts["assembly"])
-        self.assertIn("main PROC", result.texts["assembly"])
+        self.assertIn("assume cs:code,ds:data,ss:stack,es:extended", result.texts["assembly"])
+        self.assertIn("main:", result.texts["assembly"])
         self.assertIn("optimized", result.texts["optimized_quads"])
         self.assertIn("FUNC main", result.texts["optimized_target_code"])
         self.assertIn("Basic Blocks", result.texts["basic_blocks"])
@@ -74,7 +74,7 @@ class PipelineSmokeTests(unittest.TestCase):
             self.assertIn("return_value", (out_dir / "interpreter.txt").read_text(encoding="utf-8"))
             self.assertIn("define i32 @main()", (out_dir / "llvm_ir.txt").read_text(encoding="utf-8"))
             self.assertIn("FUNC main", (out_dir / "target_code.txt").read_text(encoding="utf-8"))
-            self.assertIn(".MODEL SMALL", (out_dir / "assembly.asm").read_text(encoding="utf-8"))
+            self.assertIn("assume cs:code,ds:data,ss:stack,es:extended", (out_dir / "assembly.asm").read_text(encoding="utf-8"))
             self.assertIn("optimized", (out_dir / "optimized_quads.txt").read_text(encoding="utf-8"))
             self.assertIn("FUNC main", (out_dir / "optimized_target_code.txt").read_text(encoding="utf-8"))
             self.assertIn("Basic Blocks", (out_dir / "basic_blocks.txt").read_text(encoding="utf-8"))
@@ -99,6 +99,17 @@ class PipelineSmokeTests(unittest.TestCase):
         self.assertIn("('%'", result.texts["quads"])
         self.assertIn("builtin write(ok)", result.texts["interpreter"])
         self.assertIn("return_value: 1", result.texts["interpreter"])
+
+    def test_pipeline_accepts_course_style_arrays(self):
+        from compiler.pipeline import run_pipeline
+
+        source = "int a[5]; main(){int i;i=2;a[0]=1;a[1]=1;a[i]=a[i-1]+a[i-2];write(a[i]);}"
+        result = run_pipeline(source)
+
+        self.assertEqual([], result.diagnostics)
+        self.assertIn("('[]=', '1', '0', 'a')", result.texts["quads"])
+        self.assertIn("('=[]', 'a'", result.texts["quads"])
+        self.assertIn("builtin write(2)", result.texts["interpreter"])
 
 
 class LexerTests(unittest.TestCase):
@@ -129,13 +140,13 @@ class LexerTests(unittest.TestCase):
         self.assertEqual(["'x'", "'\\n'", "'\\t'", "'\\r'", "'\\0'", "'\\''", "'\\\\'"], [token.text for token in char_literals])
         self.assertEqual([403, 403, 403, 403, 403, 403, 403], [token.code for token in char_literals])
 
-    def test_lexer_rejects_empty_and_multi_character_literals(self):
+    def test_lexer_rejects_empty_and_accepts_course_text_literals(self):
         from compiler.lexer import Lexer
 
         tokens, diagnostics = Lexer().tokenize("char empty = ''; char multi = 'ab';")
 
-        self.assertEqual([], [token for token in tokens if token.code == 403])
-        self.assertEqual(2, len(diagnostics))
+        self.assertEqual(["'ab'"], [token.text for token in tokens if token.code == 403])
+        self.assertEqual(1, len(diagnostics))
         self.assertTrue(all(diagnostic.phase == "lexer" for diagnostic in diagnostics))
 
 
@@ -247,6 +258,18 @@ class SemanticTests(unittest.TestCase):
         analyzer = self.analyze_source("int read(); void write(int a); void main(){int n;n=read();write(n);}")
 
         self.assertNotIn("304", [diagnostic.code for diagnostic in analyzer.diagnostics])
+
+    def test_course_style_read_argument_is_accepted(self):
+        analyzer = self.analyze_source("main(){int n;read(n);write(n);}")
+
+        self.assertNotIn("305", [diagnostic.code for diagnostic in analyzer.diagnostics])
+
+    def test_course_style_write_accepts_single_quoted_text(self):
+        analyzer = self.analyze_source("main(){write(' * ');write('\\n');}")
+
+        codes = [diagnostic.code for diagnostic in analyzer.diagnostics]
+        self.assertNotIn("L004", codes)
+        self.assertNotIn("305", codes)
 
     def test_course_style_void_return_value_is_accepted(self):
         analyzer = self.analyze_source("void f(){return 0;} main(){f();}")
@@ -617,10 +640,10 @@ class AssemblyTests(unittest.TestCase):
         ]
         assembly = quads_to_masm16(quads)
 
-        self.assertIn(".MODEL SMALL", assembly)
-        self.assertIn("main PROC", assembly)
-        self.assertIn("add ax, 2", assembly)
-        self.assertIn("mov WORD PTR [bp-", assembly)
+        self.assertIn("assume cs:code,ds:data,ss:stack,es:extended", assembly)
+        self.assertIn("main:", assembly)
+        self.assertIn("ADD AX,2", assembly)
+        self.assertIn("MOV ss:[bp-", assembly)
         self.assertIn("int 21h", assembly)
 
     def test_generates_masm16_globals_without_duplicate_main_proc(self):
@@ -636,9 +659,9 @@ class AssemblyTests(unittest.TestCase):
         ]
         assembly = quads_to_masm16(quads, {"main": []})
 
-        self.assertEqual(1, assembly.count("main PROC"))
-        self.assertIn("limit DW 3", assembly)
-        self.assertIn("cmp ax, limit", assembly)
+        self.assertEqual(1, assembly.count("main:"))
+        self.assertIn("limit dw 3", assembly)
+        self.assertIn("CMP AX,limit", assembly)
 
     def test_generates_masm16_for_function_call_with_parameters(self):
         from compiler.assembly import quads_to_masm16
@@ -656,12 +679,13 @@ class AssemblyTests(unittest.TestCase):
         ]
         assembly = quads_to_masm16(quads, {"add": ["a", "b"], "main": []})
 
-        self.assertIn("fn_add PROC", assembly)
-        self.assertIn("mov WORD PTR [bp-2], ax", assembly)
-        self.assertIn("mov WORD PTR [bp-4], bx", assembly)
-        self.assertIn("call fn_add", assembly)
-        self.assertIn("mov ax, 2", assembly)
-        self.assertIn("mov bx, 3", assembly)
+        self.assertIn("add:", assembly)
+        self.assertIn("MOV AX,ss:[bp+4]", assembly)
+        self.assertIn("ADD AX,ss:[bp+6]", assembly)
+        self.assertIn("CALL add", assembly)
+        self.assertIn("MOV AX,2", assembly)
+        self.assertIn("MOV AX,3", assembly)
+        self.assertIn("PUSH AX", assembly)
 
     def test_generates_masm16_for_builtin_read_write_without_external_calls(self):
         from compiler.assembly import quads_to_masm16
@@ -675,10 +699,10 @@ class AssemblyTests(unittest.TestCase):
         ]
         assembly = quads_to_masm16(quads, {"main": []})
 
-        self.assertIn("; builtin read(): returns 0 in AX", assembly)
-        self.assertIn("; builtin write(): value is already evaluated", assembly)
-        self.assertNotIn("call fn_read", assembly)
-        self.assertNotIn("call fn_write", assembly)
+        self.assertIn("CALL read", assembly)
+        self.assertIn("CALL write", assembly)
+        self.assertIn("read proc near", assembly)
+        self.assertIn("write proc near", assembly)
 
 
 class OptimizerTests(unittest.TestCase):
