@@ -7,7 +7,7 @@
 在项目根目录执行：
 
 ```powershell
-python examples/system_tests/run_system_tests.py
+python examples/系统测试用例/run_system_tests.py
 ```
 
 预期输出：
@@ -22,8 +22,8 @@ covered: lexical, syntax, semantic, IR/interpreter, MASM16, log regex NFA/DFA, L
 ## 01 词法分析
 
 文件：
-- `01_lexical/lexical_all_tokens.c`
-- `01_lexical/lexical_errors.c`
+- `01_词法分析/lexical_all_tokens.c`
+- `01_词法分析/lexical_errors.c`
 
 覆盖点：
 - 关键字：`const`、`int`、`char`、`while`
@@ -38,8 +38,8 @@ covered: lexical, syntax, semantic, IR/interpreter, MASM16, log regex NFA/DFA, L
 ## 02 语法分析
 
 文件：
-- `02_syntax/syntax_control_flow.c`
-- `02_syntax/syntax_errors.c`
+- `02_语法分析/syntax_control_flow.c`
+- `02_语法分析/syntax_errors.c`
 
 覆盖点：
 - 函数定义与调用
@@ -55,8 +55,8 @@ covered: lexical, syntax, semantic, IR/interpreter, MASM16, log regex NFA/DFA, L
 ## 03 语义分析
 
 文件：
-- `03_semantic/semantic_symbols_ok.c`
-- `03_semantic/semantic_errors.c`
+- `03_语义分析/semantic_symbols_ok.c`
+- `03_语义分析/semantic_errors.c`
 
 覆盖点：
 - 常量表、变量表、函数表
@@ -72,9 +72,9 @@ covered: lexical, syntax, semantic, IR/interpreter, MASM16, log regex NFA/DFA, L
 ## 04 中间代码与解释执行
 
 文件：
-- `04_ir_interpreter/interpreter_loop_factorial.c`
-- `04_ir_interpreter/interpreter_branch_function.c`
-- `04_ir_interpreter/interpreter_runtime_warning.c`
+- `04_中间代码与解释执行/interpreter_loop_factorial.c`
+- `04_中间代码与解释执行/interpreter_branch_function.c`
+- `04_中间代码与解释执行/interpreter_runtime_warning.c`
 
 覆盖点：
 - 四元式生成
@@ -92,8 +92,8 @@ covered: lexical, syntax, semantic, IR/interpreter, MASM16, log regex NFA/DFA, L
 ## 05 MASM16 汇编生成
 
 文件：
-- `05_assembly_masm16/assembly_basic_masm16.c`
-- `05_assembly_masm16/assembly_read_write.c`
+- `05_MASM16汇编生成/assembly_basic_masm16.c`
+- `05_MASM16汇编生成/assembly_read_write.c`
 
 覆盖点：
 - `assume cs:code,ds:data,ss:stack,es:extended`
@@ -112,9 +112,9 @@ covered: lexical, syntax, semantic, IR/interpreter, MASM16, log regex NFA/DFA, L
 ## 06 日志正则与 NFA/DFA
 
 文件：
-- `06_log_regex_automata/log_sample.log`
-- `06_log_regex_automata/regex_patterns.txt`
-- `06_log_regex_automata/no_match.log`
+- `06_日志正则自动机/log_sample.log`
+- `06_日志正则自动机/regex_patterns.txt`
+- `06_日志正则自动机/no_match.log`
 
 覆盖点：
 - 日期、时间、IP、状态码、用户、动作
@@ -136,7 +136,7 @@ GUI 操作：
 ## 07 LLVM IR
 
 文件：
-- `07_llvm_ir/llvm_branch_call.c`
+- `07_LLVM_IR生成/llvm_branch_call.c`
 
 覆盖点：
 - `define`
@@ -154,8 +154,8 @@ GUI 操作：
 ## 08 CFG 与 DAG 优化
 
 文件：
-- `08_cfg_dag_optimization/cfg_if_else.c`
-- `08_cfg_dag_optimization/dag_common_subexpr.c`
+- `08_CFG与DAG优化/cfg_if_else.c`
+- `08_CFG与DAG优化/dag_common_subexpr.c`
 
 覆盖点：
 - Leaders 识别
@@ -174,8 +174,8 @@ GUI 操作：
 ## 09 GUI 编辑器功能
 
 文件：
-- `09_gui_editor_features/gui_realtime_errors.c`
-- `09_gui_editor_features/gui_format_highlight.c`
+- `09_GUI编辑器功能/gui_realtime_errors.c`
+- `09_GUI编辑器功能/gui_format_highlight.c`
 
 覆盖点：
 - 行号显示
