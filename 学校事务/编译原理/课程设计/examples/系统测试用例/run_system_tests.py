@@ -110,6 +110,8 @@ def main() -> int:
     assert_contains(llvm.texts["llvm_ir"], "alloca i32", "llvm stack slots")
     assert_contains(llvm.texts["llvm_ir"], "br i1", "llvm branch")
     assert_contains(llvm.texts["llvm_ir"], "ret i32", "llvm return")
+    assert_contains(llvm.texts["llvm_verify"], "Internal verifier: PASS", "llvm internal verifier")
+    assert_contains(llvm.texts["llvm_verify"], "External tools:", "llvm external verifier")
     llvm_mod = assert_no_diagnostics("07_LLVM_IR生成/llvm_modulo_loop.c")
     assert_contains(llvm_mod.texts["llvm_ir"], "srem i32", "llvm modulo")
     assert_contains(llvm_mod.texts["llvm_ir"], "br i1", "llvm loop branch")
