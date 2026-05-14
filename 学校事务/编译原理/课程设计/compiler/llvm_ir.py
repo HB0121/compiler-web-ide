@@ -9,6 +9,7 @@ ARITHMETIC_OPS = {
     "-": "sub",
     "*": "mul",
     "/": "sdiv",
+    "%": "srem",
 }
 
 JUMP_PREDICATES = {

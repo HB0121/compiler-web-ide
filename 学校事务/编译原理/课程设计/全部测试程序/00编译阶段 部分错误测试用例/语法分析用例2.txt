@@ -1,0 +1,87 @@
+int s=1;
+
+void sum(int a) //正常函数定义
+{
+   if(a>0)
+    a+=1;
+}
+main()
+{
+   int a,b=1,c=2,i; //正常定义 
+   int b=2,c=2;   //重复定义
+   d=1; //没有定义d
+   
+   a=a+1; //正常赋值
+   a=(a+1)||1>0&&(1+1);//布尔表达式
+   
+   a=a+; //错误赋值
+   
+    a=sum(a); //正常函数调用
+    b=sum(1)+1;
+   if(a>0)
+     a+=1   //缺少;
+
+   if(a>0)
+     a+=1;  //正常if语句
+    
+   if(a+1>1)  //缺少;
+    {
+       a*=1
+       int c=2;
+       b+=1;
+    }
+
+    if(b+1>1)  //正常if语句
+    {
+       a*=1;
+       b+=1;
+    }
+
+     if(a>0) //正常if-else语句
+     a+=1; 
+     else 
+     a=1;
+
+     else   //单独出现else
+     a=a+1;
+
+    while(1) //正常while语句
+     a+=1;
+    while(1) //正常while语句
+    {
+	 a+=1;
+         c+=1;
+     }
+
+    while(1) //正常while 嵌套if语句
+     {
+	 if(b+1>1)   
+          a*=1; 
+     }
+     while(1) //正常while 嵌套while语句
+      {
+	  while(1)   
+          a*=1; 
+       }
+    if(a==1) //正常if 嵌套if语句
+    {
+	 if(b+1>1)   
+          a*=1; 
+    }
+    if(a==b&&a>1) //正常if 嵌套while语句
+    {
+	 while(1)   
+          a*=1; 
+    }
+    for(i=0;i<0;i=i+1) //for语句
+    {
+     i+=1;
+    }
+
+}
+
+
+
+
+
+

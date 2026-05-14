@@ -70,6 +70,8 @@ class Parser:
             if token.text == "const":
                 for decl in self.parse_const_decl():
                     node.add_child(decl)
+            elif token.code == IDENTIFIER_CODE and self.peek(1) and self.peek(1).text == "(":
+                node.add_child(self.parse_function(default_type="int"))
             elif token.text in TYPE_NAMES:
                 next_token = self.peek(1)
                 if next_token and next_token.text == "main":
@@ -141,11 +143,15 @@ class Parser:
         self.expect_text(";")
         return decls
 
-    def parse_function(self) -> Optional[ASTNode]:
+    def parse_function(self, default_type: str | None = None) -> Optional[ASTNode]:
         type_token = self.current_token()
         if not type_token:
             return None
-        self.pos += 1
+        if default_type is None:
+            self.pos += 1
+            type_text = type_token.text
+        else:
+            type_text = default_type
 
         id_token = self.current_token()
         if not id_token:
@@ -178,13 +184,13 @@ class Parser:
 
         if self.current_token() and self.current_token().text == ";":
             self.expect_text(";")
-            node = ASTNode("FunctionDecl", line=id_token.line, value=f"{type_token.text} {id_token.text}")
+            node = ASTNode("FunctionDecl", line=id_token.line, value=f"{type_text} {id_token.text}")
             for param in params:
                 node.add_child(param)
             return node
 
         if self.current_token() and self.current_token().text == "{":
-            node = ASTNode("FunctionDef", line=id_token.line, value=f"{type_token.text} {id_token.text}")
+            node = ASTNode("FunctionDef", line=id_token.line, value=f"{type_text} {id_token.text}")
             for param in params:
                 node.add_child(param)
             node.add_child(self.parse_compound())
@@ -425,7 +431,7 @@ class Parser:
     def parse_term(self) -> Optional[ASTNode]:
         node = self.parse_factor()
         token = self.current_token()
-        while node is not None and token and token.text in {"*", "/"}:
+        while node is not None and token and token.text in {"*", "/", "%"}:
             op_token = token
             self.pos += 1
             right_node = self.parse_factor()

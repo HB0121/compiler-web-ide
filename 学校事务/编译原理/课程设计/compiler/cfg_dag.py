@@ -3,7 +3,7 @@ from typing import Dict, Iterable, List, Tuple
 
 
 Quad = Tuple[object, object, object, object]
-ARITHMETIC_OPS = {"+", "-", "*", "/"}
+ARITHMETIC_OPS = {"+", "-", "*", "/", "%"}
 TERMINAL_OPS = {"ret", "return", "sys"}
 
 

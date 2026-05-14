@@ -1,0 +1,59 @@
+const int a = 2; 
+int globa_a;
+int if_fuc(int a, int b)
+{
+	int c;
+	char d='2';
+	if(a>b)
+		c=1;
+	else
+		c=2;
+	return d;
+}
+int if_fuc = 2;
+int a = 3;
+int while_fuc()
+{
+	int a=2;
+	int b=3;
+	while(a<10)
+	{
+		a++;
+		break;
+	}
+	do
+	{
+		a++;
+		continue;
+	}while(a<10);
+	continue;
+	return;
+}
+
+int while_fuc()
+{
+	int d;
+}
+const int while_fuc = 2;
+break;
+void main()
+{
+	int accc;
+	int a=10;
+	int b=20;
+	int b=12;
+	char c ='a';
+	printf("a=%d\n",a);
+	if(a<b)
+	{
+		int d = 12;
+	}
+	else
+	{	
+		d = 14;
+	}	
+	if_fuc(c,d);
+	if_fuc(a);
+	return a;
+}
+

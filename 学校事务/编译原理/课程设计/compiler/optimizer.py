@@ -4,7 +4,7 @@ from typing import Dict, Iterable, List, Optional, Tuple
 Quad = Tuple[object, object, object, object]
 
 
-ARITHMETIC_OPS = {"+", "-", "*", "/"}
+ARITHMETIC_OPS = {"+", "-", "*", "/", "%"}
 
 
 def optimize_quads(quads: Iterable[Quad]) -> List[Quad]:
@@ -105,6 +105,8 @@ class QuadOptimizer:
             return str(left_value * right_value)
         if op == "/" and right_value != 0:
             return str(int(left_value / right_value))
+        if op == "%" and right_value != 0:
+            return str(left_value % right_value)
         return None
 
     def _simplify(self, op: str, left, right):
@@ -122,6 +124,8 @@ class QuadOptimizer:
             return "0"
         if op == "/" and right == "1":
             return left
+        if op == "%" and right == "1":
+            return "0"
         return None
 
     def _forget(self, item) -> None:

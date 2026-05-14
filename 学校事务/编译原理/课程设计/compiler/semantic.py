@@ -27,6 +27,11 @@ KEYWORDS = {
     "default",
 }
 
+BUILTIN_FUNCTIONS = {
+    "read": {"type": "int", "params": []},
+    "write": {"type": "void", "params": ["any"]},
+}
+
 
 class SemanticAnalyzer:
     def __init__(self):
@@ -357,14 +362,17 @@ class SemanticAnalyzer:
         func_name = node.value or self.node_text(node)
         symbol = self.lookup_symbol(func_name)
         actual_params = node.children
+        builtin = BUILTIN_FUNCTIONS.get(func_name)
 
         if not symbol or symbol.get("kind") != "func":
-            self.report_error(node.line, 304)
-            for param in actual_params:
-                self.evaluate_expression(param)
-            return "unknown"
+            if builtin is None:
+                self.report_error(node.line, 304)
+                for param in actual_params:
+                    self.evaluate_expression(param)
+                return "unknown"
+            symbol = {"name": func_name, "kind": "func", "type": builtin["type"], "params": builtin["params"], "is_defined": True}
 
-        if not symbol.get("is_defined"):
+        if not symbol.get("is_defined") and builtin is None:
             self.pending_function_calls.append((node.line or 0, func_name))
 
         expected_params = symbol.get("params", [])
@@ -376,12 +384,14 @@ class SemanticAnalyzer:
 
         for index, param in enumerate(actual_params):
             param_type = self.evaluate_expression(param)
-            if param_type != "unknown" and param_type != expected_params[index]:
+            if expected_params[index] != "any" and param_type != "unknown" and param_type != expected_params[index]:
                 self.report_error(node.line, 306)
         return symbol.get("type", "unknown")
 
     def resolve_pending_function_calls(self) -> None:
         for line, func_name in self.pending_function_calls:
+            if func_name in BUILTIN_FUNCTIONS:
+                continue
             symbol = self.lookup_symbol(func_name)
             if not symbol or symbol.get("kind") != "func" or not symbol.get("is_defined"):
                 self.report_error(line, 304)
@@ -407,6 +417,8 @@ class SemanticAnalyzer:
             return "float"
         if re.match(r"^'.*'$", text):
             return "char"
+        if re.match(r'^".*"$', text):
+            return "string"
         return "unknown"
 
     def split_decl_value(self, value: Optional[str]) -> Tuple[str, str]:

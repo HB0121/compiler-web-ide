@@ -1,8 +1,7 @@
 Control Flow Graph
-B0 -> B1    pred: -
-B1 -> -    pred: B0
-B2 -> B3    pred: -
-B3 -> B5, B4    pred: B2, B5
-B4 -> B6    pred: B3
-B5 -> B3    pred: B3
-B6 -> -    pred: B4
+B0 -> -    pred: -
+B1 -> B3, B2    pred: -
+B2 -> B4    pred: B1
+B3 -> B5    pred: B1
+B4 -> B5    pred: B2
+B5 -> -    pred: B3, B4

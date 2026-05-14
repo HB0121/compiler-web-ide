@@ -7,7 +7,7 @@ Quad = Tuple[object, object, object, object]
 
 ARG_REGISTERS = ["rdi", "rsi", "rdx", "rcx", "r8", "r9"]
 MASM_ARG_REGISTERS = ["ax", "bx", "cx", "dx"]
-ARITHMETIC_OPS = {"+", "-", "*", "/"}
+ARITHMETIC_OPS = {"+", "-", "*", "/", "%"}
 RELATION_OPS = {
     ">": "setg",
     "<": "setl",
@@ -253,6 +253,11 @@ class Masm16FunctionEmitter:
             self._load("bx", arg2)
             self.lines.append("    cwd")
             self.lines.append("    idiv bx")
+        elif op == "%":
+            self._load("bx", arg2)
+            self.lines.append("    cwd")
+            self.lines.append("    idiv bx")
+            self.lines.append("    mov ax, dx")
         self._store(result, "ax")
 
     def _emit_relation(self, op: str, arg1, arg2, result) -> None:
@@ -294,6 +299,23 @@ class Masm16FunctionEmitter:
         self.lines.append(f"{end_label}:")
 
     def _emit_call(self, function_name: str, result) -> None:
+        if function_name == "read":
+            self.pending_params = []
+            self.lines.append("    ; builtin read(): returns 0 in AX")
+            self.lines.append("    mov ax, 0")
+            self._store(result, "ax")
+            return
+        if function_name == "write":
+            if self.pending_params:
+                value = self.pending_params[0]
+                if isinstance(value, str) and not _is_integer(value) and value not in self.offsets and value not in self.globals:
+                    self.lines.append(f"    ; builtin write(): string {value!r}")
+                else:
+                    self._load("ax", value)
+            self.pending_params = []
+            self.lines.append("    ; builtin write(): value is already evaluated")
+            self._store(result, "ax")
+            return
         for index, value in enumerate(self.pending_params[: len(MASM_ARG_REGISTERS)]):
             self._load(MASM_ARG_REGISTERS[index], value)
         self.pending_params = []
@@ -556,7 +578,7 @@ def _append_name(names: List[str], value) -> None:
 
 
 def _is_variable(value) -> bool:
-    return isinstance(value, str) and value != "_" and not _is_integer(value)
+    return isinstance(value, str) and value != "_" and not _is_integer(value) and "\n" not in value and " " not in value and not any(ch in value for ch in '：:,.!?()[]{}')
 
 
 def _is_integer(value) -> bool:

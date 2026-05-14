@@ -89,6 +89,17 @@ class PipelineSmokeTests(unittest.TestCase):
 
         self.assertIn("parser", [diagnostic.phase for diagnostic in result.diagnostics])
 
+    def test_pipeline_accepts_course_style_main_string_write_and_modulo(self):
+        from compiler.pipeline import run_pipeline
+
+        source = 'main(){int x;x=10%3;write("ok");return x;}'
+        result = run_pipeline(source)
+
+        self.assertEqual([], result.diagnostics)
+        self.assertIn("('%'", result.texts["quads"])
+        self.assertIn("builtin write(ok)", result.texts["interpreter"])
+        self.assertIn("return_value: 1", result.texts["interpreter"])
+
 
 class LexerTests(unittest.TestCase):
     def test_lexer_recognizes_comments_operators_and_lines(self):
@@ -232,6 +243,11 @@ class SemanticTests(unittest.TestCase):
 
         self.assertIn("304", [diagnostic.code for diagnostic in analyzer.diagnostics])
 
+    def test_builtin_read_write_declarations_are_allowed(self):
+        analyzer = self.analyze_source("int read(); void write(int a); void main(){int n;n=read();write(n);}")
+
+        self.assertNotIn("304", [diagnostic.code for diagnostic in analyzer.diagnostics])
+
     def test_forward_declared_later_defined_function_call_is_allowed(self):
         analyzer = self.analyze_source("int f(); int main(){return f();} int f(){return 1;}")
 
@@ -365,6 +381,23 @@ class IRTests(unittest.TestCase):
 
 
 class InterpreterTests(unittest.TestCase):
+    def test_interpreter_handles_builtin_read_and_write(self):
+        from compiler.interpreter import interpret_quads
+
+        quads = [
+            ("main", "_", "_", "_"),
+            ("call", "read", "_", "t1"),
+            ("=", "t1", "_", "n"),
+            ("para", "n", "_", "_"),
+            ("call", "write", "_", "_"),
+            ("sys", "_", "_", "_"),
+        ]
+        result = interpret_quads(quads)
+
+        self.assertEqual(0, result.variables["n"])
+        self.assertIn("builtin read() -> 0", result.trace)
+        self.assertIn("builtin write(0)", result.trace)
+
     def test_interprets_assignment_arithmetic_loop_and_return(self):
         from compiler.interpreter import interpret_quads
         from compiler.ir import generate_quads
@@ -596,6 +629,23 @@ class AssemblyTests(unittest.TestCase):
         self.assertIn("call fn_add", assembly)
         self.assertIn("mov ax, 2", assembly)
         self.assertIn("mov bx, 3", assembly)
+
+    def test_generates_masm16_for_builtin_read_write_without_external_calls(self):
+        from compiler.assembly import quads_to_masm16
+
+        quads = [
+            ("main", "_", "_", "_"),
+            ("call", "read", "_", "t1"),
+            ("para", "t1", "_", "_"),
+            ("call", "write", "_", "_"),
+            ("sys", "_", "_", "_"),
+        ]
+        assembly = quads_to_masm16(quads, {"main": []})
+
+        self.assertIn("; builtin read(): returns 0 in AX", assembly)
+        self.assertIn("; builtin write(): value is already evaluated", assembly)
+        self.assertNotIn("call fn_read", assembly)
+        self.assertNotIn("call fn_write", assembly)
 
 
 class OptimizerTests(unittest.TestCase):

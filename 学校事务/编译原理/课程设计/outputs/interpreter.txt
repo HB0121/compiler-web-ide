@@ -1,50 +1,19 @@
-return_value: 3
+return_value: None
 variables:
-  i = 3
-  limit = 3
-  t2 = 3
-  t3 = 3
-  total = 3
+  n = 0
+  t1 = 0
+  t2 = 1
+  t3 = 0
 trace:
-  0: global (=, 3, _, limit)
-  7: (=, 0, _, i)
-  8: (=, 0, _, total)
-  9: (J<, i, limit, 11)
-  11: (para, total, _, _)
-  12: (para, i, _, _)
-  13: (call, add, _, t2)
-  call add(0, 0)
-  2: fn (+, a, b, t1)
-  3: fn (=, t1, _, c)
-  4: fn (ret, _, _, c)
-  14: (=, t2, _, total)
-  15: (+, i, 1, t3)
-  16: (=, t3, _, i)
-  17: (J, _, _, 9)
-  9: (J<, i, limit, 11)
-  11: (para, total, _, _)
-  12: (para, i, _, _)
-  13: (call, add, _, t2)
-  call add(0, 1)
-  2: fn (+, a, b, t1)
-  3: fn (=, t1, _, c)
-  4: fn (ret, _, _, c)
-  14: (=, t2, _, total)
-  15: (+, i, 1, t3)
-  16: (=, t3, _, i)
-  17: (J, _, _, 9)
-  9: (J<, i, limit, 11)
-  11: (para, total, _, _)
-  12: (para, i, _, _)
-  13: (call, add, _, t2)
-  call add(1, 2)
-  2: fn (+, a, b, t1)
-  3: fn (=, t1, _, c)
-  4: fn (ret, _, _, c)
-  14: (=, t2, _, total)
-  15: (+, i, 1, t3)
-  16: (=, t3, _, i)
-  17: (J, _, _, 9)
-  9: (J<, i, limit, 11)
-  10: (J, _, _, 18)
-  18: (ret, _, _, total)
+  1: (call, read, _, t1)
+  2: (=, t1, _, n)
+  3: (para, n, _, _)
+  4: (call, factor, _, t2)
+  call factor(0)
+  9: fn (J<=, m, 1, 11)
+  11: fn (=, 1, _, fa)
+  12: fn (J, _, _, 18)
+  18: fn (ret, _, _, fa)
+  5: (para, t2, _, _)
+  6: (call, write, _, t3)
+  7: (sys, _, _, _)

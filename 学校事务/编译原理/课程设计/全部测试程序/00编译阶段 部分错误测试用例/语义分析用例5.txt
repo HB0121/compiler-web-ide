@@ -1,0 +1,46 @@
+int s=1;
+
+int sum1(int a)  //没有return语句
+{
+   if(a>0)
+    a+=1;
+}
+void sum2(int a)  
+{
+   if(a>0)
+    a+=1;
+    return a;  //多了return语句
+}
+main()
+{
+   int a,b=1,c=1+2*3,i; //正常定义 
+   int b=2,c=2;   //重复定义
+    int e=b+d;   //d未声明
+   d=1; //没有定义d
+    a=a/0;  //除数不能为0
+  
+   1=a+1;  //赋值表达式左边必须为变量
+  a=a+sum1();    //参数不一致
+  a=a+sum1(a,b); //参数不一致
+
+   b=b+sum2(a); //void 类型不能参与运算
+  
+   while(1)
+  {
+   if(a>b)
+    break;    
+    a=a+1;
+   continue;
+   b=b+1;
+  }
+   break;  //在循环语句外的break
+    continue; //在循环语句外的continue
+}
+
+
+
+
+
+
+
+

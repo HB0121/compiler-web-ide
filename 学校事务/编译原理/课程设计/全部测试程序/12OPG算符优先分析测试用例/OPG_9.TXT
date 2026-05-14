@@ -1,0 +1,5 @@
+S -> aABe
+A -> b
+A -> Abc
+B -> d
+V-> #S#

@@ -369,7 +369,7 @@ def convert_ast(node: Optional[SharedASTNode]):
         expr = convert_ast(node.children[1]) if len(node.children) > 1 else None
         return Assign(var_name, expr)
 
-    if node.name in {"+", "-", "*", "/"}:
+    if node.name in {"+", "-", "*", "/", "%"}:
         if node.name == "-" and len(node.children) == 1:
             return UnaryOp("-", convert_ast(node.children[0]))
         left = convert_ast(node.children[0]) if node.children else None
@@ -483,10 +483,12 @@ def _assignment_target(node):
 
 
 def _is_literal(text):
-    return bool(re.match(r"^\d+(?:\.\d+)?$", text) or re.match(r"^'.*'$", text))
+    return bool(re.match(r"^\d+(?:\.\d+)?$", text) or re.match(r"^'.*'$", text) or re.match(r'^".*"$', text))
 
 
 def _literal_value(text):
     if re.match(r"^'.*'$", text):
         return text[1:-1]
+    if re.match(r'^".*"$', text):
+        return text
     return text

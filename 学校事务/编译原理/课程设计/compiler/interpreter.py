@@ -60,7 +60,7 @@ class QuadInterpreter:
                 pc += 1
                 continue
 
-            if op in {"+", "-", "*", "/", ">", "<", ">=", "<=", "==", "!=", "&&", "||"}:
+            if op in {"+", "-", "*", "/", "%", ">", "<", ">=", "<=", "==", "!=", "&&", "||"}:
                 self.values[str(result)] = self._apply_binary(str(op), self._value(arg1, self.values), self._value(arg2, self.values))
                 pc += 1
                 continue
@@ -112,6 +112,13 @@ class QuadInterpreter:
         return 0
 
     def _call_function(self, name: str, args: List[object]):
+        if name == "read":
+            self.trace.append("builtin read() -> 0")
+            return 0
+        if name == "write":
+            value = args[0] if args else 0
+            self.trace.append(f"builtin write({value})")
+            return None
         if name not in self.functions:
             return 0
         start, end = self.functions[name]
@@ -144,7 +151,7 @@ class QuadInterpreter:
                 pc += 1
                 continue
 
-            if op in {"+", "-", "*", "/", ">", "<", ">=", "<=", "==", "!=", "&&", "||"}:
+            if op in {"+", "-", "*", "/", "%", ">", "<", ">=", "<=", "==", "!=", "&&", "||"}:
                 values[str(result)] = self._apply_binary(str(op), self._value(arg1, values), self._value(arg2, values))
                 pc += 1
                 continue
@@ -194,7 +201,7 @@ class QuadInterpreter:
             return [result]
         if op == "=":
             return [arg1]
-        if op in {"+", "-", "*", "/", ">", "<", ">=", "<=", "==", "!=", "&&", "||"} or str(op).startswith("J"):
+        if op in {"+", "-", "*", "/", "%", ">", "<", ">=", "<=", "==", "!=", "&&", "||"} or str(op).startswith("J"):
             return [arg1, arg2]
         if op in {"!", "neg", "para"}:
             return [arg1]
@@ -209,6 +216,8 @@ class QuadInterpreter:
         if text in values:
             return values[text]
         if text.startswith("'") and text.endswith("'") and len(text) >= 2:
+            return text[1:-1]
+        if text.startswith('"') and text.endswith('"') and len(text) >= 2:
             return text[1:-1]
         try:
             return int(text)
@@ -227,6 +236,8 @@ class QuadInterpreter:
             return left * right
         if op == "/":
             return int(left / right)
+        if op == "%":
+            return int(left % right)
         if op == ">":
             return int(left > right)
         if op == "<":
@@ -251,7 +262,7 @@ class QuadInterpreter:
     def _is_label(self, op, arg1, arg2, result) -> bool:
         return (
             isinstance(op, str)
-            and op not in {"=", "+", "-", "*", "/", ">", "<", ">=", "<=", "==", "!=", "&&", "||", "!", "J", "ret", "return", "sys", "para", "call"}
+            and op not in {"=", "+", "-", "*", "/", "%", ">", "<", ">=", "<=", "==", "!=", "&&", "||", "!", "J", "ret", "return", "sys", "para", "call"}
             and arg1 == "_"
             and arg2 == "_"
             and result == "_"

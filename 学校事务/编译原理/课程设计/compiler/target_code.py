@@ -9,6 +9,7 @@ ARITHMETIC_OPS = {
     "-": "SUB",
     "*": "MUL",
     "/": "DIV",
+    "%": "MOD",
 }
 
 JUMP_OPS = {

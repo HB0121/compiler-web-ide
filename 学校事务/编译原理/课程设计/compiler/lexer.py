@@ -34,6 +34,7 @@ OPERATORS = {
     "*": 212,
     "/": 213,
     "!": 214,
+    "%": 215,
 }
 
 SEPARATORS = {
@@ -49,7 +50,9 @@ IDENTIFIER_CODE = 700
 INT_LITERAL_CODE = 401
 FLOAT_LITERAL_CODE = 402
 CHAR_LITERAL_CODE = 403
+STRING_LITERAL_CODE = 404
 SUPPORTED_CHAR_ESCAPES = {"n", "t", "r", "0", "'", "\\"}
+SUPPORTED_STRING_ESCAPES = {"n", "t", "r", "0", '"', "\\"}
 
 
 class Lexer:
@@ -161,6 +164,35 @@ class Lexer:
                         diagnostics.append(Diagnostic("lexer", line, "L004", f"malformed char literal at column {start_column}"))
                 else:
                     diagnostics.append(Diagnostic("lexer", line, "L002", f"unclosed char literal at column {start_column}"))
+                continue
+
+            if ch == '"':
+                start = i
+                start_column = column
+                i += 1
+                column += 1
+                closed = False
+                valid = True
+                while i < len(source):
+                    if source[i] == "\n":
+                        break
+                    if source[i] == '"':
+                        closed = True
+                        i += 1
+                        column += 1
+                        break
+                    if source[i] == "\\":
+                        i += 1
+                        column += 1
+                        if i >= len(source) or source[i] not in SUPPORTED_STRING_ESCAPES:
+                            valid = False
+                            break
+                    i += 1
+                    column += 1
+                if closed and valid:
+                    tokens.append(Token(source[start:i], STRING_LITERAL_CODE, line, start_column, "string_literal"))
+                else:
+                    diagnostics.append(Diagnostic("lexer", line, "L005", f"malformed string literal at column {start_column}"))
                 continue
 
             two = source[i : i + 2]
