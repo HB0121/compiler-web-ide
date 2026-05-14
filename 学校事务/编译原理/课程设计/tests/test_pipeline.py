@@ -67,6 +67,7 @@ class PipelineSmokeTests(unittest.TestCase):
             self.assertTrue((out_dir / "quads.txt").exists())
             self.assertTrue((out_dir / "interpreter.txt").exists())
             self.assertTrue((out_dir / "llvm_ir.txt").exists())
+            self.assertTrue((out_dir / "llvm_ir.ll").exists())
             self.assertTrue((out_dir / "llvm_verify.txt").exists())
             self.assertTrue((out_dir / "target_code.txt").exists())
             self.assertTrue((out_dir / "assembly.asm").exists())

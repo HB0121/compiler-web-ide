@@ -339,7 +339,9 @@ def verify_llvm_ir(llvm_ir: str) -> str:
 
 def _internal_verify(llvm_ir: str) -> List[str]:
     errors: List[str] = []
-    lines = [line.rstrip() for line in llvm_ir.splitlines() if line.strip()]
+    all_lines = [line.rstrip() for line in llvm_ir.splitlines() if line.strip()]
+    function_start = next((index for index, line in enumerate(all_lines) if line.startswith("define i32 @main()")), 0)
+    lines = all_lines[function_start:]
     if not any(line.startswith("define i32 @main()") for line in lines):
         errors.append("missing define i32 @main()")
     labels = {line[:-1] for line in lines if line.endswith(":")}

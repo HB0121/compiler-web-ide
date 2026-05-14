@@ -28,7 +28,7 @@ OUTPUT_NAMES = {
     "dag": "dag.txt",
     "dag_optimized_quads": "dag_optimized_quads.txt",
     "interpreter": "interpreter.txt",
-    "llvm_ir": "llvm_ir.ll",
+    "llvm_ir": "llvm_ir.txt",
     "llvm_verify": "llvm_verify.txt",
     "target_code": "target_code.txt",
     "assembly": "assembly.asm",
@@ -236,3 +236,4 @@ def write_outputs(result: PipelineResult, output_dir=Path("outputs")) -> None:
     output_path.mkdir(parents=True, exist_ok=True)
     for key, filename in OUTPUT_NAMES.items():
         (output_path / filename).write_text(result.texts[key], encoding="utf-8")
+    (output_path / "llvm_ir.ll").write_text(result.texts["llvm_ir"], encoding="utf-8")
