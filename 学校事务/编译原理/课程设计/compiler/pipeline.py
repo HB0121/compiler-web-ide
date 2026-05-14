@@ -59,9 +59,9 @@ def run_pipeline(source: str) -> PipelineResult:
     control_flow = analyze_control_flow(quads) if quads else None
     interpreter_text = interpret_quads(quads).format() if quads else ""
     llvm_ir_text = quads_to_llvm_ir(quads) if quads else ""
-    target_code_text = number_lines(quads_to_target_code(quads)) if quads else ""
+    target_code_text = explain_target_code(quads_to_target_code(quads)) if quads else ""
     assembly_text = quads_to_masm16(quads, function_params_from_ast(ast)) if quads else ""
-    optimized_target_code_text = number_lines(quads_to_target_code(optimized_quads)) if optimized_quads else ""
+    optimized_target_code_text = explain_target_code(quads_to_target_code(optimized_quads)) if optimized_quads else ""
     diagnostics = lexer_diagnostics + parser_diagnostics + semantic_diagnostics
     texts = build_texts(
         tokens,
@@ -176,6 +176,53 @@ def number_lines(text: str) -> str:
         return ""
     width = len(str(len(lines)))
     return "\n".join(f"{index:>{width}} | {line}" for index, line in enumerate(lines, start=1)) + "\n"
+
+
+def explain_target_code(text: str) -> str:
+    lines = text.splitlines()
+    if not lines:
+        return ""
+    output = ["Line | Target Code | Meaning", "--- | --- | ---"]
+    for index, line in enumerate(lines, start=1):
+        output.append(f"{index} | {line} | {explain_target_instruction(line)}")
+    return "\n".join(output) + "\n"
+
+
+def explain_target_instruction(line: str) -> str:
+    instruction = line.strip()
+    if not instruction:
+        return ""
+    if instruction.endswith(":"):
+        return f"label {instruction[:-1]}: jump target"
+    if instruction.startswith(";"):
+        return "comment or skipped helper instruction"
+
+    parts = instruction.split(None, 1)
+    op = parts[0]
+    rest = parts[1] if len(parts) > 1 else ""
+    args = [item.strip() for item in rest.split(",")] if rest else []
+
+    if op == "FUNC" and args:
+        return f"enter function {args[0]}"
+    if op == "MOV" and len(args) == 2:
+        return f"{args[0]} = {args[1]}"
+    if op == "LOAD" and len(args) == 2:
+        return f"load {args[1]} into register {args[0]}"
+    if op in {"ADD", "SUB", "MUL", "DIV", "MOD"} and len(args) == 2:
+        symbols = {"ADD": "+", "SUB": "-", "MUL": "*", "DIV": "/", "MOD": "%"}
+        return f"{args[0]} = {args[0]} {symbols[op]} {args[1]}"
+    if op == "STORE" and len(args) == 2:
+        return f"{args[0]} = {args[1]}"
+    if op in {"JG", "JL", "JGE", "JLE", "JE", "JNE"} and len(args) == 3:
+        signs = {"JG": ">", "JL": "<", "JGE": ">=", "JLE": "<=", "JE": "==", "JNE": "!="}
+        return f"if {args[0]} {signs[op]} {args[1]}, jump to {args[2]}"
+    if op == "JMP" and args:
+        return f"jump to {args[0]}"
+    if op == "RET" and args:
+        return f"return {args[0]}"
+    if op == "END":
+        return "program end"
+    return "target instruction"
 
 
 def write_outputs(result: PipelineResult, output_dir=Path("outputs")) -> None:

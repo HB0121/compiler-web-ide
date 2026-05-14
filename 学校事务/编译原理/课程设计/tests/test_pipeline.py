@@ -41,10 +41,13 @@ class PipelineSmokeTests(unittest.TestCase):
         self.assertIn("return_value", result.texts["interpreter"])
         self.assertIn("define i32 @main()", result.texts["llvm_ir"])
         self.assertIn("FUNC main", result.texts["target_code"])
+        self.assertIn("Line | Target Code | Meaning", result.texts["target_code"])
+        self.assertIn("enter function main", result.texts["target_code"])
         self.assertIn("assume cs:code,ds:data,ss:stack,es:extended", result.texts["assembly"])
         self.assertIn("main:", result.texts["assembly"])
         self.assertIn("optimized", result.texts["optimized_quads"])
         self.assertIn("FUNC main", result.texts["optimized_target_code"])
+        self.assertIn("Line | Target Code | Meaning", result.texts["optimized_target_code"])
         self.assertIn("Basic Blocks", result.texts["basic_blocks"])
         self.assertIn("Control Flow Graph", result.texts["cfg"])
         self.assertIn("DAG", result.texts["dag"])
@@ -772,6 +775,7 @@ class OptimizedTargetCodeTests(unittest.TestCase):
         result = run_pipeline("int main(){int x; x=1+2; return x;}")
 
         self.assertIn("MOV x, 3", result.texts["optimized_target_code"])
+        self.assertIn("x = 3", result.texts["optimized_target_code"])
         self.assertNotIn("ADD R1, 2", result.texts["optimized_target_code"])
         self.assertIn("RET x", result.texts["optimized_target_code"])
 
