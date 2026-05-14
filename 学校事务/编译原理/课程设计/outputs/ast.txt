@@ -1,17 +1,55 @@
 Program
-  FunctionDef(int main)[2]
+  VarDecl(int a[4])[1]
+  FunctionDef(int main)[3]
     Compound
-      VarDecl(int count)[3]
+      VarDecl(int i)[4]
+      VarDecl(int sum)[5]
       ExprStmt
         =
-          count[4]
-          12[4]
+          a
+            0[6]
+          1[6]
       ExprStmt
-        Call(write)[6]
-          ' * '[6]
+        =
+          a
+            1[7]
+          2[7]
       ExprStmt
-        Call(write)[7]
-          '\n'[7]
+        =
+          a
+            2[8]
+          3[8]
       ExprStmt
-        Call(write)[8]
-          "done"[8]
+        =
+          a
+            3[9]
+          4[9]
+      ExprStmt
+        =
+          i[10]
+          0[10]
+      ExprStmt
+        =
+          sum[11]
+          0[11]
+      WhileStmt
+        <
+          i[12]
+          4[12]
+        Compound
+          ExprStmt
+            =
+              sum[13]
+              +
+                sum[13]
+                a
+                  i[13]
+          ExprStmt
+            =
+              i[14]
+              +
+                i[14]
+                1[14]
+      ExprStmt
+        Call(write)[16]
+          sum[16]

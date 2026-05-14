@@ -697,7 +697,7 @@ class CompilerApp:
         radius = max(14, int(24 * zoom))
         y = max(visible_height // 2, int(180 * zoom))
         graph_width = max(visible_width, margin * 2 + step * len(fragments) + int(120 * zoom))
-        graph_height = max(visible_height, y + int(170 * zoom))
+        graph_height = max(visible_height, y + int(220 * zoom))
         self.graph_canvas.configure(scrollregion=(0, 0, graph_width, graph_height))
 
         self.graph_canvas.create_text(
@@ -721,12 +721,6 @@ class CompilerApp:
         for index in range(len(fragments) + 1):
             positions.append((margin + index * step, y))
 
-        for index, (x, node_y) in enumerate(positions):
-            state = f"q{index}"
-            fill = "#dcfce7" if index == len(positions) - 1 else "#e0f2fe"
-            outline = "#16a34a" if index == len(positions) - 1 else "#0284c7"
-            self._draw_state(x, node_y, radius, state, fill, outline, index == len(positions) - 1, zoom)
-
         start_x, start_y = positions[0]
         start_gap = int(58 * zoom)
         self.graph_canvas.create_line(start_x - start_gap, start_y, start_x - radius, start_y, arrow=tk.LAST, fill="#334155", width=max(1, int(2 * zoom)))
@@ -736,8 +730,14 @@ class CompilerApp:
             x1, y1 = positions[index]
             x2, y2 = positions[index + 1]
             self.graph_canvas.create_line(x1 + radius, y1, x2 - radius, y2, arrow=tk.LAST, fill="#334155", width=max(1, int(2 * zoom)))
-            self._draw_edge_label((x1 + x2) / 2, y1 - int(38 * zoom), self._short_label(fragment), zoom)
             self._draw_nfa_operator_hint(index, fragment, positions, radius, zoom)
+            self._draw_edge_label((x1 + x2) / 2, y1 - int(58 * zoom), self._short_label(fragment), zoom)
+
+        for index, (x, node_y) in enumerate(positions):
+            state = f"q{index}"
+            fill = "#dcfce7" if index == len(positions) - 1 else "#e0f2fe"
+            outline = "#16a34a" if index == len(positions) - 1 else "#0284c7"
+            self._draw_state(x, node_y, radius, state, fill, outline, index == len(positions) - 1, zoom)
 
     def _draw_log_dfa_graph(self, fragments: list[str]) -> None:
         zoom = self.graph_zoom
@@ -745,12 +745,12 @@ class CompilerApp:
         visible_height = max(self.graph_canvas.winfo_height(), 360)
         margin = int(80 * zoom)
         col_step = int(190 * zoom)
-        row_step = int(120 * zoom)
+        row_step = int(155 * zoom)
         radius = max(18, int(30 * zoom))
         columns = max(1, min(4, len(fragments) + 1))
         rows = (len(fragments) + columns) // columns
         graph_width = max(visible_width, margin * 2 + columns * col_step)
-        graph_height = max(visible_height, int(130 * zoom) + rows * row_step + int(120 * zoom))
+        graph_height = max(visible_height, int(150 * zoom) + rows * row_step + int(150 * zoom))
         self.graph_canvas.configure(scrollregion=(0, 0, graph_width, graph_height))
 
         self.graph_canvas.create_text(
@@ -776,13 +776,13 @@ class CompilerApp:
             col = index % columns
             if row % 2 == 1:
                 col = columns - 1 - col
-            positions.append((margin + col * col_step, int(140 * zoom) + row * row_step))
+            positions.append((margin + col * col_step, int(160 * zoom) + row * row_step))
 
         for index, (x, y) in enumerate(positions):
-            label = f"D{index}\n{{q{index}}}"
             fill = "#dcfce7" if index == len(positions) - 1 else "#fef3c7"
             outline = "#16a34a" if index == len(positions) - 1 else "#d97706"
-            self._draw_state(x, y, radius, label, fill, outline, index == len(positions) - 1, zoom)
+            self._draw_state(x, y, radius, f"D{index}", fill, outline, index == len(positions) - 1, zoom)
+            self._draw_state_caption(x, y + radius + int(24 * zoom), f"{{q{index}}}", zoom)
 
         start_x, start_y = positions[0]
         self.graph_canvas.create_line(start_x - int(62 * zoom), start_y, start_x - radius, start_y, arrow=tk.LAST, fill="#334155", width=max(1, int(2 * zoom)))
@@ -792,7 +792,8 @@ class CompilerApp:
             x1, y1 = positions[index]
             x2, y2 = positions[index + 1]
             self._draw_directed_edge(x1, y1, x2, y2, radius, zoom)
-            self._draw_edge_label((x1 + x2) / 2, (y1 + y2) / 2 - int(22 * zoom), self._short_label(fragment), zoom)
+            label_x, label_y = self._edge_label_position(x1, y1, x2, y2, int(38 * zoom))
+            self._draw_edge_label(label_x, label_y, self._short_label(fragment), zoom)
             if any(mark in fragment for mark in ("*", "+")):
                 self._draw_self_loop(x2, y2, radius, self._short_label(fragment), zoom)
 
@@ -820,25 +821,44 @@ class CompilerApp:
         self.graph_canvas.create_rectangle(x - half_width, y - half_height, x + half_width, y + half_height, fill="#f8fafc", outline="#cbd5e1")
         self.graph_canvas.create_text(x, y, text=label, fill="#7c2d12", font=("Consolas", max(8, int(9 * zoom))))
 
+    def _draw_state_caption(self, x: float, y: float, label: str, zoom: float) -> None:
+        half_width = max(30, int((len(label) * 4 + 16) * zoom))
+        half_height = max(9, int(10 * zoom))
+        self.graph_canvas.create_rectangle(x - half_width, y - half_height, x + half_width, y + half_height, fill="#fff7ed", outline="#fed7aa")
+        self.graph_canvas.create_text(x, y, text=label, fill="#9a3412", font=("Consolas", max(8, int(8 * zoom))))
+
+    def _edge_label_position(self, x1: int, y1: int, x2: int, y2: int, offset: int) -> tuple[float, float]:
+        mid_x = (x1 + x2) / 2
+        mid_y = (y1 + y2) / 2
+        dx = x2 - x1
+        dy = y2 - y1
+        distance = max((dx * dx + dy * dy) ** 0.5, 1)
+        normal_x = -dy / distance
+        normal_y = dx / distance
+        if normal_y > 0:
+            normal_x = -normal_x
+            normal_y = -normal_y
+        return mid_x + normal_x * offset, mid_y + normal_y * offset
+
     def _draw_nfa_operator_hint(self, index: int, fragment: str, positions: list[tuple[int, int]], radius: int, zoom: float) -> None:
         x1, y1 = positions[index]
         x2, y2 = positions[index + 1]
         if "|" in fragment or "?:" in fragment:
-            top = y1 - int(84 * zoom)
+            top = y1 - int(126 * zoom)
             self.graph_canvas.create_line(x1, y1 - radius, x1 + int(38 * zoom), top, x2 - int(38 * zoom), top, x2, y2 - radius, smooth=True, arrow=tk.LAST, fill="#64748b", dash=(4, 3), width=max(1, int(1.5 * zoom)))
-            self._draw_edge_label((x1 + x2) / 2, top - int(14 * zoom), "ε branch", zoom)
+            self._draw_edge_label((x1 + x2) / 2, top - int(24 * zoom), "ε branch", zoom)
         if "*" in fragment or "+" in fragment:
             self._draw_self_loop(x2, y2, radius, "ε / repeat", zoom)
         if "?" in fragment and "?:" not in fragment:
-            bottom = y1 + int(74 * zoom)
+            bottom = y1 + int(92 * zoom)
             self.graph_canvas.create_line(x1, y1 + radius, x1 + int(38 * zoom), bottom, x2 - int(38 * zoom), bottom, x2, y2 + radius, smooth=True, arrow=tk.LAST, fill="#64748b", dash=(4, 3), width=max(1, int(1.5 * zoom)))
-            self._draw_edge_label((x1 + x2) / 2, bottom + int(14 * zoom), "ε skip", zoom)
+            self._draw_edge_label((x1 + x2) / 2, bottom + int(24 * zoom), "ε skip", zoom)
 
     def _draw_self_loop(self, x: int, y: int, radius: int, label: str, zoom: float) -> None:
         loop_r = int(28 * zoom)
         self.graph_canvas.create_arc(x - loop_r, y - radius - loop_r, x + loop_r, y - radius + loop_r, start=20, extent=300, style=tk.ARC, outline="#64748b", width=max(1, int(2 * zoom)))
         self.graph_canvas.create_line(x + int(18 * zoom), y - radius - int(7 * zoom), x + int(8 * zoom), y - radius + int(2 * zoom), arrow=tk.LAST, fill="#64748b", width=max(1, int(2 * zoom)))
-        self.graph_canvas.create_text(x, y - radius - int(38 * zoom), text=label, fill="#475569", font=("Consolas", max(8, int(8 * zoom))))
+        self.graph_canvas.create_text(x, y - radius - int(56 * zoom), text=label, fill="#475569", font=("Consolas", max(8, int(8 * zoom))))
 
     def _short_label(self, text: str) -> str:
         return text if len(text) <= 18 else text[:15] + "..."

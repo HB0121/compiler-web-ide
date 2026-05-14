@@ -4,15 +4,32 @@ Leaders
 Index | Block | Reason
 --- | --- | ---
 0 | B0 | entry; function entry main
+7 | B1 | jump target from 14
+8 | B2 | fall-through after jump 7
+9 | B3 | jump target from 7; fall-through after jump 8
+15 | B4 | jump target from 8; fall-through after jump 14
 
 Blocks
-B0 [0..8]
+B0 [0..6]
   0: (main, _, _, _)
-  1: (=, 12, _, count)
-  2: (para,  * , _, _)
-  3: (call, write, _, t1)
-  4: (para, \n, _, _)
-  5: (call, write, _, t2)
-  6: (para, "done", _, _)
-  7: (call, write, _, t3)
-  8: (sys, _, _, _)
+  1: ([]=, 1, 0, a)
+  2: ([]=, 2, 1, a)
+  3: ([]=, 3, 2, a)
+  4: ([]=, 4, 3, a)
+  5: (=, 0, _, i)
+  6: (=, 0, _, sum)
+B1 [7..7]
+  7: (J<, i, 4, 9)
+B2 [8..8]
+  8: (J, _, _, 15)
+B3 [9..14]
+  9: (=[], a, i, t1)
+  10: (+, sum, t1, t2)
+  11: (=, t2, _, sum)
+  12: (+, i, 1, t3)
+  13: (=, t3, _, i)
+  14: (J, _, _, 7)
+B4 [15..17]
+  15: (para, sum, _, _)
+  16: (call, write, _, t4)
+  17: (sys, _, _, _)

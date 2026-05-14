@@ -1,3 +1,5 @@
 Variable Name | Type
 --- | ---
-count | int
+a | int
+i | int
+sum | int

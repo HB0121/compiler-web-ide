@@ -1,11 +1,22 @@
 Line | Target Code | Meaning
 --- | --- | ---
 1 | FUNC main | enter function main
-2 | MOV count, 12 | count = 12
-3 | ; para  *  _ _ | comment or skipped helper instruction
-4 | ; call write _ t1 | comment or skipped helper instruction
-5 | ; para \n _ _ | comment or skipped helper instruction
-6 | ; call write _ t2 | comment or skipped helper instruction
-7 | ; para "done" _ _ | comment or skipped helper instruction
-8 | ; call write _ t3 | comment or skipped helper instruction
-9 | END | program end
+2 | MOV i, 0 | i = 0
+3 | MOV sum, 0 | sum = 0
+4 | L7: | label L7: jump target
+5 | JL i, 4, L9 | if i < 4, jump to L9
+6 | JMP L15 | jump to L15
+7 | L9: | label L9: jump target
+8 | LOAD R1, sum | load sum into register R1
+9 | ADD R1, t1 | R1 = R1 + t1
+10 | STORE t2, R1 | t2 = R1
+11 | MOV sum, t2 | sum = t2
+12 | LOAD R1, i | load i into register R1
+13 | ADD R1, 1 | R1 = R1 + 1
+14 | STORE t3, R1 | t3 = R1
+15 | MOV i, t3 | i = t3
+16 | JMP L7 | jump to L7
+17 | L15: | label L15: jump target
+18 | ; para sum _ _ | comment or skipped helper instruction
+19 | ; call write _ t4 | comment or skipped helper instruction
+20 | END | program end

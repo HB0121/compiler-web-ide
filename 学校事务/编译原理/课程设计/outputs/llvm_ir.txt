@@ -1,12 +1,23 @@
 define i32 @main() {
 entry:
-% *  = alloca i32
-%"done" = alloca i32
-%\n = alloca i32
-%count = alloca i32
-store i32 12, ptr %count
-%t1 = add i32 0, 0
-%t2 = add i32 0, 0
-%t3 = add i32 0, 0
+%a = alloca i32
+%i = alloca i32
+%sum = alloca i32
+store i32 0, ptr %i
+store i32 0, ptr %sum
+L7:
+%v1 = load i32, ptr %i
+%cmp1 = icmp slt i32 %v1, 4
+br i1 %cmp1, label %L9, label %L15
+L9:
+%v2 = load i32, ptr %sum
+%t2 = add i32 %v2, %t1
+store i32 %t2, ptr %sum
+%v3 = load i32, ptr %i
+%t3 = add i32 %v3, 1
+store i32 %t3, ptr %i
+br label %L7
+L15:
+%t4 = add i32 0, 0
 ret i32 0
 }
