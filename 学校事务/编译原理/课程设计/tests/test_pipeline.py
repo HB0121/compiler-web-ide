@@ -40,6 +40,7 @@ class PipelineSmokeTests(unittest.TestCase):
         self.assertIn("call", result.texts["quads"])
         self.assertIn("return_value", result.texts["interpreter"])
         self.assertIn("define i32 @main()", result.texts["llvm_ir"])
+        self.assertIn("Internal verifier: PASS", result.texts["llvm_verify"])
         self.assertIn("FUNC main", result.texts["target_code"])
         self.assertIn("Line | Target Code | Meaning", result.texts["target_code"])
         self.assertIn("enter function main", result.texts["target_code"])
@@ -66,6 +67,7 @@ class PipelineSmokeTests(unittest.TestCase):
             self.assertTrue((out_dir / "quads.txt").exists())
             self.assertTrue((out_dir / "interpreter.txt").exists())
             self.assertTrue((out_dir / "llvm_ir.txt").exists())
+            self.assertTrue((out_dir / "llvm_verify.txt").exists())
             self.assertTrue((out_dir / "target_code.txt").exists())
             self.assertTrue((out_dir / "assembly.asm").exists())
             self.assertTrue((out_dir / "optimized_quads.txt").exists())
@@ -79,6 +81,7 @@ class PipelineSmokeTests(unittest.TestCase):
             self.assertIn("sys", (out_dir / "quads.txt").read_text(encoding="utf-8"))
             self.assertIn("return_value", (out_dir / "interpreter.txt").read_text(encoding="utf-8"))
             self.assertIn("define i32 @main()", (out_dir / "llvm_ir.txt").read_text(encoding="utf-8"))
+            self.assertIn("Internal verifier: PASS", (out_dir / "llvm_verify.txt").read_text(encoding="utf-8"))
             self.assertIn("FUNC main", (out_dir / "target_code.txt").read_text(encoding="utf-8"))
             self.assertIn("assume cs:code,ds:data,ss:stack,es:extended", (out_dir / "assembly.asm").read_text(encoding="utf-8"))
             self.assertIn("optimized", (out_dir / "optimized_quads.txt").read_text(encoding="utf-8"))
@@ -536,9 +539,9 @@ class LLVMIRTests(unittest.TestCase):
 
         self.assertIn("define i32 @main()", llvm)
         self.assertIn("%a = alloca i32", llvm)
-        self.assertIn("store i32 10, ptr %a", llvm)
+        self.assertIn("store i32 10, i32* %a", llvm)
         self.assertIn("%t1 = add i32", llvm)
-        self.assertIn("store i32 %t1, ptr %c", llvm)
+        self.assertIn("store i32 %t1, i32* %c", llvm)
         self.assertIn("ret i32", llvm)
 
     def test_converts_conditional_jumps_to_cmp_and_br(self):
@@ -560,6 +563,7 @@ class LLVMIRTests(unittest.TestCase):
         self.assertIn("br i1", llvm)
         self.assertIn("label %L4", llvm)
         self.assertIn("L6:", llvm)
+        self.assertNotRegex(llvm, r"store i32 [^\n]+\nL\d+:")
 
     def test_llvm_conversion_uses_main_region_when_function_labels_exist(self):
         from compiler.llvm_ir import quads_to_llvm_ir
@@ -576,7 +580,7 @@ class LLVMIRTests(unittest.TestCase):
         llvm = quads_to_llvm_ir(quads)
 
         self.assertNotIn("ret i32 1", llvm)
-        self.assertIn("store i32 2, ptr %x", llvm)
+        self.assertIn("store i32 2, i32* %x", llvm)
 
     def test_llvm_conversion_keeps_call_temps_defined(self):
         from compiler.llvm_ir import quads_to_llvm_ir
@@ -593,7 +597,27 @@ class LLVMIRTests(unittest.TestCase):
 
         self.assertNotIn("%add = alloca i32", llvm)
         self.assertIn("%t1 = add i32 0, 0", llvm)
-        self.assertIn("store i32 %t1, ptr %x", llvm)
+        self.assertIn("store i32 %t1, i32* %x", llvm)
+
+    def test_generates_engineering_style_write_and_verification_report(self):
+        from compiler.llvm_ir import quads_to_llvm_ir, verify_llvm_ir
+
+        quads = [
+            ("main", "_", "_", "_"),
+            ("=", "15", "_", "x"),
+            ("para", "x", "_", "_"),
+            ("call", "write", "_", "t1"),
+            ("ret", "_", "_", "x"),
+            ("sys", "_", "_", "_"),
+        ]
+        llvm = quads_to_llvm_ir(quads)
+        report = verify_llvm_ir(llvm)
+
+        self.assertIn("declare i32 @printf(i8*, ...)", llvm)
+        self.assertIn("@.fmt_int", llvm)
+        self.assertIn("call i32 (i8*, ...) @printf", llvm)
+        self.assertIn("Internal verifier: PASS", report)
+        self.assertIn("External tools:", report)
 
 
 class TargetCodeTests(unittest.TestCase):
