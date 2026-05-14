@@ -1,9 +1,46 @@
 DAG
 B0
-  N0: x {x}
-  N1: * {t1} <- N0, N0
 B1
 B2
 B3
+  N0: res {res}
+  N1: base {base}
+  N2: * {t1, res} <- N0, N1
+  N3: i {i}
+  N4: 1 {1}
+  N5: + {t2, i} <- N3, N4
 B4
 B5
+  N0: 10 {10}
+  N1: 5 {5}
+  N2: + {t3, x, z} <- N0, N1
+  N3: 2 {2}
+  N4: * {t4, y} <- N1, N3
+  N5: t3 {t3}
+  N6: * {t7, result} <- N5, N5
+  N7: t7 {t7}
+  N8: t4 {t4}
+  N9: + {t9, result} <- N7, N8
+  common: 10 + 5 reused by t5
+  common: 10 + 5 reused by t6
+  common: 5 * 2 reused by t8
+B6
+B7
+  N0: y {y}
+  N1: z {z}
+  N2: + {t10, x, y} <- N0, N1
+  common: y + z reused by t11
+B8
+  N0: a {a}
+  N1: b {b}
+  N2: - {t13, x, z} <- N0, N1
+  common: a - b reused by t14
+B9
+  N0: a {a}
+  N1: 0 {0}
+  N2: + {t15, a} <- N0, N1
+  N3: b {b}
+  N4: 1 {1}
+  N5: * {t16, b} <- N3, N4
+  N6: c {c}
+  N7: * {t17, c} <- N6, N1

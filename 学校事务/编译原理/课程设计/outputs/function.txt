@@ -1,2 +1,2 @@
-int square(int)
-int main(void)
+int calculate_power(int, int)
+void main(void)

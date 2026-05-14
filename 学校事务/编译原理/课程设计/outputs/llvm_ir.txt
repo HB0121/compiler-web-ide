@@ -2,17 +2,72 @@ define i32 @main() {
 entry:
 %a = alloca i32
 %b = alloca i32
-store i32 4, ptr %a
-%t2 = add i32 0, 0
-store i32 %t2, ptr %b
-%v1 = load i32, ptr %b
-%cmp1 = icmp sgt i32 %v1, 10
-br i1 %cmp1, label %L11, label %L14
-L11:
-%t3 = add i32 0, 0
-br label %L16
-L14:
-%t4 = add i32 0, 0
-L16:
+%c = alloca i32
+%result = alloca i32
+%x = alloca i32
+%y = alloca i32
+%z = alloca i32
+store i32 10, ptr %a
+store i32 5, ptr %b
+store i32 2, ptr %c
+%v1 = load i32, ptr %a
+%v2 = load i32, ptr %b
+%t3 = add i32 %v1, %v2
+store i32 %t3, ptr %x
+%v3 = load i32, ptr %b
+%v4 = load i32, ptr %c
+%t4 = mul i32 %v3, %v4
+store i32 %t4, ptr %y
+%v5 = load i32, ptr %a
+%v6 = load i32, ptr %b
+%t5 = add i32 %v5, %v6
+store i32 %t5, ptr %z
+%v7 = load i32, ptr %a
+%v8 = load i32, ptr %b
+%t6 = add i32 %v7, %v8
+%v9 = load i32, ptr %x
+%t7 = mul i32 %v9, %t6
+store i32 %t7, ptr %result
+%v10 = load i32, ptr %b
+%v11 = load i32, ptr %c
+%t8 = mul i32 %v10, %v11
+%v12 = load i32, ptr %result
+%t9 = add i32 %v12, %t8
+store i32 %t9, ptr %result
+%v13 = load i32, ptr %result
+%cmp1 = icmp sgt i32 %v13, 100
+br i1 %cmp1, label %L30, label %L38
+L30:
+%v14 = load i32, ptr %y
+%v15 = load i32, ptr %z
+%t10 = add i32 %v14, %v15
+store i32 %t10, ptr %x
+%v16 = load i32, ptr %y
+%v17 = load i32, ptr %z
+%t11 = add i32 %v16, %v17
+store i32 %t11, ptr %y
+%t12 = add i32 0, 0
+br label %L42
+L38:
+%v18 = load i32, ptr %a
+%v19 = load i32, ptr %b
+%t13 = sub i32 %v18, %v19
+store i32 %t13, ptr %x
+%v20 = load i32, ptr %a
+%v21 = load i32, ptr %b
+%t14 = sub i32 %v20, %v21
+store i32 %t14, ptr %z
+L42:
+%v22 = load i32, ptr %a
+%t15 = add i32 %v22, 0
+store i32 %t15, ptr %a
+%v23 = load i32, ptr %b
+%t16 = mul i32 %v23, 1
+store i32 %t16, ptr %b
+%v24 = load i32, ptr %c
+%t17 = mul i32 %v24, 0
+store i32 %t17, ptr %c
+%t18 = add i32 0, 0
+store i32 %t18, ptr %result
 ret i32 0
 }

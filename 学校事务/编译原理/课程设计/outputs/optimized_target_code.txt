@@ -1,22 +1,82 @@
-FUNC square
-LOAD R1, x
-MUL R1, x
+FUNC calculate_power
+MOV res, 1
+MOV i, 0
+L3:
+JL i, exp, L5
+JMP L10
+L5:
+LOAD R1, res
+MUL R1, base
 STORE t1, R1
-RET t1
+MOV res, t1
+LOAD R1, i
+ADD R1, 1
+STORE t2, R1
+MOV i, t2
+JMP L3
+L10:
+RET res
 RET 0
 FUNC main
-MOV a, 4
-; para a _ _
-; call square _ t2
-MOV b, t2
-JG b, 10, L11
-JMP L14
-L11:
+MOV a, 10
+MOV b, 5
+MOV c, 2
+LOAD R1, a
+ADD R1, b
+STORE t3, R1
+MOV x, t3
+LOAD R1, b
+MUL R1, c
+STORE t4, R1
+MOV y, t4
+LOAD R1, a
+ADD R1, b
+STORE t5, R1
+MOV z, t5
+LOAD R1, a
+ADD R1, b
+STORE t6, R1
+LOAD R1, x
+MUL R1, t6
+STORE t7, R1
+MOV result, t7
+LOAD R1, b
+MUL R1, c
+STORE t8, R1
+LOAD R1, result
+ADD R1, t8
+STORE t9, R1
+MOV result, t9
+JG result, 100, L30
+JMP L38
+L30:
+LOAD R1, y
+ADD R1, z
+STORE t10, R1
+MOV x, t10
+LOAD R1, y
+ADD R1, z
+STORE t11, R1
+MOV y, t11
+; para x _ _
+; para 2 _ _
+; call calculate_power _ t12
+JMP L42
+L38:
+LOAD R1, a
+SUB R1, b
+STORE t13, R1
+MOV x, t13
+LOAD R1, a
+SUB R1, b
+STORE t14, R1
+MOV z, t14
+L42:
+MOV a, a
+MOV b, b
+MOV c, 0
 ; para b _ _
-; call write _ t3
-JMP L16
-L14:
-; para 0 _ _
-; call write _ t4
-L16:
+; para c _ _
+; call calculate_power _ t18
+MOV result, t18
 END

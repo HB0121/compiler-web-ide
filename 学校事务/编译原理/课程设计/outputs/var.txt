@@ -1,3 +1,11 @@
-int x
+int base
+int exp
+int res
+int i
 int a
 int b
+int c
+int x
+int y
+int z
+int result

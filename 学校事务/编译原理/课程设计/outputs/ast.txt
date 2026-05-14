@@ -1,33 +1,147 @@
 Program
-  FunctionDef(int square)[1]
-    Param(int x)[1]
+  FunctionDef(int calculate_power)[4]
+    Param(int base)[4]
+    Param(int exp)[4]
     Compound
-      ReturnStmt[2]
-        *
-          x[2]
-          x[2]
-  FunctionDef(int main)[5]
-    Compound
-      VarDecl(int a)[6]
-      VarDecl(int b)[7]
+      VarDecl(int res)[5]
+      VarDecl(int i)[6]
       ExprStmt
         =
-          a[8]
-          4[8]
+          res[7]
+          1[7]
       ExprStmt
         =
-          b[9]
-          Call(square)[9]
-            a[9]
+          i[8]
+          0[8]
+      WhileStmt
+        <
+          i[10]
+          exp[10]
+        Compound
+          ExprStmt
+            =
+              res[11]
+              *
+                res[11]
+                base[11]
+          ExprStmt
+            =
+              i[12]
+              +
+                i[12]
+                1[12]
+      ReturnStmt[14]
+        res[14]
+  FunctionDef(void main)[17]
+    Compound
+      VarDecl(int a)[18]
+      VarDecl(int b)[18]
+      VarDecl(int c)[18]
+      VarDecl(int x)[18]
+      VarDecl(int y)[18]
+      VarDecl(int z)[18]
+      VarDecl(int result)[19]
+      ExprStmt
+        =
+          a[21]
+          10[21]
+      ExprStmt
+        =
+          b[22]
+          5[22]
+      ExprStmt
+        =
+          c[23]
+          2[23]
+      ExprStmt
+        =
+          x[26]
+          +
+            a[26]
+            b[26]
+      ExprStmt
+        =
+          y[27]
+          *
+            b[27]
+            c[27]
+      ExprStmt
+        =
+          z[28]
+          +
+            a[28]
+            b[28]
+      ExprStmt
+        =
+          result[30]
+          *
+            x[30]
+            +
+              a[30]
+              b[30]
+      ExprStmt
+        =
+          result[31]
+          +
+            result[31]
+            *
+              b[31]
+              c[31]
       IfStmt
         >
-          b[10]
-          10[10]
+          result[34]
+          100[34]
         Compound
           ExprStmt
-            Call(write)[11]
-              b[11]
+            =
+              x[36]
+              +
+                y[36]
+                z[36]
+          ExprStmt
+            =
+              y[37]
+              +
+                y[37]
+                z[37]
+          ExprStmt
+            Call(calculate_power)[38]
+              x[38]
+              2[38]
         Compound
           ExprStmt
-            Call(write)[13]
-              0[13]
+            =
+              x[41]
+              -
+                a[41]
+                b[41]
+          ExprStmt
+            =
+              z[42]
+              -
+                a[42]
+                b[42]
+      ExprStmt
+        =
+          a[46]
+          +
+            a[46]
+            0[46]
+      ExprStmt
+        =
+          b[47]
+          *
+            b[47]
+            1[47]
+      ExprStmt
+        =
+          c[48]
+          *
+            c[48]
+            0[48]
+      ExprStmt
+        =
+          result[51]
+          Call(calculate_power)[51]
+            b[51]
+            c[51]
