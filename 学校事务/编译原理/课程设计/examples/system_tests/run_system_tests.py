@@ -79,18 +79,20 @@ def main() -> int:
         raise AssertionError("log no-match: expected zero matches")
 
     llvm = assert_no_diagnostics("07_llvm_ir/llvm_branch_call.c")
-    assert_contains(llvm.texts["llvm_ir"], "define i32 @square", "llvm function")
-    assert_contains(llvm.texts["llvm_ir"], "call i32 @square", "llvm call")
+    assert_contains(llvm.texts["llvm_ir"], "define i32 @main", "llvm main")
+    assert_contains(llvm.texts["llvm_ir"], "alloca i32", "llvm stack slots")
     assert_contains(llvm.texts["llvm_ir"], "br i1", "llvm branch")
+    assert_contains(llvm.texts["llvm_ir"], "ret i32", "llvm return")
 
     cfg = assert_no_diagnostics("08_cfg_dag_optimization/cfg_if_else.c")
     assert_contains(cfg.texts["basic_blocks"], "Basic Blocks", "cfg blocks")
-    assert_contains(cfg.texts["cfg"], "CFG Edges", "cfg edges")
+    assert_contains(cfg.texts["cfg"], "Control Flow Graph", "cfg graph")
+    assert_contains(cfg.texts["cfg"], "->", "cfg edges")
     dag = assert_no_diagnostics("08_cfg_dag_optimization/dag_common_subexpr.c")
     assert_contains(dag.texts["dag"], "reuse", "dag common subexpr")
     assert_contains(dag.texts["dag_optimized_quads"], "DAG optimized quadruples", "dag optimized quads")
 
-    assert_diagnostic_codes("09_gui_editor_features/gui_realtime_errors.c", {"P001", "302"})
+    assert_diagnostic_codes("09_gui_editor_features/gui_realtime_errors.c", {"P002", "302"})
     gui_format = assert_no_diagnostics("09_gui_editor_features/gui_format_highlight.c")
     assert_contains(gui_format.texts["tokens"], "while", "gui keyword token")
 

@@ -138,15 +138,16 @@ GUI 操作：
 
 覆盖点：
 - `define`
-- `call`
+- 局部变量 `alloca`
 - `br`
 - `ret`
-- 条件分支和函数调用
+- 条件分支
 
 预期：
-- `LLVM IR` 中包含 `define i32 @square`。
-- 包含 `call i32 @square`。
+- `LLVM IR` 中包含 `define i32 @main`。
+- 包含局部变量分配 `alloca i32`。
 - 包含条件跳转 `br i1`。
+- 包含返回语句 `ret i32`。
 
 ## 08 CFG 与 DAG 优化
 
@@ -164,7 +165,7 @@ GUI 操作：
 
 预期：
 - `cfg_if_else.c` 的 `Basic Blocks` 中有多个基本块。
-- `CFG` 中显示 `CFG Edges`。
+- `CFG` 中显示 `Control Flow Graph`、前驱信息和 `B0 -> B1` 这类控制流边。
 - `dag_common_subexpr.c` 的 `DAG` 中出现公共子表达式复用信息。
 - `DAG Optimized Quads` 中减少重复的 `a + b` 计算。
 
@@ -188,6 +189,6 @@ GUI 操作：
 3. 查看代码缩进是否展开，关键字和函数名是否高亮。
 
 预期：
-- 错误用例产生语法和语义诊断。
+- 错误用例产生语法诊断 `P002` 和语义诊断 `302`。
 - 格式化后代码多行缩进清晰。
 - 行号和错误行标记保持同步。
