@@ -1,4 +1,5 @@
 Line | Column | Kind | Value
 --- | --- | --- | ---
-2 | 51-61 | REGEX | status=200
-3 | 50-60 | REGEX | status=500
+1 | 49-61 | REGEX | 192.168.1.20
+2 | 29-40 | REGEX | 172.16.8.31
+3 | 30-38 | REGEX | 10.1.2.3
