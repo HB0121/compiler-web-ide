@@ -1,24 +1,38 @@
 define i32 @main() {
 entry:
-%i = alloca i32
-%limit = alloca i32
-%total = alloca i32
-store i32 3, ptr %limit
-store i32 0, ptr %i
-store i32 0, ptr %total
-L9:
-%v1 = load i32, ptr %i
-%v2 = load i32, ptr %limit
-%cmp1 = icmp slt i32 %v1, %v2
-br i1 %cmp1, label %L11, label %L18
+%a = alloca i32
+%b = alloca i32
+%c = alloca i32
+%d = alloca i32
+%x = alloca i32
+%y = alloca i32
+store i32 2, ptr %a
+store i32 3, ptr %b
+%v1 = load i32, ptr %a
+%v2 = load i32, ptr %b
+%t1 = add i32 %v1, %v2
+store i32 %t1, ptr %c
+%v3 = load i32, ptr %a
+%v4 = load i32, ptr %b
+%t2 = add i32 %v3, %v4
+store i32 %t2, ptr %d
+%v5 = load i32, ptr %c
+%v6 = load i32, ptr %d
+%t3 = mul i32 %v5, %v6
+store i32 %t3, ptr %x
+%v7 = load i32, ptr %x
+%cmp1 = icmp sgt i32 %v7, 20
+br i1 %cmp1, label %L11, label %L14
 L11:
-%t2 = add i32 0, 0
-store i32 %t2, ptr %total
-%v3 = load i32, ptr %i
-%t3 = add i32 %v3, 1
-store i32 %t3, ptr %i
-br label %L9
-L18:
-%v4 = load i32, ptr %total
-ret i32 %v4
+%v8 = load i32, ptr %x
+%t4 = sub i32 %v8, 1
+store i32 %t4, ptr %y
+br label %L16
+L14:
+%v9 = load i32, ptr %x
+%t5 = add i32 %v9, 1
+store i32 %t5, ptr %y
+L16:
+%t6 = add i32 0, 0
+ret i32 0
 }

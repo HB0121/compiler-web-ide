@@ -1,2 +1,1 @@
-int add(int, int)
 int main(void)
