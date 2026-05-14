@@ -156,6 +156,7 @@ GUI 操作：
 文件：
 - `08_CFG与DAG优化/cfg_if_else.c`
 - `08_CFG与DAG优化/dag_common_subexpr.c`
+- `08_CFG与DAG优化/cfg_dag_complex.c`
 
 覆盖点：
 - Leaders 识别
@@ -164,12 +165,16 @@ GUI 操作：
 - 基本块内 DAG 构建
 - 公共子表达式消除
 - 优化前后四元式对比
+- 基于 DAG 优化结果生成 `Optimized Target Code`
+- 优化前后目标代码行数对比
 
 预期：
 - `cfg_if_else.c` 的 `Basic Blocks` 中有多个基本块。
 - `CFG` 中显示 `Control Flow Graph`、前驱信息和 `B0 -> B1` 这类控制流边。
 - `dag_common_subexpr.c` 的 `DAG` 中出现公共子表达式复用信息。
 - `DAG Optimized Quads` 中减少重复的 `a + b` 计算。
+- `cfg_dag_complex.c` 的 `Optimized Target Code` 行数应少于 `Target Code`，用于证明 DAG 优化结果已经进入目标代码生成阶段。
+- `cfg_dag_complex.c` 优化后目标代码中应出现 `MOV c, 15`、`MOV d, 15`、`MOV x, 225` 这类常量传播/折叠结果。
 
 ## 09 GUI 编辑器功能
 

@@ -37,6 +37,10 @@ def assert_no_diagnostics(relative: str):
     return result
 
 
+def target_code_row_count(text: str) -> int:
+    return sum(1 for line in text.splitlines() if " | " in line and not line.startswith(("Line |", "---")))
+
+
 def main() -> int:
     checks = []
 
@@ -122,6 +126,9 @@ def main() -> int:
     assert_contains(complex_cfg_dag.texts["cfg"], "Predecessors", "complex cfg predecessor")
     assert_contains(complex_cfg_dag.texts["dag"], "common:", "complex dag common subexpr")
     assert_contains(complex_cfg_dag.texts["dag_optimized_quads"], "Optimized instruction count", "complex optimized count")
+    if target_code_row_count(complex_cfg_dag.texts["optimized_target_code"]) >= target_code_row_count(complex_cfg_dag.texts["target_code"]):
+        raise AssertionError("complex optimized target code: expected fewer rows than original target code")
+    assert_contains(complex_cfg_dag.texts["optimized_target_code"], "MOV x, 225", "complex optimized target folded expression")
 
     assert_diagnostic_codes("09_GUI编辑器功能/gui_realtime_errors.c", {"P002", "302"})
     gui_format = assert_no_diagnostics("09_GUI编辑器功能/gui_format_highlight.c")
