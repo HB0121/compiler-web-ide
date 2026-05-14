@@ -1,33 +1,11 @@
 Line | Target Code | Meaning
 --- | --- | ---
 1 | FUNC main | enter function main
-2 | MOV a, 10 | a = 10
-3 | MOV b, 5 | b = 5
-4 | MOV c, 15 | c = 15
-5 | MOV d, 15 | d = 15
-6 | MOV x, 225 | x = 225
-7 | JG x, 20, L8 | if x > 20, jump to L8
-8 | JMP L13 | jump to L13
-9 | L8: | label L8: jump target
-10 | LOAD R1, a | load a into register R1
-11 | ADD R1, b | R1 = R1 + b
-12 | STORE t4, R1 | t4 = R1
-13 | MOV y, t4 | y = t4
-14 | LOAD R1, t4 | load t4 into register R1
-15 | MUL R1, d | R1 = R1 * d
-16 | STORE t5, R1 | t5 = R1
-17 | MOV z, t5 | z = t5
-18 | JMP L17 | jump to L17
-19 | L13: | label L13: jump target
-20 | LOAD R1, a | load a into register R1
-21 | SUB R1, b | R1 = R1 - b
-22 | STORE t6, R1 | t6 = R1
-23 | MOV y, t6 | y = t6
-24 | LOAD R1, t6 | load t6 into register R1
-25 | ADD R1, d | R1 = R1 + d
-26 | STORE t7, R1 | t7 = R1
-27 | MOV z, t7 | z = t7
-28 | L17: | label L17: jump target
-29 | ; para z _ _ | comment or skipped helper instruction
-30 | ; call write _ t8 | comment or skipped helper instruction
-31 | END | program end
+2 | MOV count, 12 | count = 12
+3 | ; para  *  _ _ | comment or skipped helper instruction
+4 | ; call write _ t1 | comment or skipped helper instruction
+5 | ; para \n _ _ | comment or skipped helper instruction
+6 | ; call write _ t2 | comment or skipped helper instruction
+7 | ; para "done" _ _ | comment or skipped helper instruction
+8 | ; call write _ t3 | comment or skipped helper instruction
+9 | END | program end

@@ -1,34 +1,18 @@
 return_value: None
 variables:
-  a = 10
-  b = 5
-  c = 15
-  d = 15
-  t1 = 15
-  t2 = 15
-  t3 = 225
-  t4 = 15
-  t5 = 225
-  t8 = 0
-  x = 225
-  y = 15
-  z = 225
+  count = 12
+  t1 = 0
+  t2 = 0
+  t3 = 0
 trace:
-  1: (=, 10, _, a)
-  2: (=, 5, _, b)
-  3: (+, a, b, t1)
-  4: (=, t1, _, c)
-  5: (+, a, b, t2)
-  6: (=, t2, _, d)
-  7: (*, c, d, t3)
-  8: (=, t3, _, x)
-  9: (J>, x, 20, 11)
-  11: (+, a, b, t4)
-  12: (=, t4, _, y)
-  13: (*, y, d, t5)
-  14: (=, t5, _, z)
-  15: (J, _, _, 20)
-  20: (para, z, _, _)
-  21: (call, write, _, t8)
-  builtin write(225)
-  22: (sys, _, _, _)
+  1: (=, 12, _, count)
+  2: (para,  * , _, _)
+  3: (call, write, _, t1)
+  builtin write(0)
+  4: (para, \n, _, _)
+  5: (call, write, _, t2)
+  builtin write(0)
+  6: (para, "done", _, _)
+  7: (call, write, _, t3)
+  builtin write(done)
+  8: (sys, _, _, _)

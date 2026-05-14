@@ -32,60 +32,20 @@ start:
 main:
     PUSH BP
     MOV BP,SP
-    SUB SP,30
-    MOV AX,10
+    SUB SP,12
+    MOV AX,12
     MOV ss:[bp-2],AX
-    MOV AX,5
+    ; builtin write(): string ' * '
+    CALL write
     MOV ss:[bp-4],AX
-    MOV AX,ss:[bp-2]
-    ADD AX,ss:[bp-4]
-    MOV ss:[bp-6],AX
     MOV AX,ss:[bp-6]
-    MOV ss:[bp-8],AX
-    MOV AX,ss:[bp-2]
-    ADD AX,ss:[bp-4]
-    MOV ss:[bp-10],AX
-    MOV AX,ss:[bp-10]
-    MOV ss:[bp-12],AX
-    MOV AX,ss:[bp-8]
-    MOV BX,ss:[bp-12]
-    MUL BX
-    MOV ss:[bp-14],AX
-    MOV AX,ss:[bp-14]
-    MOV ss:[bp-16],AX
-    MOV AX,ss:[bp-16]
-    CMP AX,20
-    JG _11
-    JMP far ptr _16
-_11:
-    MOV AX,ss:[bp-2]
-    ADD AX,ss:[bp-4]
-    MOV ss:[bp-18],AX
-    MOV AX,ss:[bp-18]
-    MOV ss:[bp-20],AX
-    MOV AX,ss:[bp-20]
-    MOV BX,ss:[bp-12]
-    MUL BX
-    MOV ss:[bp-22],AX
-    MOV AX,ss:[bp-22]
-    MOV ss:[bp-24],AX
-    JMP far ptr _20
-_16:
-    MOV AX,ss:[bp-2]
-    SUB AX,ss:[bp-4]
-    MOV ss:[bp-26],AX
-    MOV AX,ss:[bp-26]
-    MOV ss:[bp-20],AX
-    MOV AX,ss:[bp-20]
-    ADD AX,ss:[bp-12]
-    MOV ss:[bp-28],AX
-    MOV AX,ss:[bp-28]
-    MOV ss:[bp-24],AX
-_20:
-    MOV AX,ss:[bp-24]
     PUSH AX
     CALL write
-    MOV ss:[bp-30],AX
+    MOV ss:[bp-8],AX
+    MOV AX,ss:[bp-10]
+    PUSH AX
+    CALL write
+    MOV ss:[bp-12],AX
     MOV AX,0
     mov ah,4ch
     int 21h
