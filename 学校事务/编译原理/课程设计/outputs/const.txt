@@ -1,3 +1,2 @@
 Const Name | Type
 --- | ---
-limit | int

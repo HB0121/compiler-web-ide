@@ -3,5 +3,7 @@ Variable Name | Type
 a | int
 b | int
 c | int
-i | int
-total | int
+d | int
+x | int
+y | int
+z | int
