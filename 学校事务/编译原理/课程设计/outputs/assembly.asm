@@ -39,7 +39,7 @@ main:
     MOV ss:[bp-4],AX
     MOV AX,ss:[bp-4]
     PUSH AX
-    CALL f
+    CALL seq
     MOV ss:[bp-6],AX
     MOV AX,ss:[bp-6]
     PUSH AX
@@ -49,76 +49,40 @@ main:
     mov ah,4ch
     int 21h
 
-f:
+seq:
     PUSH BP
     MOV BP,SP
-    SUB SP,22
+    SUB SP,12
     MOV AX,ss:[bp+4]
-    CMP AX,1
-    JE _11
+    CMP AX,2
+    JLE _11
     JMP far ptr _13
 _11:
     MOV AX,1
-    MOV SP,BP
-    POP BP
-    RET
-    JMP far ptr _20
+    MOV ss:[bp-2],AX
+    JMP far ptr _21
 _13:
     MOV AX,ss:[bp+4]
-    CMP AX,2
-    JE _15
-    JMP far ptr _17
-_15:
-    MOV AX,2
-    MOV SP,BP
-    POP BP
-    RET
-    JMP far ptr _20
-_17:
-    MOV AX,ss:[bp+4]
-    CMP AX,3
-    JE _19
-    JMP far ptr _20
-_19:
-    MOV AX,4
-    MOV SP,BP
-    POP BP
-    RET
-_20:
-    MOV AX,ss:[bp+4]
     SUB AX,1
-    MOV ss:[bp-2],AX
-    MOV AX,ss:[bp-2]
-    PUSH AX
-    CALL f
     MOV ss:[bp-4],AX
     MOV AX,ss:[bp-4]
+    PUSH AX
+    CALL seq
     MOV ss:[bp-6],AX
     MOV AX,ss:[bp+4]
     SUB AX,2
     MOV ss:[bp-8],AX
     MOV AX,ss:[bp-8]
     PUSH AX
-    CALL f
+    CALL seq
     MOV ss:[bp-10],AX
-    MOV AX,ss:[bp-10]
-    MOV ss:[bp-12],AX
-    MOV AX,ss:[bp+4]
-    SUB AX,3
-    MOV ss:[bp-14],AX
-    MOV AX,ss:[bp-14]
-    PUSH AX
-    CALL f
-    MOV ss:[bp-16],AX
-    MOV AX,ss:[bp-16]
-    MOV ss:[bp-18],AX
     MOV AX,ss:[bp-6]
-    ADD AX,ss:[bp-12]
-    MOV ss:[bp-20],AX
-    MOV AX,ss:[bp-20]
-    ADD AX,ss:[bp-18]
-    MOV ss:[bp-22],AX
-    MOV AX,ss:[bp-22]
+    ADD AX,ss:[bp-10]
+    MOV ss:[bp-12],AX
+    MOV AX,ss:[bp-12]
+    MOV ss:[bp-2],AX
+_21:
+    MOV AX,ss:[bp-2]
     MOV SP,BP
     POP BP
     RET

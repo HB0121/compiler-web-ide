@@ -1,71 +1,46 @@
 Program
-  FunctionDecl(int f)[4]
+  FunctionDecl(int seq)[2]
+    Param(int a)[2]
+  FunctionDecl(int read)[3]
+  FunctionDecl(void write)[4]
     Param(int a)[4]
-  FunctionDecl(int read)[5]
-  FunctionDecl(void write)[6]
-    Param(int a)[6]
-  FunctionDef(void main)[7]
+  FunctionDef(void main)[5]
     Compound
-      VarDecl(int m)[9]
+      VarDecl(int n)[7]
       ExprStmt
         =
-          m[10]
-          Call(read)[10]
+          n[8]
+          Call(read)[8]
       ExprStmt
-        Call(write)[11]
-          Call(f)[11]
-            m[11]
-  FunctionDef(int f)[15]
-    Param(int n)[15]
+        Call(write)[9]
+          Call(seq)[9]
+            n[9]
+  FunctionDef(int seq)[12]
+    Param(int m)[12]
     Compound
-      VarDecl(int a)[16]
-      VarDecl(int b)[16]
-      VarDecl(int c)[16]
+      VarDecl(int s)[14]
+      VarDecl(int a)[14]
+      VarDecl(int b)[14]
       IfStmt
-        ==
-          n[17]
-          1[17]
+        <=
+          m[15]
+          2[15]
+        ExprStmt
+          =
+            s[16]
+            1[16]
         Compound
-          ReturnStmt[18]
-            1[18]
-        IfStmt
-          ==
-            n[20]
-            2[20]
-          Compound
-            ReturnStmt[21]
-              2[21]
-          IfStmt
-            ==
-              n[23]
-              3[23]
-            Compound
-              ReturnStmt[24]
-                4[24]
-      ExprStmt
-        =
-          a[26]
-          Call(f)[26]
-            -
-              n[26]
-              1[26]
-      ExprStmt
-        =
-          b[27]
-          Call(f)[27]
-            -
-              n[27]
-              2[27]
-      ExprStmt
-        =
-          c[28]
-          Call(f)[28]
-            -
-              n[28]
-              3[28]
-      ReturnStmt[29]
-        +
-          +
-            a[29]
-            b[29]
-          c[29]
+          ExprStmt
+            =
+              s[21]
+              +
+                Call(seq)[21]
+                  -
+                    m[21]
+                    1[21]
+                Call(seq)[21]
+                  -
+                    m[21]
+                    2[21]
+      ReturnStmt[23]
+        s[23]
