@@ -61,7 +61,8 @@ def run_pipeline(source: str) -> PipelineResult:
     llvm_ir_text = quads_to_llvm_ir(quads) if quads else ""
     target_code_text = explain_target_code(quads_to_target_code(quads)) if quads else ""
     assembly_text = quads_to_masm16(quads, function_params_from_ast(ast)) if quads else ""
-    optimized_target_code_text = explain_target_code(quads_to_target_code(optimized_quads)) if optimized_quads else ""
+    target_optimized_quads = optimize_quads(control_flow.optimized_quads) if control_flow else optimized_quads
+    optimized_target_code_text = explain_target_code(quads_to_target_code(target_optimized_quads)) if target_optimized_quads else ""
     diagnostics = lexer_diagnostics + parser_diagnostics + semantic_diagnostics
     texts = build_texts(
         tokens,

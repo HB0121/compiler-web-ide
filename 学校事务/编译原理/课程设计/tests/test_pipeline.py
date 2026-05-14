@@ -779,6 +779,34 @@ class OptimizedTargetCodeTests(unittest.TestCase):
         self.assertNotIn("ADD R1, 2", result.texts["optimized_target_code"])
         self.assertIn("RET x", result.texts["optimized_target_code"])
 
+    def test_optimized_target_code_uses_dag_reduced_quads(self):
+        from compiler.pipeline import run_pipeline
+
+        source = """
+        main() {
+            int a; int b; int c; int d; int x;
+            a = 10;
+            b = 5;
+            c = a + b;
+            d = a + b;
+            x = c * d;
+            write(x);
+        }
+        """
+        result = run_pipeline(source)
+
+        target_rows = [
+            line for line in result.texts["target_code"].splitlines()
+            if " | " in line and not line.startswith(("Line |", "---"))
+        ]
+        optimized_rows = [
+            line for line in result.texts["optimized_target_code"].splitlines()
+            if " | " in line and not line.startswith(("Line |", "---"))
+        ]
+
+        self.assertLess(len(optimized_rows), len(target_rows))
+        self.assertIn("x = 225", result.texts["optimized_target_code"])
+
 
 class ControlFlowDagTests(unittest.TestCase):
     def sample_quads(self):
