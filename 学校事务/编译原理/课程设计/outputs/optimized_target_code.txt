@@ -3,40 +3,31 @@ Line | Target Code | Meaning
 1 | FUNC main | enter function main
 2 | MOV a, 10 | a = 10
 3 | MOV b, 5 | b = 5
-4 | LOAD R1, a | load a into register R1
-5 | ADD R1, b | R1 = R1 + b
-6 | STORE t1, R1 | t1 = R1
-7 | MOV c, t1 | c = t1
-8 | LOAD R1, a | load a into register R1
-9 | ADD R1, b | R1 = R1 + b
-10 | STORE t2, R1 | t2 = R1
-11 | MOV d, t2 | d = t2
-12 | LOAD R1, c | load c into register R1
-13 | MUL R1, d | R1 = R1 * d
-14 | STORE t3, R1 | t3 = R1
-15 | MOV x, t3 | x = t3
-16 | JG x, 20, L11 | if x > 20, jump to L11
-17 | JMP L16 | jump to L16
-18 | L11: | label L11: jump target
-19 | LOAD R1, a | load a into register R1
-20 | ADD R1, b | R1 = R1 + b
-21 | STORE t4, R1 | t4 = R1
-22 | MOV y, t4 | y = t4
-23 | LOAD R1, y | load y into register R1
-24 | MUL R1, d | R1 = R1 * d
-25 | STORE t5, R1 | t5 = R1
-26 | MOV z, t5 | z = t5
-27 | JMP L20 | jump to L20
-28 | L16: | label L16: jump target
-29 | LOAD R1, a | load a into register R1
-30 | SUB R1, b | R1 = R1 - b
-31 | STORE t6, R1 | t6 = R1
-32 | MOV y, t6 | y = t6
-33 | LOAD R1, y | load y into register R1
-34 | ADD R1, d | R1 = R1 + d
-35 | STORE t7, R1 | t7 = R1
-36 | MOV z, t7 | z = t7
-37 | L20: | label L20: jump target
-38 | ; para z _ _ | comment or skipped helper instruction
-39 | ; call write _ t8 | comment or skipped helper instruction
-40 | END | program end
+4 | MOV c, 15 | c = 15
+5 | MOV d, 15 | d = 15
+6 | MOV x, 225 | x = 225
+7 | JG x, 20, L8 | if x > 20, jump to L8
+8 | JMP L13 | jump to L13
+9 | L8: | label L8: jump target
+10 | LOAD R1, a | load a into register R1
+11 | ADD R1, b | R1 = R1 + b
+12 | STORE t4, R1 | t4 = R1
+13 | MOV y, t4 | y = t4
+14 | LOAD R1, t4 | load t4 into register R1
+15 | MUL R1, d | R1 = R1 * d
+16 | STORE t5, R1 | t5 = R1
+17 | MOV z, t5 | z = t5
+18 | JMP L17 | jump to L17
+19 | L13: | label L13: jump target
+20 | LOAD R1, a | load a into register R1
+21 | SUB R1, b | R1 = R1 - b
+22 | STORE t6, R1 | t6 = R1
+23 | MOV y, t6 | y = t6
+24 | LOAD R1, t6 | load t6 into register R1
+25 | ADD R1, d | R1 = R1 + d
+26 | STORE t7, R1 | t7 = R1
+27 | MOV z, t7 | z = t7
+28 | L17: | label L17: jump target
+29 | ; para z _ _ | comment or skipped helper instruction
+30 | ; call write _ t8 | comment or skipped helper instruction
+31 | END | program end
