@@ -1,42 +1,71 @@
 Program
-  FunctionDecl(int factor)[4]
+  FunctionDecl(int f)[4]
     Param(int a)[4]
   FunctionDecl(int read)[5]
   FunctionDecl(void write)[6]
     Param(int a)[6]
   FunctionDef(void main)[7]
     Compound
-      VarDecl(int n)[11]
+      VarDecl(int m)[9]
       ExprStmt
         =
-          n[13]
-          Call(read)[13]
+          m[10]
+          Call(read)[10]
       ExprStmt
-        Call(write)[15]
-          Call(factor)[15]
-            n[15]
-  FunctionDef(int factor)[20]
-    Param(int m)[20]
+        Call(write)[11]
+          Call(f)[11]
+            m[11]
+  FunctionDef(int f)[15]
+    Param(int n)[15]
     Compound
-      VarDecl(int fa)[21]
+      VarDecl(int a)[16]
+      VarDecl(int b)[16]
+      VarDecl(int c)[16]
       IfStmt
-        <=
-          m[22]
-          1[22]
+        ==
+          n[17]
+          1[17]
         Compound
-          ExprStmt
-            =
-              fa[23]
-              1[23]
-        Compound
-          ExprStmt
-            =
-              fa[26]
-              *
-                m[26]
-                Call(factor)[26]
-                  -
-                    m[26]
-                    1[26]
-      ReturnStmt[28]
-        fa[28]
+          ReturnStmt[18]
+            1[18]
+        IfStmt
+          ==
+            n[20]
+            2[20]
+          Compound
+            ReturnStmt[21]
+              2[21]
+          IfStmt
+            ==
+              n[23]
+              3[23]
+            Compound
+              ReturnStmt[24]
+                4[24]
+      ExprStmt
+        =
+          a[26]
+          Call(f)[26]
+            -
+              n[26]
+              1[26]
+      ExprStmt
+        =
+          b[27]
+          Call(f)[27]
+            -
+              n[27]
+              2[27]
+      ExprStmt
+        =
+          c[28]
+          Call(f)[28]
+            -
+              n[28]
+              3[28]
+      ReturnStmt[29]
+        +
+          +
+            a[29]
+            b[29]
+          c[29]

@@ -1,8 +1,8 @@
 define i32 @main() {
 entry:
-%n = alloca i32
+%m = alloca i32
 %t1 = add i32 0, 0
-store i32 %t1, ptr %n
+store i32 %t1, ptr %m
 %t2 = add i32 0, 0
 %t3 = add i32 0, 0
 ret i32 0

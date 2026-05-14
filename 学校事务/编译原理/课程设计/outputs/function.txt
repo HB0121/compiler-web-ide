@@ -1,4 +1,4 @@
-int factor(int)
+int f(int)
 int read(void)
 void write(int)
 void main(void)
