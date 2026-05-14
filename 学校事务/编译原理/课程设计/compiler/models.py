@@ -27,6 +27,7 @@ class OutputTexts(TypedDict):
     dag_optimized_quads: str
     interpreter: str
     llvm_ir: str
+    llvm_verify: str
     target_code: str
     assembly: str
     optimized_target_code: str

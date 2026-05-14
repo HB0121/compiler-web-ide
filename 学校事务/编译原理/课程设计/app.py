@@ -48,6 +48,7 @@ RESULT_GROUPS = (
         (
             ("optimized_quads", "Optimized Quads"),
             ("llvm_ir", "LLVM IR"),
+            ("llvm_verify", "LLVM Verify"),
             ("target_code", "Target Code"),
             ("assembly", "Assembly"),
             ("optimized_target_code", "Optimized Target Code"),

@@ -6,7 +6,7 @@ from .cfg_dag import analyze_control_flow
 from .interpreter import interpret_quads
 from .ir import format_quads, generate_quads
 from .lexer import Lexer
-from .llvm_ir import quads_to_llvm_ir
+from .llvm_ir import quads_to_llvm_ir, verify_llvm_ir
 from .models import ASTNode, Diagnostic, OutputTexts, PipelineResult, SymbolInfo, Token, format_ast
 from .optimizer import optimize_quads
 from .parser import Parser
@@ -28,7 +28,8 @@ OUTPUT_NAMES = {
     "dag": "dag.txt",
     "dag_optimized_quads": "dag_optimized_quads.txt",
     "interpreter": "interpreter.txt",
-    "llvm_ir": "llvm_ir.txt",
+    "llvm_ir": "llvm_ir.ll",
+    "llvm_verify": "llvm_verify.txt",
     "target_code": "target_code.txt",
     "assembly": "assembly.asm",
     "optimized_target_code": "optimized_target_code.txt",
@@ -59,6 +60,7 @@ def run_pipeline(source: str) -> PipelineResult:
     control_flow = analyze_control_flow(quads) if quads else None
     interpreter_text = interpret_quads(quads).format() if quads else ""
     llvm_ir_text = quads_to_llvm_ir(quads) if quads else ""
+    llvm_verify_text = verify_llvm_ir(llvm_ir_text) if llvm_ir_text else ""
     target_code_text = explain_target_code(quads_to_target_code(quads)) if quads else ""
     assembly_text = quads_to_masm16(quads, function_params_from_ast(ast)) if quads else ""
     target_optimized_quads = optimize_quads(control_flow.optimized_quads) if control_flow else optimized_quads
@@ -79,6 +81,7 @@ def run_pipeline(source: str) -> PipelineResult:
         control_flow.dag_optimized_quads_text if control_flow else "",
         interpreter_text,
         llvm_ir_text,
+        llvm_verify_text,
         target_code_text,
         assembly_text,
         optimized_target_code_text,
@@ -111,6 +114,7 @@ def build_texts(
     dag_optimized_quads_text: str,
     interpreter_text: str,
     llvm_ir_text: str,
+    llvm_verify_text: str,
     target_code_text: str,
     assembly_text: str,
     optimized_target_code_text: str,
@@ -130,6 +134,7 @@ def build_texts(
         "dag_optimized_quads": dag_optimized_quads_text,
         "interpreter": interpreter_text,
         "llvm_ir": llvm_ir_text,
+        "llvm_verify": llvm_verify_text,
         "target_code": target_code_text,
         "assembly": assembly_text,
         "optimized_target_code": optimized_target_code_text,
