@@ -1,0 +1,24 @@
+ffconcat version 1.0
+file 'D:/Users/28197/Documents/GitHub/bivote_rep/学校事务/编译原理/课程设计/outputs/share_video/frames/01_title.png'
+duration 13.100000
+file 'D:/Users/28197/Documents/GitHub/bivote_rep/学校事务/编译原理/课程设计/outputs/share_video/frames/02_structure.png'
+duration 14.900000
+file 'D:/Users/28197/Documents/GitHub/bivote_rep/学校事务/编译原理/课程设计/outputs/share_video/frames/03_product.png'
+duration 12.500000
+file 'D:/Users/28197/Documents/GitHub/bivote_rep/学校事务/编译原理/课程设计/outputs/share_video/frames/04_flow.png'
+duration 11.500000
+file 'D:/Users/28197/Documents/GitHub/bivote_rep/学校事务/编译原理/课程设计/outputs/share_video/frames/05_gui.png'
+duration 13.000000
+file 'D:/Users/28197/Documents/GitHub/bivote_rep/学校事务/编译原理/课程设计/outputs/share_video/frames/06_diagnostics.png'
+duration 17.000000
+file 'D:/Users/28197/Documents/GitHub/bivote_rep/学校事务/编译原理/课程设计/outputs/share_video/frames/07_opt.png'
+duration 21.000000
+file 'D:/Users/28197/Documents/GitHub/bivote_rep/学校事务/编译原理/课程设计/outputs/share_video/frames/08_llvm.png'
+duration 13.000000
+file 'D:/Users/28197/Documents/GitHub/bivote_rep/学校事务/编译原理/课程设计/outputs/share_video/frames/09_log.png'
+duration 14.000000
+file 'D:/Users/28197/Documents/GitHub/bivote_rep/学校事务/编译原理/课程设计/outputs/share_video/frames/10_tests.png'
+duration 12.000000
+file 'D:/Users/28197/Documents/GitHub/bivote_rep/学校事务/编译原理/课程设计/outputs/share_video/frames/11_end.png'
+duration 12.346667
+file 'D:/Users/28197/Documents/GitHub/bivote_rep/学校事务/编译原理/课程设计/outputs/share_video/frames/11_end.png'
