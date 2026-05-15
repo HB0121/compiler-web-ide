@@ -87,8 +87,8 @@ def main() -> int:
     assert_contains(read_write.texts["assembly"], "read proc near", "masm read proc")
     assert_contains(read_write.texts["assembly"], "write proc near", "masm write proc")
     recursive_asm = assert_no_diagnostics("05_MASM16汇编生成/assembly_recursive_factor.c")
-    assert_contains(recursive_asm.texts["assembly"], "factor:", "recursive factor label")
-    assert_contains(recursive_asm.texts["assembly"], "CALL factor", "recursive factor call")
+    assert_contains(recursive_asm.texts["assembly"], "fn_factor:", "recursive factor label")
+    assert_contains(recursive_asm.texts["assembly"], "CALL fn_factor", "recursive factor call")
     assert_contains(recursive_asm.texts["assembly"], "ss:[bp+4]", "stack parameter access")
 
     log_text = read_case("06_日志正则自动机/log_sample.log")
