@@ -1,62 +1,32 @@
 Execution Result
 Item | Value | Meaning
 --- | --- | ---
-return_value | 3 | 程序最终返回值
+return_value | None | 程序最终返回值
 
 Variables
 Name | Value
 --- | ---
-i | 3
-limit | 3
-t2 | 3
-t3 | 3
-total | 3
+a | 4
+b | 16
+t2 | 16
+t3 | 0
 
 Execution Trace
 Step | Quad / Event | Meaning
 --- | --- | ---
-1 | 0: global (=, 3, _, limit) | limit = 3
-2 | 7: (=, 0, _, i) | i = 0
-3 | 8: (=, 0, _, total) | total = 0
-4 | 9: (J<, i, limit, 11) | 条件成立时跳转到四元式 11
-5 | 11: (para, total, _, _) | 准备函数参数 total
-6 | 12: (para, i, _, _) | 准备函数参数 i
-7 | 13: (call, add, _, t2) | 调用函数 add，结果保存到 t2
-8 | call add(0, 0) | 调用用户自定义函数
-9 | 2: fn (+, a, b, t1) | t1 = a + b
-10 | 3: fn (=, t1, _, c) | c = t1
-11 | 4: fn (ret, _, _, c) | 返回 c
-12 | 14: (=, t2, _, total) | total = t2
-13 | 15: (+, i, 1, t3) | t3 = i + 1
-14 | 16: (=, t3, _, i) | i = t3
-15 | 17: (J, _, _, 9) | 无条件跳转到四元式 9
-16 | 9: (J<, i, limit, 11) | 条件成立时跳转到四元式 11
-17 | 11: (para, total, _, _) | 准备函数参数 total
-18 | 12: (para, i, _, _) | 准备函数参数 i
-19 | 13: (call, add, _, t2) | 调用函数 add，结果保存到 t2
-20 | call add(0, 1) | 调用用户自定义函数
-21 | 2: fn (+, a, b, t1) | t1 = a + b
-22 | 3: fn (=, t1, _, c) | c = t1
-23 | 4: fn (ret, _, _, c) | 返回 c
-24 | 14: (=, t2, _, total) | total = t2
-25 | 15: (+, i, 1, t3) | t3 = i + 1
-26 | 16: (=, t3, _, i) | i = t3
-27 | 17: (J, _, _, 9) | 无条件跳转到四元式 9
-28 | 9: (J<, i, limit, 11) | 条件成立时跳转到四元式 11
-29 | 11: (para, total, _, _) | 准备函数参数 total
-30 | 12: (para, i, _, _) | 准备函数参数 i
-31 | 13: (call, add, _, t2) | 调用函数 add，结果保存到 t2
-32 | call add(1, 2) | 调用用户自定义函数
-33 | 2: fn (+, a, b, t1) | t1 = a + b
-34 | 3: fn (=, t1, _, c) | c = t1
-35 | 4: fn (ret, _, _, c) | 返回 c
-36 | 14: (=, t2, _, total) | total = t2
-37 | 15: (+, i, 1, t3) | t3 = i + 1
-38 | 16: (=, t3, _, i) | i = t3
-39 | 17: (J, _, _, 9) | 无条件跳转到四元式 9
-40 | 9: (J<, i, limit, 11) | 条件成立时跳转到四元式 11
-41 | 10: (J, _, _, 18) | 无条件跳转到四元式 18
-42 | 18: (ret, _, _, total) | 返回 total
+1 | 5: (=, 4, _, a) | a = 4
+2 | 6: (para, a, _, _) | 准备函数参数 a
+3 | 7: (call, square, _, t2) | 调用函数 square，结果保存到 t2
+4 | call square(4) | 调用用户自定义函数
+5 | 1: fn (*, x, x, t1) | t1 = x * x
+6 | 2: fn (ret, _, _, t1) | 返回 t1
+7 | 8: (=, t2, _, b) | b = t2
+8 | 9: (J>, b, 10, 11) | 条件成立时跳转到四元式 11
+9 | 11: (para, b, _, _) | 准备函数参数 b
+10 | 12: (call, write, _, t3) | 调用函数 write，结果保存到 t3
+11 | builtin write(16) | 模拟内置输出函数 write
+12 | 13: (J, _, _, 16) | 无条件跳转到四元式 16
+13 | 16: (sys, _, _, _) | 程序结束
 
 Runtime Warnings
 Warning

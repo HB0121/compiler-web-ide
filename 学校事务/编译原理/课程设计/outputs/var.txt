@@ -1,7 +1,5 @@
 Variable Name | Type
 --- | ---
+x | int
 a | int
 b | int
-c | int
-i | int
-total | int
