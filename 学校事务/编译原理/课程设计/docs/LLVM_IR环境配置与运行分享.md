@@ -89,10 +89,10 @@ C:\Program Files\Microsoft Visual Studio\...\VC\Tools\Llvm\bin\clang.exe
 在 `x64 Native Tools Command Prompt for VS` 中进入项目目录：
 
 ```cmd
-cd /d "D:\Users\28197\Documents\GitHub\bivote_rep\学校事务\编译原理\课程设计"
+cd /d "D:\path\to\课程设计"
 ```
 
-这里的 `/d` 用于在 CMD 中切换盘符。如果项目在 D 盘，从 C 盘命令行进入 D 盘目录时必须加 `/d`。
+这里的 `/d` 用于在 CMD 中切换盘符。如果项目在 D 盘，从 C 盘命令行进入 D 盘目录时必须加 `/d`。实际使用时把 `D:\path\to\课程设计` 替换成自己的项目目录。
 
 ## 6. 先由项目生成 LLVM IR
 
@@ -113,7 +113,7 @@ python app.py
 如果本机 Python 没配好，也可以使用项目环境中的 Python：
 
 ```powershell
-& "C:\Users\28197\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe" app.py
+& "C:\path\to\python.exe" app.py
 ```
 
 2. 打开或粘贴测试程序，例如：
@@ -304,7 +304,7 @@ where clang
 ## 12. 一页命令速查
 
 ```cmd
-cd /d "D:\Users\28197\Documents\GitHub\bivote_rep\学校事务\编译原理\课程设计"
+cd /d "D:\path\to\课程设计"
 
 where cl
 where link
