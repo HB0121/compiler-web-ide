@@ -368,32 +368,45 @@ def _internal_verify(llvm_ir: str) -> List[str]:
 def _external_verify(llvm_ir: str) -> List[str]:
     llvm_as = shutil.which("llvm-as")
     lli = shutil.which("lli")
+    clang = shutil.which("clang")
     lines = ["External tools:"]
     if llvm_as is None:
         lines.append("- llvm-as: not found")
     if lli is None:
         lines.append("- lli: not found")
+    if clang is None:
+        lines.append("- clang: not found")
     lines.extend([
         "Manual commands:",
         "  llvm-as outputs/llvm_ir.ll -o outputs/llvm_ir.bc",
         "  lli outputs/llvm_ir.ll",
+        "  clang -c outputs/llvm_ir.ll -o outputs/llvm_ir.obj",
+        "  clang outputs/llvm_ir.ll -o outputs/llvm_ir.exe",
+        "  outputs\\llvm_ir.exe",
     ])
-    if llvm_as is None:
+    if llvm_as is None and clang is None:
         return lines
 
     with tempfile.TemporaryDirectory() as temp_dir:
         ll_path = Path(temp_dir) / "output.ll"
         bc_path = Path(temp_dir) / "output.bc"
+        obj_path = Path(temp_dir) / "output.obj"
         ll_path.write_text(llvm_ir, encoding="utf-8")
-        result = subprocess.run([llvm_as, str(ll_path), "-o", str(bc_path)], capture_output=True, text=True)
-        lines.append(f"- llvm-as: {'PASS' if result.returncode == 0 else 'FAIL'}")
-        if result.stderr.strip():
-            lines.append(result.stderr.strip())
-        if lli is not None and result.returncode == 0:
-            run_result = subprocess.run([lli, str(ll_path)], capture_output=True, text=True)
-            lines.append(f"- lli: {'PASS' if run_result.returncode == 0 else 'FAIL'}")
-            if run_result.stdout.strip():
-                lines.append(f"lli stdout: {run_result.stdout.strip()}")
-            if run_result.stderr.strip():
-                lines.append(f"lli stderr: {run_result.stderr.strip()}")
+        if llvm_as is not None:
+            result = subprocess.run([llvm_as, str(ll_path), "-o", str(bc_path)], capture_output=True, text=True)
+            lines.append(f"- llvm-as: {'PASS' if result.returncode == 0 else 'FAIL'}")
+            if result.stderr.strip():
+                lines.append(result.stderr.strip())
+            if lli is not None and result.returncode == 0:
+                run_result = subprocess.run([lli, str(ll_path)], capture_output=True, text=True)
+                lines.append(f"- lli: {'PASS' if run_result.returncode == 0 else 'FAIL'}")
+                if run_result.stdout.strip():
+                    lines.append(f"lli stdout: {run_result.stdout.strip()}")
+                if run_result.stderr.strip():
+                    lines.append(f"lli stderr: {run_result.stderr.strip()}")
+        if clang is not None:
+            clang_result = subprocess.run([clang, "-c", str(ll_path), "-o", str(obj_path)], capture_output=True, text=True)
+            lines.append(f"- clang -c: {'PASS' if clang_result.returncode == 0 else 'FAIL'}")
+            if clang_result.stderr.strip():
+                lines.append(clang_result.stderr.strip())
     return lines

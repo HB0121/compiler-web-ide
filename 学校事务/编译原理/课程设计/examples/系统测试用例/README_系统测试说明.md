@@ -155,7 +155,8 @@ GUI 操作：
 - 包含条件跳转 `br i1`。
 - 包含返回语句 `ret i32`。
 - `LLVM Verify` 显示 `Internal verifier: PASS`。
-- 如果本机安装了 LLVM 工具链，可使用 `llvm-as outputs/llvm_ir.ll -o outputs/llvm_ir.bc` 和 `lli outputs/llvm_ir.ll` 做外部验证。
+- 如果本机安装了完整 LLVM 工具链，可使用 `llvm-as outputs/llvm_ir.ll -o outputs/llvm_ir.bc` 和 `lli outputs/llvm_ir.ll` 做外部验证。
+- 如果只有 `clang`，可使用 `clang -c outputs/llvm_ir.ll -o outputs/llvm_ir.obj` 验证 IR 能否被 LLVM 前端编译成目标文件；该命令不链接，因此不依赖 MSVC 运行库。
 
 ## 08 CFG 与 DAG 优化
 

@@ -1,12 +1,9 @@
 DAG
 B0
+  N0: x {x}
+  N1: * {t1} <- N0, N0
 B1
 B2
 B3
-  N0: sum {sum}
-  N1: t1 {t1}
-  N2: + {t2, sum} <- N0, N1
-  N3: i {i}
-  N4: 1 {1}
-  N5: + {t3, i} <- N3, N4
 B4
+B5

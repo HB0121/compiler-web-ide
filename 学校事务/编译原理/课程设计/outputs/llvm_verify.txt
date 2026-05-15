@@ -1,0 +1,16 @@
+LLVM Verify
+Internal verifier: PASS
+External tools:
+- llvm-as: not found
+- lli: not found
+Manual commands:
+  llvm-as outputs/llvm_ir.ll -o outputs/llvm_ir.bc
+  lli outputs/llvm_ir.ll
+  clang outputs/llvm_ir.ll -o outputs/llvm_ir.exe
+  outputs\llvm_ir.exe
+- clang: FAIL
+warning: overriding the module target triple with x86_64-pc-windows-msvc19.33.0 [-Woverride-module]
+1 warning generated.
+lld-link: error: could not open 'libcmt.lib': no such file or directory
+lld-link: error: could not open 'oldnames.lib': no such file or directory
+clang: error: linker command failed with exit code 1 (use -v to see invocation)

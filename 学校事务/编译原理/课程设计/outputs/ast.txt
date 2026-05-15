@@ -1,55 +1,33 @@
 Program
-  VarDecl(int a[4])[1]
-  FunctionDef(int main)[3]
+  FunctionDef(int square)[1]
+    Param(int x)[1]
     Compound
-      VarDecl(int i)[4]
-      VarDecl(int sum)[5]
+      ReturnStmt[2]
+        *
+          x[2]
+          x[2]
+  FunctionDef(int main)[5]
+    Compound
+      VarDecl(int a)[6]
+      VarDecl(int b)[7]
       ExprStmt
         =
-          a
-            0[6]
-          1[6]
+          a[8]
+          4[8]
       ExprStmt
         =
-          a
-            1[7]
-          2[7]
-      ExprStmt
-        =
-          a
-            2[8]
-          3[8]
-      ExprStmt
-        =
-          a
-            3[9]
-          4[9]
-      ExprStmt
-        =
-          i[10]
-          0[10]
-      ExprStmt
-        =
-          sum[11]
-          0[11]
-      WhileStmt
-        <
-          i[12]
-          4[12]
+          b[9]
+          Call(square)[9]
+            a[9]
+      IfStmt
+        >
+          b[10]
+          10[10]
         Compound
           ExprStmt
-            =
-              sum[13]
-              +
-                sum[13]
-                a
-                  i[13]
+            Call(write)[11]
+              b[11]
+        Compound
           ExprStmt
-            =
-              i[14]
-              +
-                i[14]
-                1[14]
-      ExprStmt
-        Call(write)[16]
-          sum[16]
+            Call(write)[13]
+              0[13]

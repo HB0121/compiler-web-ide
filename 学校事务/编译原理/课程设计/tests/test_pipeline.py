@@ -620,6 +620,14 @@ class LLVMIRTests(unittest.TestCase):
         self.assertIn("Internal verifier: PASS", report)
         self.assertIn("External tools:", report)
 
+    def test_llvm_verifier_reports_clang_fallback_commands(self):
+        from compiler.llvm_ir import quads_to_llvm_ir, verify_llvm_ir
+
+        llvm = quads_to_llvm_ir([("main", "_", "_", "_"), ("ret", "_", "_", "0"), ("sys", "_", "_", "_")])
+        report = verify_llvm_ir(llvm)
+
+        self.assertIn("clang -c outputs/llvm_ir.ll -o outputs/llvm_ir.obj", report)
+
 
 class TargetCodeTests(unittest.TestCase):
     def test_converts_assignment_arithmetic_and_return(self):

@@ -1,53 +1,34 @@
-return_value: None
-variables:
-  a[0] = 1
-  a[1] = 2
-  a[2] = 3
-  a[3] = 4
-  i = 4
-  sum = 10
-  t1 = 4
-  t2 = 10
-  t3 = 4
-  t4 = 0
-trace:
-  1: ([]=, 1, 0, a)
-  2: ([]=, 2, 1, a)
-  3: ([]=, 3, 2, a)
-  4: ([]=, 4, 3, a)
-  5: (=, 0, _, i)
-  6: (=, 0, _, sum)
-  7: (J<, i, 4, 9)
-  9: (=[], a, i, t1)
-  10: (+, sum, t1, t2)
-  11: (=, t2, _, sum)
-  12: (+, i, 1, t3)
-  13: (=, t3, _, i)
-  14: (J, _, _, 7)
-  7: (J<, i, 4, 9)
-  9: (=[], a, i, t1)
-  10: (+, sum, t1, t2)
-  11: (=, t2, _, sum)
-  12: (+, i, 1, t3)
-  13: (=, t3, _, i)
-  14: (J, _, _, 7)
-  7: (J<, i, 4, 9)
-  9: (=[], a, i, t1)
-  10: (+, sum, t1, t2)
-  11: (=, t2, _, sum)
-  12: (+, i, 1, t3)
-  13: (=, t3, _, i)
-  14: (J, _, _, 7)
-  7: (J<, i, 4, 9)
-  9: (=[], a, i, t1)
-  10: (+, sum, t1, t2)
-  11: (=, t2, _, sum)
-  12: (+, i, 1, t3)
-  13: (=, t3, _, i)
-  14: (J, _, _, 7)
-  7: (J<, i, 4, 9)
-  8: (J, _, _, 15)
-  15: (para, sum, _, _)
-  16: (call, write, _, t4)
-  builtin write(10)
-  17: (sys, _, _, _)
+Execution Result
+Item | Value | Meaning
+--- | --- | ---
+return_value | None | 程序最终返回值
+
+Variables
+Name | Value
+--- | ---
+a | 4
+b | 16
+t2 | 16
+t3 | 0
+
+Execution Trace
+Step | Quad / Event | Meaning
+--- | --- | ---
+1 | 5: (=, 4, _, a) | a = 4
+2 | 6: (para, a, _, _) | 准备函数参数 a
+3 | 7: (call, square, _, t2) | 调用函数 square，结果保存到 t2
+4 | call square(4) | 调用用户自定义函数
+5 | 1: fn (*, x, x, t1) | t1 = x * x
+6 | 2: fn (ret, _, _, t1) | 返回 t1
+7 | 8: (=, t2, _, b) | b = t2
+8 | 9: (J>, b, 10, 11) | 条件成立时跳转到四元式 11
+9 | 11: (para, b, _, _) | 准备函数参数 b
+10 | 12: (call, write, _, t3) | 调用函数 write，结果保存到 t3
+11 | builtin write(16) | 模拟内置输出函数 write
+12 | 13: (J, _, _, 16) | 无条件跳转到四元式 16
+13 | 16: (sys, _, _, _) | 程序结束
+
+Runtime Warnings
+Warning
+---
+None
