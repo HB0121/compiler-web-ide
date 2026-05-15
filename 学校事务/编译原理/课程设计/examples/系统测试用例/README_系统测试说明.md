@@ -99,7 +99,7 @@ covered: lexical, syntax, semantic, IR/interpreter, MASM16, log regex NFA/DFA, L
 - `assume cs:code,ds:data,ss:stack,es:extended`
 - `data segment`、`code segment`
 - `main:` 函数入口
-- 用户函数标签，如 `add:`
+- 用户函数标签会加 `fn_` 前缀以避免和 MASM 指令重名，如 `fn_add:`
 - 条件跳转、循环跳转
 - `read/write` DOS 输入输出过程
 

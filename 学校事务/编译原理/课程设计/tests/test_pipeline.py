@@ -724,10 +724,11 @@ class AssemblyTests(unittest.TestCase):
         ]
         assembly = quads_to_masm16(quads, {"add": ["a", "b"], "main": []})
 
-        self.assertIn("add:", assembly)
+        self.assertIn("fn_add:", assembly)
+        self.assertNotIn("\nadd:", assembly)
         self.assertIn("MOV AX,ss:[bp+4]", assembly)
         self.assertIn("ADD AX,ss:[bp+6]", assembly)
-        self.assertIn("CALL add", assembly)
+        self.assertIn("CALL fn_add", assembly)
         self.assertIn("MOV AX,2", assembly)
         self.assertIn("MOV AX,3", assembly)
         self.assertIn("PUSH AX", assembly)

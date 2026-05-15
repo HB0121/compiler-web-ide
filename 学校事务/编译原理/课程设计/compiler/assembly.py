@@ -194,7 +194,7 @@ class Masm16FunctionEmitter:
         self.function = function
         self.params = params
         self.globals = globals_ or {}
-        self.assembly_name = function.name
+        self.assembly_name = _masm_function_name(function.name)
         self.variables = self._collect_variables()
         self.offsets = {name: (index + 1) * 2 for index, name in enumerate(self.variables)}
         self.param_offsets = {name: 4 + index * 2 for index, name in enumerate(self.params)}
@@ -350,7 +350,7 @@ class Masm16FunctionEmitter:
             self._load("ax", value)
             self.lines.append("    PUSH AX")
         self.pending_params = []
-        self.lines.append(f"    CALL {function_name}")
+        self.lines.append(f"    CALL {_masm_function_name(function_name)}")
         self._store(result, "ax")
 
     def _emit_return(self) -> None:
