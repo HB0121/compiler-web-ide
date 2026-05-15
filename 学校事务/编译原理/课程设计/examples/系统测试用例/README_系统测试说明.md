@@ -157,6 +157,8 @@ GUI 操作：
 - `LLVM Verify` 显示 `Internal verifier: PASS`。
 - 如果本机安装了完整 LLVM 工具链，可使用 `llvm-as outputs/llvm_ir.ll -o outputs/llvm_ir.bc` 和 `lli outputs/llvm_ir.ll` 做外部验证。
 - 如果只有 `clang`，可使用 `clang -c outputs/llvm_ir.ll -o outputs/llvm_ir.obj` 验证 IR 能否被 LLVM 前端编译成目标文件；该命令不链接，因此不依赖 MSVC 运行库。
+- 安装 Visual Studio C++ Build Tools 后，可在 `x64 Native Tools Command Prompt for VS` 中执行 `clang outputs\llvm_ir.ll -o outputs\llvm_ir.exe` 和 `outputs\llvm_ir.exe`，完成外部编译、链接和运行验证。
+- 完整运行验证允许出现 `overriding the module target triple` warning，但不能出现 error；程序输出应与 `Interpreter` 的 `builtin write(...)` 或 `return_value` 一致。
 
 ## 08 CFG 与 DAG 优化
 
