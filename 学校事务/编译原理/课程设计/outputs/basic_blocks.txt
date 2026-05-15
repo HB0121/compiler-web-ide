@@ -3,34 +3,37 @@ Basic Blocks
 Leaders
 Index | Block | Reason
 --- | --- | ---
-0 | B0 | entry; function entry square
-4 | B1 | function entry main
-10 | B2 | fall-through after jump 9
-11 | B3 | jump target from 9; fall-through after jump 10
-14 | B4 | jump target from 10; fall-through after jump 13
-16 | B5 | jump target from 13
+0 | B0 | entry; function entry main
+3 | B1 | jump target from 12
+4 | B2 | fall-through after jump 3
+5 | B3 | jump target from 3; fall-through after jump 4
+7 | B4 | fall-through after jump 6
+8 | B5 | jump target from 6; fall-through after jump 7
+10 | B6 | jump target from 7
+13 | B7 | jump target from 4; fall-through after jump 12
 
 Blocks
-B0 [0..3]
-  0: (square, _, _, _)
-  1: (*, x, x, t1)
-  2: (ret, _, _, t1)
-  3: (ret, _, _, _)
-B1 [4..9]
-  4: (main, _, _, _)
-  5: (=, 4, _, a)
-  6: (para, a, _, _)
-  7: (call, square, _, t2)
-  8: (=, t2, _, b)
-  9: (J>, b, 10, 11)
-B2 [10..10]
-  10: (J, _, _, 14)
-B3 [11..13]
-  11: (para, b, _, _)
-  12: (call, write, _, t3)
-  13: (J, _, _, 16)
-B4 [14..15]
-  14: (para, 0, _, _)
-  15: (call, write, _, t4)
-B5 [16..16]
-  16: (sys, _, _, _)
+B0 [0..2]
+  0: (main, _, _, _)
+  1: (=, 0, _, i)
+  2: (=, 0, _, odd)
+B1 [3..3]
+  3: (J<, i, 5, 5)
+B2 [4..4]
+  4: (J, _, _, 13)
+B3 [5..6]
+  5: (%, i, 2, t1)
+  6: (J!=, t1, 0, 8)
+B4 [7..7]
+  7: (J, _, _, 10)
+B5 [8..9]
+  8: (+, odd, 1, t2)
+  9: (=, t2, _, odd)
+B6 [10..12]
+  10: (+, i, 1, t3)
+  11: (=, t3, _, i)
+  12: (J, _, _, 3)
+B7 [13..15]
+  13: (para, odd, _, _)
+  14: (call, write, _, t4)
+  15: (sys, _, _, _)

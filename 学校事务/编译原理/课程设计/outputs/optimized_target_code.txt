@@ -1,24 +1,29 @@
 Line | Target Code | Meaning
 --- | --- | ---
-1 | FUNC square | enter function square
-2 | LOAD R1, x | load x into register R1
-3 | MUL R1, x | R1 = R1 * x
-4 | STORE t1, R1 | t1 = R1
-5 | RET t1 | return t1
-6 | RET 0 | return 0
-7 | FUNC main | enter function main
-8 | MOV a, 4 | a = 4
-9 | ; para a _ _ | comment or skipped helper instruction
-10 | ; call square _ t2 | comment or skipped helper instruction
-11 | MOV b, t2 | b = t2
-12 | JG b, 10, L11 | if b > 10, jump to L11
-13 | JMP L14 | jump to L14
-14 | L11: | label L11: jump target
-15 | ; para b _ _ | comment or skipped helper instruction
-16 | ; call write _ t3 | comment or skipped helper instruction
-17 | JMP L16 | jump to L16
-18 | L14: | label L14: jump target
-19 | ; para 0 _ _ | comment or skipped helper instruction
-20 | ; call write _ t4 | comment or skipped helper instruction
-21 | L16: | label L16: jump target
-22 | END | program end
+1 | FUNC main | enter function main
+2 | MOV i, 0 | i = 0
+3 | MOV odd, 0 | odd = 0
+4 | L3: | label L3: jump target
+5 | JL i, 5, L5 | if i < 5, jump to L5
+6 | JMP L13 | jump to L13
+7 | L5: | label L5: jump target
+8 | LOAD R1, i | load i into register R1
+9 | MOD R1, 2 | R1 = R1 % 2
+10 | STORE t1, R1 | t1 = R1
+11 | JNE t1, 0, L8 | if t1 != 0, jump to L8
+12 | JMP L10 | jump to L10
+13 | L8: | label L8: jump target
+14 | LOAD R1, odd | load odd into register R1
+15 | ADD R1, 1 | R1 = R1 + 1
+16 | STORE t2, R1 | t2 = R1
+17 | MOV odd, t2 | odd = t2
+18 | L10: | label L10: jump target
+19 | LOAD R1, i | load i into register R1
+20 | ADD R1, 1 | R1 = R1 + 1
+21 | STORE t3, R1 | t3 = R1
+22 | MOV i, t3 | i = t3
+23 | JMP L3 | jump to L3
+24 | L13: | label L13: jump target
+25 | ; para odd _ _ | comment or skipped helper instruction
+26 | ; call write _ t4 | comment or skipped helper instruction
+27 | END | program end

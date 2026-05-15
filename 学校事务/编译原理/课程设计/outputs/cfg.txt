@@ -1,9 +1,11 @@
 Control Flow Graph
 Block | Successors | Predecessors
 --- | --- | ---
-B0 | - | -
-B1 | B3, B2 | -
-B2 | B4 | B1
-B3 | B5 | B1
-B4 | B5 | B2
-B5 | - | B3, B4
+B0 | B1 | -
+B1 | B3, B2 | B0, B6
+B2 | B7 | B1
+B3 | B5, B4 | B1
+B4 | B6 | B3
+B5 | B6 | B3
+B6 | B1 | B4, B5
+B7 | - | B2

@@ -1,33 +1,40 @@
 Program
-  FunctionDef(int square)[1]
-    Param(int x)[1]
+  FunctionDef(int main)[1]
     Compound
-      ReturnStmt[2]
-        *
-          x[2]
-          x[2]
-  FunctionDef(int main)[5]
-    Compound
-      VarDecl(int a)[6]
-      VarDecl(int b)[7]
+      VarDecl(int i)[2]
+      VarDecl(int odd)[3]
       ExprStmt
         =
-          a[8]
-          4[8]
+          i[4]
+          0[4]
       ExprStmt
         =
-          b[9]
-          Call(square)[9]
-            a[9]
-      IfStmt
-        >
-          b[10]
-          10[10]
+          odd[5]
+          0[5]
+      WhileStmt
+        <
+          i[6]
+          5[6]
         Compound
+          IfStmt
+            !=
+              %
+                i[7]
+                2[7]
+              0[7]
+            Compound
+              ExprStmt
+                =
+                  odd[8]
+                  +
+                    odd[8]
+                    1[8]
           ExprStmt
-            Call(write)[11]
-              b[11]
-        Compound
-          ExprStmt
-            Call(write)[13]
-              0[13]
+            =
+              i[10]
+              +
+                i[10]
+                1[10]
+      ExprStmt
+        Call(write)[12]
+          odd[12]
