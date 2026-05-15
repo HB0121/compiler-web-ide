@@ -1,18 +1,14 @@
 DAG
 B0
 B1
+  N0: a {a}
+  N1: b {b}
+  N2: + {t1, c} <- N0, N1
 B2
 B3
-  N0: i {i}
-  N1: 2 {2}
-  N2: % {t1} <- N0, N1
 B4
 B5
-  N0: odd {odd}
-  N1: 1 {1}
-  N2: + {t2, odd} <- N0, N1
-B6
   N0: i {i}
   N1: 1 {1}
   N2: + {t3, i} <- N0, N1
-B7
+B6

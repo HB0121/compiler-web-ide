@@ -1,4 +1,5 @@
 Line | Column | Kind | Value
 --- | --- | --- | ---
-2 | 51-61 | REGEX | status=200
-3 | 50-60 | REGEX | status=500
+1 | 7-17 | REGEX | 2026-05-06
+2 | 1-11 | REGEX | 2026-05-10
+3 | 7-17 | REGEX | 2026-05-11

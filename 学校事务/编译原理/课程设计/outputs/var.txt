@@ -1,4 +1,7 @@
 Variable Name | Type
 --- | ---
+a | int
+b | int
+c | int
 i | int
-odd | int
+total | int

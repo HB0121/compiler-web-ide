@@ -1,3 +1,4 @@
 Name | Return Type | Parameters
 --- | --- | ---
+add | int | int, int
 main | int | void

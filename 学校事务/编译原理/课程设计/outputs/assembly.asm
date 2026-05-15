@@ -17,6 +17,7 @@ data segment
   _msg_s db 0ah,'Input:',0
   next_row db 0dh,0ah,'$'
   error db 'input error, please re-enter: ','$'
+  limit dw 3
 data ends
 code segment
 start:
@@ -29,49 +30,50 @@ start:
     mov ax,data
     mov ds,ax
 
+add:
+    PUSH BP
+    MOV BP,SP
+    SUB SP,4
+    MOV AX,ss:[bp+4]
+    ADD AX,ss:[bp+6]
+    MOV ss:[bp-2],AX
+    MOV AX,ss:[bp-2]
+    MOV ss:[bp-4],AX
+    MOV AX,ss:[bp-4]
+    MOV SP,BP
+    POP BP
+    RET
+
 main:
     PUSH BP
     MOV BP,SP
-    SUB SP,12
+    SUB SP,8
     MOV AX,0
     MOV ss:[bp-2],AX
     MOV AX,0
     MOV ss:[bp-4],AX
-_3:
+_9:
     MOV AX,ss:[bp-2]
-    CMP AX,5
-    JL _5
-    JMP far ptr _13
-_5:
+    CMP AX,limit
+    JL _11
+    JMP far ptr _18
+_11:
     MOV AX,ss:[bp-2]
-    MOV BX,2
-    CWD
-    IDIV BX
-    MOV AX,DX
+    PUSH AX
+    MOV AX,ss:[bp-4]
+    PUSH AX
+    CALL add
     MOV ss:[bp-6],AX
     MOV AX,ss:[bp-6]
-    CMP AX,0
-    JNE _8
-    JMP far ptr _10
-_8:
-    MOV AX,ss:[bp-4]
+    MOV ss:[bp-4],AX
+    MOV AX,ss:[bp-2]
     ADD AX,1
     MOV ss:[bp-8],AX
     MOV AX,ss:[bp-8]
-    MOV ss:[bp-4],AX
-_10:
-    MOV AX,ss:[bp-2]
-    ADD AX,1
-    MOV ss:[bp-10],AX
-    MOV AX,ss:[bp-10]
     MOV ss:[bp-2],AX
-    JMP far ptr _3
-_13:
+    JMP far ptr _9
+_18:
     MOV AX,ss:[bp-4]
-    PUSH AX
-    CALL write
-    MOV ss:[bp-12],AX
-    MOV AX,0
     mov ah,4ch
     int 21h
 

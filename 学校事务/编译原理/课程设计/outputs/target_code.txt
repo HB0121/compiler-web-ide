@@ -1,29 +1,29 @@
 Line | Target Code | Meaning
 --- | --- | ---
-1 | FUNC main | enter function main
-2 | MOV i, 0 | i = 0
-3 | MOV odd, 0 | odd = 0
-4 | L3: | label L3: jump target
-5 | JL i, 5, L5 | if i < 5, jump to L5
-6 | JMP L13 | jump to L13
-7 | L5: | label L5: jump target
-8 | LOAD R1, i | load i into register R1
-9 | MOD R1, 2 | R1 = R1 % 2
-10 | STORE t1, R1 | t1 = R1
-11 | JNE t1, 0, L8 | if t1 != 0, jump to L8
-12 | JMP L10 | jump to L10
-13 | L8: | label L8: jump target
-14 | LOAD R1, odd | load odd into register R1
-15 | ADD R1, 1 | R1 = R1 + 1
-16 | STORE t2, R1 | t2 = R1
-17 | MOV odd, t2 | odd = t2
-18 | L10: | label L10: jump target
-19 | LOAD R1, i | load i into register R1
-20 | ADD R1, 1 | R1 = R1 + 1
-21 | STORE t3, R1 | t3 = R1
-22 | MOV i, t3 | i = t3
-23 | JMP L3 | jump to L3
-24 | L13: | label L13: jump target
-25 | ; para odd _ _ | comment or skipped helper instruction
-26 | ; call write _ t4 | comment or skipped helper instruction
+1 | MOV limit, 3 | limit = 3
+2 | FUNC add | enter function add
+3 | LOAD R1, a | load a into register R1
+4 | ADD R1, b | R1 = R1 + b
+5 | STORE t1, R1 | t1 = R1
+6 | MOV c, t1 | c = t1
+7 | RET c | return c
+8 | RET 0 | return 0
+9 | FUNC main | enter function main
+10 | MOV i, 0 | i = 0
+11 | MOV total, 0 | total = 0
+12 | L9: | label L9: jump target
+13 | JL i, limit, L11 | if i < limit, jump to L11
+14 | JMP L18 | jump to L18
+15 | L11: | label L11: jump target
+16 | ; para total _ _ | comment or skipped helper instruction
+17 | ; para i _ _ | comment or skipped helper instruction
+18 | ; call add _ t2 | comment or skipped helper instruction
+19 | MOV total, t2 | total = t2
+20 | LOAD R1, i | load i into register R1
+21 | ADD R1, 1 | R1 = R1 + 1
+22 | STORE t3, R1 | t3 = R1
+23 | MOV i, t3 | i = t3
+24 | JMP L9 | jump to L9
+25 | L18: | label L18: jump target
+26 | RET total | return total
 27 | END | program end
