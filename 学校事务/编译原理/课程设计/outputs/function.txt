@@ -1,4 +1,4 @@
 Name | Return Type | Parameters
 --- | --- | ---
-square | int | int
+factor | int | int
 main | int | void

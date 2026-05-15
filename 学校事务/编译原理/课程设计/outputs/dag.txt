@@ -1,9 +1,12 @@
 DAG
 B0
-  N0: x {x}
-  N1: * {t1} <- N0, N0
 B1
 B2
 B3
+  N0: n {n}
+  N1: 1 {1}
+  N2: - {t1} <- N0, N1
+  N3: t2 {t2}
+  N4: * {t3, result} <- N0, N3
 B4
 B5
