@@ -1,37 +1,33 @@
 Program
-  FunctionDef(int factor)[1]
-    Param(int n)[1]
+  FunctionDef(int square)[1]
+    Param(int x)[1]
     Compound
-      VarDecl(int result)[2]
-      IfStmt
-        <=
-          n[3]
-          1[3]
-        Compound
-          ExprStmt
-            =
-              result[4]
-              1[4]
-        Compound
-          ExprStmt
-            =
-              result[6]
-              *
-                n[6]
-                Call(factor)[6]
-                  -
-                    n[6]
-                    1[6]
-      ReturnStmt[8]
-        result[8]
-  FunctionDef(int main)[11]
+      ReturnStmt[2]
+        *
+          x[2]
+          x[2]
+  FunctionDef(int main)[5]
     Compound
-      VarDecl(int value)[12]
+      VarDecl(int a)[6]
+      VarDecl(int b)[7]
       ExprStmt
         =
-          value[13]
-          5[13]
+          a[8]
+          4[8]
       ExprStmt
-        Call(write)[14]
-          Call(factor)[14]
-            value[14]
+        =
+          b[9]
+          Call(square)[9]
+            a[9]
+      IfStmt
+        >
+          b[10]
+          10[10]
+        Compound
+          ExprStmt
+            Call(write)[11]
+              b[11]
+        Compound
+          ExprStmt
+            Call(write)[13]
+              0[13]

@@ -1,28 +1,24 @@
 Line | Target Code | Meaning
 --- | --- | ---
-1 | FUNC factor | enter function factor
-2 | JLE n, 1, L3 | if n <= 1, jump to L3
-3 | JMP L5 | jump to L5
-4 | L3: | label L3: jump target
-5 | MOV result, 1 | result = 1
-6 | JMP L10 | jump to L10
-7 | L5: | label L5: jump target
-8 | LOAD R1, n | load n into register R1
-9 | SUB R1, 1 | R1 = R1 - 1
-10 | STORE t1, R1 | t1 = R1
-11 | ; para t1 _ _ | comment or skipped helper instruction
-12 | ; call factor _ t2 | comment or skipped helper instruction
-13 | LOAD R1, n | load n into register R1
-14 | MUL R1, t2 | R1 = R1 * t2
-15 | STORE t3, R1 | t3 = R1
-16 | MOV result, t3 | result = t3
-17 | L10: | label L10: jump target
-18 | RET result | return result
-19 | RET 0 | return 0
-20 | FUNC main | enter function main
-21 | MOV value, 5 | value = 5
-22 | ; para value _ _ | comment or skipped helper instruction
-23 | ; call factor _ t4 | comment or skipped helper instruction
-24 | ; para t4 _ _ | comment or skipped helper instruction
-25 | ; call write _ t5 | comment or skipped helper instruction
-26 | END | program end
+1 | FUNC square | enter function square
+2 | LOAD R1, x | load x into register R1
+3 | MUL R1, x | R1 = R1 * x
+4 | STORE t1, R1 | t1 = R1
+5 | RET t1 | return t1
+6 | RET 0 | return 0
+7 | FUNC main | enter function main
+8 | MOV a, 4 | a = 4
+9 | ; para a _ _ | comment or skipped helper instruction
+10 | ; call square _ t2 | comment or skipped helper instruction
+11 | MOV b, t2 | b = t2
+12 | JG b, 10, L11 | if b > 10, jump to L11
+13 | JMP L14 | jump to L14
+14 | L11: | label L11: jump target
+15 | ; para b _ _ | comment or skipped helper instruction
+16 | ; call write _ t3 | comment or skipped helper instruction
+17 | JMP L16 | jump to L16
+18 | L14: | label L14: jump target
+19 | ; para 0 _ _ | comment or skipped helper instruction
+20 | ; call write _ t4 | comment or skipped helper instruction
+21 | L16: | label L16: jump target
+22 | END | program end

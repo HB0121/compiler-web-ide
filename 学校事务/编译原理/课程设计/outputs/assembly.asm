@@ -29,33 +29,14 @@ start:
     mov ax,data
     mov ds,ax
 
-fn_factor:
+fn_square:
     PUSH BP
     MOV BP,SP
-    SUB SP,8
+    SUB SP,2
     MOV AX,ss:[bp+4]
-    CMP AX,1
-    JLE _3
-    JMP far ptr _5
-_3:
-    MOV AX,1
-    MOV ss:[bp-2],AX
-    JMP far ptr _10
-_5:
-    MOV AX,ss:[bp+4]
-    SUB AX,1
-    MOV ss:[bp-4],AX
-    MOV AX,ss:[bp-4]
-    PUSH AX
-    CALL fn_factor
-    MOV ss:[bp-6],AX
-    MOV AX,ss:[bp+4]
-    MOV BX,ss:[bp-6]
+    MOV BX,ss:[bp+4]
     MUL BX
-    MOV ss:[bp-8],AX
-    MOV AX,ss:[bp-8]
     MOV ss:[bp-2],AX
-_10:
     MOV AX,ss:[bp-2]
     MOV SP,BP
     POP BP
@@ -64,17 +45,31 @@ _10:
 main:
     PUSH BP
     MOV BP,SP
-    SUB SP,6
-    MOV AX,5
+    SUB SP,10
+    MOV AX,4
     MOV ss:[bp-2],AX
     MOV AX,ss:[bp-2]
     PUSH AX
-    CALL fn_factor
+    CALL fn_square
     MOV ss:[bp-4],AX
     MOV AX,ss:[bp-4]
+    MOV ss:[bp-6],AX
+    MOV AX,ss:[bp-6]
+    CMP AX,10
+    JG _11
+    JMP far ptr _14
+_11:
+    MOV AX,ss:[bp-6]
     PUSH AX
     CALL write
-    MOV ss:[bp-6],AX
+    MOV ss:[bp-8],AX
+    JMP far ptr _16
+_14:
+    MOV AX,0
+    PUSH AX
+    CALL write
+    MOV ss:[bp-10],AX
+_16:
     MOV AX,0
     mov ah,4ch
     int 21h

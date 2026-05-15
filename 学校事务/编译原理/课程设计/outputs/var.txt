@@ -1,5 +1,5 @@
 Variable Name | Type
 --- | ---
-n | int
-result | int
-value | int
+x | int
+a | int
+b | int
