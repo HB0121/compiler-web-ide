@@ -1,0 +1,450 @@
+========== 测试用例 ==========
+test2.6
+
+========== 源程序 ==========
+// break，continue跳转
+int read();
+void write(int);
+main()
+{
+    int a;
+    while (1)
+    {
+        write("请输入选择(1:break,2:continue,3:exit):\n");
+        a = read();
+        if (a == 1 || a == 2)
+        {
+            do
+            {
+                write("循环内\n");
+                if (a == 1)
+                    break;
+                if (a == 2)
+                {
+                    a = a - 1;
+                    continue;
+                }
+            } while (1);
+            write("循环外\n");
+        }
+        else
+            break;
+    }
+}
+
+========== TOKEN 序列 ==========
+int 101 2
+read 700 2
+( 303 2
+) 304 2
+; 301 2
+void 104 3
+write 700 3
+( 303 3
+int 101 3
+) 304 3
+; 301 3
+main 700 4
+( 303 4
+) 304 4
+{ 305 5
+int 101 6
+a 700 6
+; 301 6
+while 108 7
+( 303 7
+1 401 7
+) 304 7
+{ 305 8
+write 700 9
+( 303 9
+"请输入选择(1:break,2:continue,3:exit):\n" 404 9
+) 304 9
+; 301 9
+a 700 10
+= 207 10
+read 700 10
+( 303 10
+) 304 10
+; 301 10
+if 106 11
+( 303 11
+a 700 11
+== 201 11
+1 401 11
+|| 206 11
+a 700 11
+== 201 11
+2 401 11
+) 304 11
+{ 305 12
+do 109 13
+{ 305 14
+write 700 15
+( 303 15
+"循环内\n" 404 15
+) 304 15
+; 301 15
+if 106 16
+( 303 16
+a 700 16
+== 201 16
+1 401 16
+) 304 16
+break 111 17
+; 301 17
+if 106 18
+( 303 18
+a 700 18
+== 201 18
+2 401 18
+) 304 18
+{ 305 19
+a 700 20
+= 207 20
+a 700 20
+- 211 20
+1 401 20
+; 301 20
+continue 112 21
+; 301 21
+} 306 22
+} 306 23
+while 108 23
+( 303 23
+1 401 23
+) 304 23
+; 301 23
+write 700 24
+( 303 24
+"循环外\n" 404 24
+) 304 24
+; 301 24
+} 306 25
+else 107 26
+break 111 27
+; 301 27
+} 306 28
+} 306 29
+
+========== AST ==========
+Program
+  FunctionDecl(int read)[2]
+  FunctionDecl(void write)[3]
+    Param(int)[3]
+  FunctionDef(int main)[4]
+    Compound
+      VarDecl(int a)[6]
+      WhileStmt
+        1[7]
+        Compound
+          ExprStmt
+            Call(write)[9]
+              "请输入选择(1:break,2:continue,3:exit):\n"[9]
+          ExprStmt
+            =
+              a[10]
+              Call(read)[10]
+          IfStmt
+            ||
+              ==
+                a[11]
+                1[11]
+              ==
+                a[11]
+                2[11]
+            Compound
+              DoWhileStmt
+                Compound
+                  ExprStmt
+                    Call(write)[15]
+                      "循环内\n"[15]
+                  IfStmt
+                    ==
+                      a[16]
+                      1[16]
+                    BreakStmt[17]
+                  IfStmt
+                    ==
+                      a[18]
+                      2[18]
+                    Compound
+                      ExprStmt
+                        =
+                          a[20]
+                          -
+                            a[20]
+                            1[20]
+                      ContinueStmt[21]
+                1[23]
+              ExprStmt
+                Call(write)[24]
+                  "循环外\n"[24]
+            BreakStmt[27]
+
+========== 中间代码（四元式） ==========
+0: ('main', '_', '_', '_')
+1: ('J!=', '1', '0', 3)
+2: ('J', '_', '_', 28)
+3: ('para', '"请输入选择(1:break,2:continue,3:exit):\n"', '_', '_')
+4: ('call', 'write', '_', 't1')
+5: ('call', 'read', '_', 't2')
+6: ('=', 't2', '_', 'a')
+7: ('J==', 'a', '1', 11)
+8: ('J', '_', '_', 9)
+9: ('J==', 'a', '2', 11)
+10: ('J', '_', '_', 26)
+11: ('para', '"循环内\n"', '_', '_')
+12: ('call', 'write', '_', 't3')
+13: ('J==', 'a', '1', 15)
+14: ('J', '_', '_', 16)
+15: ('J', '_', '_', 23)
+16: ('J==', 'a', '2', 18)
+17: ('J', '_', '_', 21)
+18: ('-', 'a', '1', 't4')
+19: ('=', 't4', '_', 'a')
+20: ('J', '_', '_', 21)
+21: ('J!=', '1', '0', 11)
+22: ('J', '_', '_', 23)
+23: ('para', '"循环外\n"', '_', '_')
+24: ('call', 'write', '_', 't5')
+25: ('J', '_', '_', 27)
+26: ('J', '_', '_', 28)
+27: ('J', '_', '_', 1)
+28: ('sys', '_', '_', '_')
+
+========== MASM16 汇编程序代码 ==========
+assume cs:code,ds:data,ss:stack,es:extended
+extended segment
+  db 1024 dup (0)
+extended ends
+stack segment
+  db 1024 dup (0)
+stack ends
+dispmsg macro message
+  lea dx, message
+  mov ah, 9
+  int 21h
+endm
+data segment
+  _buff_p db 256 dup (24h)
+  _buff_s db 256 dup (0)
+  _msg_p db 0ah,'Output:',0
+  _msg_s db 0ah,'Input:',0
+  next_row db 0dh,0ah,'$'
+  error db 'input error, please re-enter: ','$'
+data ends
+code segment
+start:
+    mov ax,extended
+    mov es,ax
+    mov ax,stack
+    mov ss,ax
+    mov sp,1024
+    mov bp,sp
+    mov ax,data
+    mov ds,ax
+
+main:
+    PUSH BP
+    MOV BP,SP
+    SUB SP,16
+_1:
+    MOV AX,1
+    CMP AX,0
+    JNE _3
+    JMP far ptr _28
+_3:
+    ; builtin write(): string '"请输入选择(1:break,2:continue,3:exit):\\n"'
+    CALL write
+    MOV ss:[bp-2],AX
+    CALL read
+    MOV ss:[bp-4],AX
+    MOV AX,ss:[bp-4]
+    MOV ss:[bp-6],AX
+    MOV AX,ss:[bp-6]
+    CMP AX,1
+    JE _11
+    JMP far ptr _9
+_9:
+    MOV AX,ss:[bp-6]
+    CMP AX,2
+    JE _11
+    JMP far ptr _26
+_11:
+    MOV AX,ss:[bp-8]
+    PUSH AX
+    CALL write
+    MOV ss:[bp-10],AX
+    MOV AX,ss:[bp-6]
+    CMP AX,1
+    JE _15
+    JMP far ptr _16
+_15:
+    JMP far ptr _23
+_16:
+    MOV AX,ss:[bp-6]
+    CMP AX,2
+    JE _18
+    JMP far ptr _21
+_18:
+    MOV AX,ss:[bp-6]
+    SUB AX,1
+    MOV ss:[bp-12],AX
+    MOV AX,ss:[bp-12]
+    MOV ss:[bp-6],AX
+    JMP far ptr _21
+_21:
+    MOV AX,1
+    CMP AX,0
+    JNE _11
+    JMP far ptr _23
+_23:
+    MOV AX,ss:[bp-14]
+    PUSH AX
+    CALL write
+    MOV ss:[bp-16],AX
+    JMP far ptr _27
+_26:
+    JMP far ptr _28
+_27:
+    JMP far ptr _1
+_28:
+    MOV AX,0
+    mov ah,4ch
+    int 21h
+
+
+read proc near
+    push bp
+    mov bp, sp
+    mov bx,offset _msg_s
+    call _print
+    push bx
+    push cx
+    push dx
+proc_pre_start:
+    xor ax, ax
+    xor bx, bx
+    xor cx, cx
+    xor dx, dx
+proc_judge_sign:
+    mov ah, 1
+    int 21h
+    cmp al, '-'
+    jne proc_next
+    mov dx, 0ffffh
+    jmp proc_digit_in
+proc_next:
+    cmp al, 30h
+    jb proc_unexpected
+    cmp al, 39h
+    ja proc_unexpected
+    sub al, 30h
+    shl bx, 1
+    mov cx, bx
+    shl bx, 1
+    shl bx, 1
+    add bx, cx
+    add bl, al
+    adc bh, 0
+proc_digit_in:
+    mov ah, 1
+    int 21h
+    jmp proc_next
+proc_save:
+    cmp dx, 0ffffh
+    jne proc_result_save
+    neg bx
+proc_result_save:
+    mov ax, bx
+    jmp proc_input_done
+proc_unexpected:
+    cmp al, 0dh
+    je proc_save
+    dispmsg next_row
+    dispmsg error
+    jmp proc_pre_start
+proc_input_done:
+    pop dx
+    pop cx
+    pop bx
+    pop bp
+    ret
+read endp
+
+write proc near
+    push bp
+    mov bp, sp
+    push ax
+    push bx
+    push cx
+    push dx
+    mov bx,offset _msg_p
+    call _print
+    xor cx, cx
+    mov bx, [bp+4]
+    test bx, 8000h
+    jz proc_nonneg
+    neg bx
+    mov dl,'-'
+    mov ah, 2
+    int 21h
+proc_nonneg:
+    mov ax, bx
+    cwd
+    mov bx, 10
+proc_div_again:
+    xor dx, dx
+    div bx
+    add dl, 30h
+    push dx
+    inc cx
+    cmp ax, 0
+    jne proc_div_again
+proc_digit_out:
+    pop dx
+    mov ah, 2
+    int 21h
+    loop proc_digit_out
+proc_output_done:
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+    pop bp
+    ret 2
+write endp
+
+_print:
+    mov si,0
+    mov di,offset _buff_p
+_p_lp_1:
+    mov al,ds:[bx+si]
+    cmp al,0
+    je _p_brk_1
+    mov ds:[di],al
+    inc si
+    inc di
+    jmp short _p_lp_1
+_p_brk_1:
+    mov dx,offset _buff_p
+    mov ah,09h
+    int 21h
+    mov cx,si
+    mov di,offset _buff_p
+_p_lp_2:
+    mov al,24h
+    mov ds:[di],al
+    inc di
+    loop _p_lp_2
+    ret
+code ends
+end start
+
+========== 编译诊断 ==========
+Line | Phase | Code | Message
+--- | --- | --- | ---
+9 | semantic | 306 | argument type mismatch
+15 | semantic | 306 | argument type mismatch
+24 | semantic | 306 | argument type mismatch

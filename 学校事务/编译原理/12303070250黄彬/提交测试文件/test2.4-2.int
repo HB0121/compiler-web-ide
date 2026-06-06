@@ -1,0 +1,472 @@
+========== 测试用例 ==========
+test2.4-2
+
+========== 源程序 ==========
+//双重for循环测试，求给定数以内的素数
+
+main(){
+
+    int N = read() ;
+    int count=0,nprime=0,i,j;
+    for(i=2;i<=N;i=i+1) {
+       nprime = 0;
+       for(j=2;j<i;j=j+1) {
+	   if(i%j == 0) nprime = nprime + 1;
+       }
+       if(nprime == 0) {
+            write(i);
+            count = count + 1;
+        }
+     }
+
+}
+
+========== TOKEN 序列 ==========
+main 700 3
+( 303 3
+) 304 3
+{ 305 3
+int 101 5
+N 700 5
+= 207 5
+read 700 5
+( 303 5
+) 304 5
+; 301 5
+int 101 6
+count 700 6
+= 207 6
+0 401 6
+, 302 6
+nprime 700 6
+= 207 6
+0 401 6
+, 302 6
+i 700 6
+, 302 6
+j 700 6
+; 301 6
+for 110 7
+( 303 7
+i 700 7
+= 207 7
+2 401 7
+; 301 7
+i 700 7
+<= 203 7
+N 700 7
+; 301 7
+i 700 7
+= 207 7
+i 700 7
++ 210 7
+1 401 7
+) 304 7
+{ 305 7
+nprime 700 8
+= 207 8
+0 401 8
+; 301 8
+for 110 9
+( 303 9
+j 700 9
+= 207 9
+2 401 9
+; 301 9
+j 700 9
+< 209 9
+i 700 9
+; 301 9
+j 700 9
+= 207 9
+j 700 9
++ 210 9
+1 401 9
+) 304 9
+{ 305 9
+if 106 10
+( 303 10
+i 700 10
+% 215 10
+j 700 10
+== 201 10
+0 401 10
+) 304 10
+nprime 700 10
+= 207 10
+nprime 700 10
++ 210 10
+1 401 10
+; 301 10
+} 306 11
+if 106 12
+( 303 12
+nprime 700 12
+== 201 12
+0 401 12
+) 304 12
+{ 305 12
+write 700 13
+( 303 13
+i 700 13
+) 304 13
+; 301 13
+count 700 14
+= 207 14
+count 700 14
++ 210 14
+1 401 14
+; 301 14
+} 306 15
+} 306 16
+} 306 18
+
+========== AST ==========
+Program
+  FunctionDef(int main)[3]
+    Compound
+      VarDecl(int N)[5]
+        Call(read)[5]
+      VarDecl(int count)[6]
+        0[6]
+      VarDecl(int nprime)[6]
+        0[6]
+      VarDecl(int i)[6]
+      VarDecl(int j)[6]
+      ForStmt
+        =
+          i[7]
+          2[7]
+        <=
+          i[7]
+          N[7]
+        =
+          i[7]
+          +
+            i[7]
+            1[7]
+        Compound
+          ExprStmt
+            =
+              nprime[8]
+              0[8]
+          ForStmt
+            =
+              j[9]
+              2[9]
+            <
+              j[9]
+              i[9]
+            =
+              j[9]
+              +
+                j[9]
+                1[9]
+            Compound
+              IfStmt
+                ==
+                  %
+                    i[10]
+                    j[10]
+                  0[10]
+                ExprStmt
+                  =
+                    nprime[10]
+                    +
+                      nprime[10]
+                      1[10]
+          IfStmt
+            ==
+              nprime[12]
+              0[12]
+            Compound
+              ExprStmt
+                Call(write)[13]
+                  i[13]
+              ExprStmt
+                =
+                  count[14]
+                  +
+                    count[14]
+                    1[14]
+
+========== 中间代码（四元式） ==========
+0: ('main', '_', '_', '_')
+1: ('call', 'read', '_', 't1')
+2: ('=', 't1', '_', 'N')
+3: ('=', '0', '_', 'count')
+4: ('=', '0', '_', 'nprime')
+5: ('=', '2', '_', 'i')
+6: ('J<=', 'i', 'N', 11)
+7: ('J', '_', '_', 31)
+8: ('+', 'i', '1', 't2')
+9: ('=', 't2', '_', 'i')
+10: ('J', '_', '_', 6)
+11: ('=', '0', '_', 'nprime')
+12: ('=', '2', '_', 'j')
+13: ('J<', 'j', 'i', 18)
+14: ('J', '_', '_', 24)
+15: ('+', 'j', '1', 't3')
+16: ('=', 't3', '_', 'j')
+17: ('J', '_', '_', 13)
+18: ('%', 'i', 'j', 't4')
+19: ('J==', 't4', '0', 21)
+20: ('J', '_', '_', 23)
+21: ('+', 'nprime', '1', 't5')
+22: ('=', 't5', '_', 'nprime')
+23: ('J', '_', '_', 15)
+24: ('J==', 'nprime', '0', 26)
+25: ('J', '_', '_', 30)
+26: ('para', 'i', '_', '_')
+27: ('call', 'write', '_', 't6')
+28: ('+', 'count', '1', 't7')
+29: ('=', 't7', '_', 'count')
+30: ('J', '_', '_', 8)
+31: ('sys', '_', '_', '_')
+
+========== MASM16 汇编程序代码 ==========
+assume cs:code,ds:data,ss:stack,es:extended
+extended segment
+  db 1024 dup (0)
+extended ends
+stack segment
+  db 1024 dup (0)
+stack ends
+dispmsg macro message
+  lea dx, message
+  mov ah, 9
+  int 21h
+endm
+data segment
+  _buff_p db 256 dup (24h)
+  _buff_s db 256 dup (0)
+  _msg_p db 0ah,'Output:',0
+  _msg_s db 0ah,'Input:',0
+  next_row db 0dh,0ah,'$'
+  error db 'input error, please re-enter: ','$'
+data ends
+code segment
+start:
+    mov ax,extended
+    mov es,ax
+    mov ax,stack
+    mov ss,ax
+    mov sp,1024
+    mov bp,sp
+    mov ax,data
+    mov ds,ax
+
+main:
+    PUSH BP
+    MOV BP,SP
+    SUB SP,24
+    CALL read
+    MOV ss:[bp-2],AX
+    MOV AX,ss:[bp-2]
+    MOV ss:[bp-4],AX
+    MOV AX,0
+    MOV ss:[bp-6],AX
+    MOV AX,0
+    MOV ss:[bp-8],AX
+    MOV AX,2
+    MOV ss:[bp-10],AX
+_6:
+    MOV AX,ss:[bp-10]
+    CMP AX,ss:[bp-4]
+    JLE _11
+    JMP far ptr _31
+_8:
+    MOV AX,ss:[bp-10]
+    ADD AX,1
+    MOV ss:[bp-12],AX
+    MOV AX,ss:[bp-12]
+    MOV ss:[bp-10],AX
+    JMP far ptr _6
+_11:
+    MOV AX,0
+    MOV ss:[bp-8],AX
+    MOV AX,2
+    MOV ss:[bp-14],AX
+_13:
+    MOV AX,ss:[bp-14]
+    CMP AX,ss:[bp-10]
+    JL _18
+    JMP far ptr _24
+_15:
+    MOV AX,ss:[bp-14]
+    ADD AX,1
+    MOV ss:[bp-16],AX
+    MOV AX,ss:[bp-16]
+    MOV ss:[bp-14],AX
+    JMP far ptr _13
+_18:
+    MOV AX,ss:[bp-10]
+    MOV BX,ss:[bp-14]
+    CWD
+    IDIV BX
+    MOV AX,DX
+    MOV ss:[bp-18],AX
+    MOV AX,ss:[bp-18]
+    CMP AX,0
+    JE _21
+    JMP far ptr _23
+_21:
+    MOV AX,ss:[bp-8]
+    ADD AX,1
+    MOV ss:[bp-20],AX
+    MOV AX,ss:[bp-20]
+    MOV ss:[bp-8],AX
+_23:
+    JMP far ptr _15
+_24:
+    MOV AX,ss:[bp-8]
+    CMP AX,0
+    JE _26
+    JMP far ptr _30
+_26:
+    MOV AX,ss:[bp-10]
+    PUSH AX
+    CALL write
+    MOV ss:[bp-22],AX
+    MOV AX,ss:[bp-6]
+    ADD AX,1
+    MOV ss:[bp-24],AX
+    MOV AX,ss:[bp-24]
+    MOV ss:[bp-6],AX
+_30:
+    JMP far ptr _8
+_31:
+    MOV AX,0
+    mov ah,4ch
+    int 21h
+
+
+read proc near
+    push bp
+    mov bp, sp
+    mov bx,offset _msg_s
+    call _print
+    push bx
+    push cx
+    push dx
+proc_pre_start:
+    xor ax, ax
+    xor bx, bx
+    xor cx, cx
+    xor dx, dx
+proc_judge_sign:
+    mov ah, 1
+    int 21h
+    cmp al, '-'
+    jne proc_next
+    mov dx, 0ffffh
+    jmp proc_digit_in
+proc_next:
+    cmp al, 30h
+    jb proc_unexpected
+    cmp al, 39h
+    ja proc_unexpected
+    sub al, 30h
+    shl bx, 1
+    mov cx, bx
+    shl bx, 1
+    shl bx, 1
+    add bx, cx
+    add bl, al
+    adc bh, 0
+proc_digit_in:
+    mov ah, 1
+    int 21h
+    jmp proc_next
+proc_save:
+    cmp dx, 0ffffh
+    jne proc_result_save
+    neg bx
+proc_result_save:
+    mov ax, bx
+    jmp proc_input_done
+proc_unexpected:
+    cmp al, 0dh
+    je proc_save
+    dispmsg next_row
+    dispmsg error
+    jmp proc_pre_start
+proc_input_done:
+    pop dx
+    pop cx
+    pop bx
+    pop bp
+    ret
+read endp
+
+write proc near
+    push bp
+    mov bp, sp
+    push ax
+    push bx
+    push cx
+    push dx
+    mov bx,offset _msg_p
+    call _print
+    xor cx, cx
+    mov bx, [bp+4]
+    test bx, 8000h
+    jz proc_nonneg
+    neg bx
+    mov dl,'-'
+    mov ah, 2
+    int 21h
+proc_nonneg:
+    mov ax, bx
+    cwd
+    mov bx, 10
+proc_div_again:
+    xor dx, dx
+    div bx
+    add dl, 30h
+    push dx
+    inc cx
+    cmp ax, 0
+    jne proc_div_again
+proc_digit_out:
+    pop dx
+    mov ah, 2
+    int 21h
+    loop proc_digit_out
+proc_output_done:
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+    pop bp
+    ret 2
+write endp
+
+_print:
+    mov si,0
+    mov di,offset _buff_p
+_p_lp_1:
+    mov al,ds:[bx+si]
+    cmp al,0
+    je _p_brk_1
+    mov ds:[di],al
+    inc si
+    inc di
+    jmp short _p_lp_1
+_p_brk_1:
+    mov dx,offset _buff_p
+    mov ah,09h
+    int 21h
+    mov cx,si
+    mov di,offset _buff_p
+_p_lp_2:
+    mov al,24h
+    mov ds:[di],al
+    inc di
+    loop _p_lp_2
+    ret
+code ends
+end start
+
+========== 编译诊断 ==========
+No diagnostics

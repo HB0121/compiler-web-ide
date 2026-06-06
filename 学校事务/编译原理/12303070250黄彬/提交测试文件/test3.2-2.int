@@ -1,0 +1,546 @@
+========== 测试用例 ==========
+test3.2-2
+
+========== 源程序 ==========
+// 输入数字num，判断是不是素数
+// 测试函数调用，基本分支，循环结构
+int isPrime(int x);
+
+int main(void)
+{
+    int num;
+    int res;
+    read(num);
+    if(isPrime(num) == 1)
+    {
+        res = 1;
+    }
+    else
+    {
+        res = 0;
+    }
+    write(res);
+    return 0;
+}
+int isPrime(int x)
+{
+    int i;
+    int yes;
+    i = 2;
+    if(x < 2)
+    {
+        yes = 0;
+    }
+    else
+    {
+        yes = 1;
+    }
+    while(i * i <= x)
+    {
+        if(x / i * i == x)
+        {
+            yes = 0;
+        }
+        i = i + 1;
+    }
+    return yes;
+}
+
+========== TOKEN 序列 ==========
+int 101 3
+isPrime 700 3
+( 303 3
+int 101 3
+x 700 3
+) 304 3
+; 301 3
+int 101 5
+main 700 5
+( 303 5
+void 104 5
+) 304 5
+{ 305 6
+int 101 7
+num 700 7
+; 301 7
+int 101 8
+res 700 8
+; 301 8
+read 700 9
+( 303 9
+num 700 9
+) 304 9
+; 301 9
+if 106 10
+( 303 10
+isPrime 700 10
+( 303 10
+num 700 10
+) 304 10
+== 201 10
+1 401 10
+) 304 10
+{ 305 11
+res 700 12
+= 207 12
+1 401 12
+; 301 12
+} 306 13
+else 107 14
+{ 305 15
+res 700 16
+= 207 16
+0 401 16
+; 301 16
+} 306 17
+write 700 18
+( 303 18
+res 700 18
+) 304 18
+; 301 18
+return 105 19
+0 401 19
+; 301 19
+} 306 20
+int 101 21
+isPrime 700 21
+( 303 21
+int 101 21
+x 700 21
+) 304 21
+{ 305 22
+int 101 23
+i 700 23
+; 301 23
+int 101 24
+yes 700 24
+; 301 24
+i 700 25
+= 207 25
+2 401 25
+; 301 25
+if 106 26
+( 303 26
+x 700 26
+< 209 26
+2 401 26
+) 304 26
+{ 305 27
+yes 700 28
+= 207 28
+0 401 28
+; 301 28
+} 306 29
+else 107 30
+{ 305 31
+yes 700 32
+= 207 32
+1 401 32
+; 301 32
+} 306 33
+while 108 34
+( 303 34
+i 700 34
+* 212 34
+i 700 34
+<= 203 34
+x 700 34
+) 304 34
+{ 305 35
+if 106 36
+( 303 36
+x 700 36
+/ 213 36
+i 700 36
+* 212 36
+i 700 36
+== 201 36
+x 700 36
+) 304 36
+{ 305 37
+yes 700 38
+= 207 38
+0 401 38
+; 301 38
+} 306 39
+i 700 40
+= 207 40
+i 700 40
++ 210 40
+1 401 40
+; 301 40
+} 306 41
+return 105 42
+yes 700 42
+; 301 42
+} 306 43
+
+========== AST ==========
+Program
+  FunctionDecl(int isPrime)[3]
+    Param(int x)[3]
+  FunctionDef(int main)[5]
+    Compound
+      VarDecl(int num)[7]
+      VarDecl(int res)[8]
+      ExprStmt
+        Call(read)[9]
+          num[9]
+      IfStmt
+        ==
+          Call(isPrime)[10]
+            num[10]
+          1[10]
+        Compound
+          ExprStmt
+            =
+              res[12]
+              1[12]
+        Compound
+          ExprStmt
+            =
+              res[16]
+              0[16]
+      ExprStmt
+        Call(write)[18]
+          res[18]
+      ReturnStmt[19]
+        0[19]
+  FunctionDef(int isPrime)[21]
+    Param(int x)[21]
+    Compound
+      VarDecl(int i)[23]
+      VarDecl(int yes)[24]
+      ExprStmt
+        =
+          i[25]
+          2[25]
+      IfStmt
+        <
+          x[26]
+          2[26]
+        Compound
+          ExprStmt
+            =
+              yes[28]
+              0[28]
+        Compound
+          ExprStmt
+            =
+              yes[32]
+              1[32]
+      WhileStmt
+        <=
+          *
+            i[34]
+            i[34]
+          x[34]
+        Compound
+          IfStmt
+            ==
+              *
+                /
+                  x[36]
+                  i[36]
+                i[36]
+              x[36]
+            Compound
+              ExprStmt
+                =
+                  yes[38]
+                  0[38]
+          ExprStmt
+            =
+              i[40]
+              +
+                i[40]
+                1[40]
+      ReturnStmt[42]
+        yes[42]
+
+========== 中间代码（四元式） ==========
+0: ('main', '_', '_', '_')
+1: ('call', 'read', '_', 't1')
+2: ('=', 't1', '_', 'num')
+3: ('para', 'num', '_', '_')
+4: ('call', 'isPrime', '_', 't2')
+5: ('J==', 't2', '1', 7)
+6: ('J', '_', '_', 9)
+7: ('=', '1', '_', 'res')
+8: ('J', '_', '_', 10)
+9: ('=', '0', '_', 'res')
+10: ('para', 'res', '_', '_')
+11: ('call', 'write', '_', 't3')
+12: ('ret', '_', '_', '0')
+13: ('sys', '_', '_', '_')
+14: ('isPrime', '_', '_', '_')
+15: ('=', '2', '_', 'i')
+16: ('J<', 'x', '2', 18)
+17: ('J', '_', '_', 20)
+18: ('=', '0', '_', 'yes')
+19: ('J', '_', '_', 21)
+20: ('=', '1', '_', 'yes')
+21: ('*', 'i', 'i', 't4')
+22: ('J<=', 't4', 'x', 24)
+23: ('J', '_', '_', 32)
+24: ('/', 'x', 'i', 't5')
+25: ('*', 't5', 'i', 't6')
+26: ('J==', 't6', 'x', 28)
+27: ('J', '_', '_', 29)
+28: ('=', '0', '_', 'yes')
+29: ('+', 'i', '1', 't7')
+30: ('=', 't7', '_', 'i')
+31: ('J', '_', '_', 21)
+32: ('ret', '_', '_', 'yes')
+33: ('ret', '_', '_', '_')
+
+========== MASM16 汇编程序代码 ==========
+assume cs:code,ds:data,ss:stack,es:extended
+extended segment
+  db 1024 dup (0)
+extended ends
+stack segment
+  db 1024 dup (0)
+stack ends
+dispmsg macro message
+  lea dx, message
+  mov ah, 9
+  int 21h
+endm
+data segment
+  _buff_p db 256 dup (24h)
+  _buff_s db 256 dup (0)
+  _msg_p db 0ah,'Output:',0
+  _msg_s db 0ah,'Input:',0
+  next_row db 0dh,0ah,'$'
+  error db 'input error, please re-enter: ','$'
+data ends
+code segment
+start:
+    mov ax,extended
+    mov es,ax
+    mov ax,stack
+    mov ss,ax
+    mov sp,1024
+    mov bp,sp
+    mov ax,data
+    mov ds,ax
+
+main:
+    PUSH BP
+    MOV BP,SP
+    SUB SP,10
+    CALL read
+    MOV ss:[bp-2],AX
+    MOV AX,ss:[bp-2]
+    MOV ss:[bp-4],AX
+    MOV AX,ss:[bp-4]
+    PUSH AX
+    CALL fn_isPrime
+    MOV ss:[bp-6],AX
+    MOV AX,ss:[bp-6]
+    CMP AX,1
+    JE _7
+    JMP far ptr _9
+_7:
+    MOV AX,1
+    MOV ss:[bp-8],AX
+    JMP far ptr _10
+_9:
+    MOV AX,0
+    MOV ss:[bp-8],AX
+_10:
+    MOV AX,ss:[bp-8]
+    PUSH AX
+    CALL write
+    MOV ss:[bp-10],AX
+    MOV AX,0
+    mov ah,4ch
+    int 21h
+
+fn_isPrime:
+    PUSH BP
+    MOV BP,SP
+    SUB SP,12
+    MOV AX,2
+    MOV ss:[bp-2],AX
+    MOV AX,ss:[bp+4]
+    CMP AX,2
+    JL _18
+    JMP far ptr _20
+_18:
+    MOV AX,0
+    MOV ss:[bp-4],AX
+    JMP far ptr _21
+_20:
+    MOV AX,1
+    MOV ss:[bp-4],AX
+_21:
+    MOV AX,ss:[bp-2]
+    MOV BX,ss:[bp-2]
+    MUL BX
+    MOV ss:[bp-6],AX
+    MOV AX,ss:[bp-6]
+    CMP AX,ss:[bp+4]
+    JLE _24
+    JMP far ptr _32
+_24:
+    MOV AX,ss:[bp+4]
+    MOV BX,ss:[bp-2]
+    CWD
+    IDIV BX
+    MOV ss:[bp-8],AX
+    MOV AX,ss:[bp-8]
+    MOV BX,ss:[bp-2]
+    MUL BX
+    MOV ss:[bp-10],AX
+    MOV AX,ss:[bp-10]
+    CMP AX,ss:[bp+4]
+    JE _28
+    JMP far ptr _29
+_28:
+    MOV AX,0
+    MOV ss:[bp-4],AX
+_29:
+    MOV AX,ss:[bp-2]
+    ADD AX,1
+    MOV ss:[bp-12],AX
+    MOV AX,ss:[bp-12]
+    MOV ss:[bp-2],AX
+    JMP far ptr _21
+_32:
+    MOV AX,ss:[bp-4]
+    MOV SP,BP
+    POP BP
+    RET
+
+
+read proc near
+    push bp
+    mov bp, sp
+    mov bx,offset _msg_s
+    call _print
+    push bx
+    push cx
+    push dx
+proc_pre_start:
+    xor ax, ax
+    xor bx, bx
+    xor cx, cx
+    xor dx, dx
+proc_judge_sign:
+    mov ah, 1
+    int 21h
+    cmp al, '-'
+    jne proc_next
+    mov dx, 0ffffh
+    jmp proc_digit_in
+proc_next:
+    cmp al, 30h
+    jb proc_unexpected
+    cmp al, 39h
+    ja proc_unexpected
+    sub al, 30h
+    shl bx, 1
+    mov cx, bx
+    shl bx, 1
+    shl bx, 1
+    add bx, cx
+    add bl, al
+    adc bh, 0
+proc_digit_in:
+    mov ah, 1
+    int 21h
+    jmp proc_next
+proc_save:
+    cmp dx, 0ffffh
+    jne proc_result_save
+    neg bx
+proc_result_save:
+    mov ax, bx
+    jmp proc_input_done
+proc_unexpected:
+    cmp al, 0dh
+    je proc_save
+    dispmsg next_row
+    dispmsg error
+    jmp proc_pre_start
+proc_input_done:
+    pop dx
+    pop cx
+    pop bx
+    pop bp
+    ret
+read endp
+
+write proc near
+    push bp
+    mov bp, sp
+    push ax
+    push bx
+    push cx
+    push dx
+    mov bx,offset _msg_p
+    call _print
+    xor cx, cx
+    mov bx, [bp+4]
+    test bx, 8000h
+    jz proc_nonneg
+    neg bx
+    mov dl,'-'
+    mov ah, 2
+    int 21h
+proc_nonneg:
+    mov ax, bx
+    cwd
+    mov bx, 10
+proc_div_again:
+    xor dx, dx
+    div bx
+    add dl, 30h
+    push dx
+    inc cx
+    cmp ax, 0
+    jne proc_div_again
+proc_digit_out:
+    pop dx
+    mov ah, 2
+    int 21h
+    loop proc_digit_out
+proc_output_done:
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+    pop bp
+    ret 2
+write endp
+
+_print:
+    mov si,0
+    mov di,offset _buff_p
+_p_lp_1:
+    mov al,ds:[bx+si]
+    cmp al,0
+    je _p_brk_1
+    mov ds:[di],al
+    inc si
+    inc di
+    jmp short _p_lp_1
+_p_brk_1:
+    mov dx,offset _buff_p
+    mov ah,09h
+    int 21h
+    mov cx,si
+    mov di,offset _buff_p
+_p_lp_2:
+    mov al,24h
+    mov ds:[di],al
+    inc di
+    loop _p_lp_2
+    ret
+code ends
+end start
+
+========== 编译诊断 ==========
+No diagnostics

@@ -1,0 +1,14 @@
+{\rtf1\ansi\deff0
+\pard\b test0.1 \u-28720?\u-30644?\u32467?\u26524?\u-28781?\u20986?\b0\par
+\pard \u27979?\u-29739?\u29992?\u20363?\u-230?test0.1\par
+\pard Token \u25968?\u-28209?\u-230?18\par
+\pard \u-29750?\u26029?\u25968?\u-28209?\u-230?0\par
+\pard \u22235?\u20803?\u24335?\u25968?\u-28209?\u-230?5\par
+\pard \u-28720?\u-30644?\u30028?\u-26782?\u-29708?\u26126?\u-230?\u22312? GUI \u24038?\u20391?\u25171?\u24320?\u28304?\u31243?\u24207?\u21518?\u28857?\u20987?\u8220?\u-28720?\u-30644?\u8221?\u-244?\u21491?\u20391? Results \u21306?\u22495?\u23637?\u31034? Tokens\u12289?AST\u12289?\u20013?\u-27148?\u20195?\u30721?\u12289?Interpreter\u12289?Assembly \u31561?\u32467?\u26524?\u-229?\u19979?\u26041? Diagnostics \u21306?\u22495?\u23637?\u31034?\u-27367?\u-29713?\u25552?\u31034?\u12290?\par
+\pard\b \u28304?\u31243?\u24207?\b0\par
+\pard\f1 int main() \{\par     int x;\par     x = 1 + 2;\par     return x;\par \}\par
+\pard\b \u25191?\u-30644?\u32467?\u26524?\u25688?\u-30335?\b0\par
+\pard\f1 Execution Result\par Item | Value | Meaning\par --- | --- | ---\par return_value | 3 | \u31243?\u24207?\u26368?\u32456?\u-28716?\u22238?\u20540?\par \par Variables\par Name | Value\par --- | ---\par t1 | 3\par x | 3\par \par Execution Trace\par Step | Quad / Event | Meaning\par --- | --- | ---\par 1 | 1: (+, 1, 2, t1) | t1 = 1 + 2\par 2 | 2: (=, t1, _, x) | x = t1\par 3 | 3: (ret, _, _, x) | \u-28716?\u22238? x\par \par Runtime Warnings\par Warning\par ---\par None\par
+\pard\b \u-29750?\u26029?\u20449?\u24687?\b0\par
+\pard\f1 No diagnostics\par
+}

@@ -1,0 +1,507 @@
+========== 测试用例 ==========
+test2.7
+
+========== 源程序 ==========
+//if嵌套for和while,首先输入给定数N，
+//输入选择1计算求1到N以内所有奇数的和
+//输入2计算所有偶数的和,否则输出0
+main()
+
+{
+  int i,N,sum = 0,choice=0;
+  N = read();
+  choice=read();
+  if(choice == 1) {
+      for(i=1;i<=N;i=i+1)
+      {
+         if(i%2 == 1)
+	    sum = sum+i;
+      }
+  }
+  else if(choice == 2){
+      i=0;
+      while(i<N){
+      sum = sum + i;
+      i = i + 2;
+     }
+   }
+  write(sum);
+}
+
+========== TOKEN 序列 ==========
+main 700 4
+( 303 4
+) 304 4
+{ 305 6
+int 101 7
+i 700 7
+, 302 7
+N 700 7
+, 302 7
+sum 700 7
+= 207 7
+0 401 7
+, 302 7
+choice 700 7
+= 207 7
+0 401 7
+; 301 7
+N 700 8
+= 207 8
+read 700 8
+( 303 8
+) 304 8
+; 301 8
+choice 700 9
+= 207 9
+read 700 9
+( 303 9
+) 304 9
+; 301 9
+if 106 10
+( 303 10
+choice 700 10
+== 201 10
+1 401 10
+) 304 10
+{ 305 10
+for 110 11
+( 303 11
+i 700 11
+= 207 11
+1 401 11
+; 301 11
+i 700 11
+<= 203 11
+N 700 11
+; 301 11
+i 700 11
+= 207 11
+i 700 11
++ 210 11
+1 401 11
+) 304 11
+{ 305 12
+if 106 13
+( 303 13
+i 700 13
+% 215 13
+2 401 13
+== 201 13
+1 401 13
+) 304 13
+sum 700 14
+= 207 14
+sum 700 14
++ 210 14
+i 700 14
+; 301 14
+} 306 15
+} 306 16
+else 107 17
+if 106 17
+( 303 17
+choice 700 17
+== 201 17
+2 401 17
+) 304 17
+{ 305 17
+i 700 18
+= 207 18
+0 401 18
+; 301 18
+while 108 19
+( 303 19
+i 700 19
+< 209 19
+N 700 19
+) 304 19
+{ 305 19
+sum 700 20
+= 207 20
+sum 700 20
++ 210 20
+i 700 20
+; 301 20
+i 700 21
+= 207 21
+i 700 21
++ 210 21
+2 401 21
+; 301 21
+} 306 22
+} 306 23
+write 700 24
+( 303 24
+sum 700 24
+) 304 24
+; 301 24
+} 306 25
+
+========== AST ==========
+Program
+  FunctionDef(int main)[4]
+    Compound
+      VarDecl(int i)[7]
+      VarDecl(int N)[7]
+      VarDecl(int sum)[7]
+        0[7]
+      VarDecl(int choice)[7]
+        0[7]
+      ExprStmt
+        =
+          N[8]
+          Call(read)[8]
+      ExprStmt
+        =
+          choice[9]
+          Call(read)[9]
+      IfStmt
+        ==
+          choice[10]
+          1[10]
+        Compound
+          ForStmt
+            =
+              i[11]
+              1[11]
+            <=
+              i[11]
+              N[11]
+            =
+              i[11]
+              +
+                i[11]
+                1[11]
+            Compound
+              IfStmt
+                ==
+                  %
+                    i[13]
+                    2[13]
+                  1[13]
+                ExprStmt
+                  =
+                    sum[14]
+                    +
+                      sum[14]
+                      i[14]
+        IfStmt
+          ==
+            choice[17]
+            2[17]
+          Compound
+            ExprStmt
+              =
+                i[18]
+                0[18]
+            WhileStmt
+              <
+                i[19]
+                N[19]
+              Compound
+                ExprStmt
+                  =
+                    sum[20]
+                    +
+                      sum[20]
+                      i[20]
+                ExprStmt
+                  =
+                    i[21]
+                    +
+                      i[21]
+                      2[21]
+      ExprStmt
+        Call(write)[24]
+          sum[24]
+
+========== 中间代码（四元式） ==========
+0: ('main', '_', '_', '_')
+1: ('=', '0', '_', 'sum')
+2: ('=', '0', '_', 'choice')
+3: ('call', 'read', '_', 't1')
+4: ('=', 't1', '_', 'N')
+5: ('call', 'read', '_', 't2')
+6: ('=', 't2', '_', 'choice')
+7: ('J==', 'choice', '1', 9)
+8: ('J', '_', '_', 22)
+9: ('=', '1', '_', 'i')
+10: ('J<=', 'i', 'N', 15)
+11: ('J', '_', '_', 21)
+12: ('+', 'i', '1', 't3')
+13: ('=', 't3', '_', 'i')
+14: ('J', '_', '_', 10)
+15: ('%', 'i', '2', 't4')
+16: ('J==', 't4', '1', 18)
+17: ('J', '_', '_', 20)
+18: ('+', 'sum', 'i', 't5')
+19: ('=', 't5', '_', 'sum')
+20: ('J', '_', '_', 12)
+21: ('J', '_', '_', 32)
+22: ('J==', 'choice', '2', 24)
+23: ('J', '_', '_', 32)
+24: ('=', '0', '_', 'i')
+25: ('J<', 'i', 'N', 27)
+26: ('J', '_', '_', 32)
+27: ('+', 'sum', 'i', 't6')
+28: ('=', 't6', '_', 'sum')
+29: ('+', 'i', '2', 't7')
+30: ('=', 't7', '_', 'i')
+31: ('J', '_', '_', 25)
+32: ('para', 'sum', '_', '_')
+33: ('call', 'write', '_', 't8')
+34: ('sys', '_', '_', '_')
+
+========== MASM16 汇编程序代码 ==========
+assume cs:code,ds:data,ss:stack,es:extended
+extended segment
+  db 1024 dup (0)
+extended ends
+stack segment
+  db 1024 dup (0)
+stack ends
+dispmsg macro message
+  lea dx, message
+  mov ah, 9
+  int 21h
+endm
+data segment
+  _buff_p db 256 dup (24h)
+  _buff_s db 256 dup (0)
+  _msg_p db 0ah,'Output:',0
+  _msg_s db 0ah,'Input:',0
+  next_row db 0dh,0ah,'$'
+  error db 'input error, please re-enter: ','$'
+data ends
+code segment
+start:
+    mov ax,extended
+    mov es,ax
+    mov ax,stack
+    mov ss,ax
+    mov sp,1024
+    mov bp,sp
+    mov ax,data
+    mov ds,ax
+
+main:
+    PUSH BP
+    MOV BP,SP
+    SUB SP,24
+    MOV AX,0
+    MOV ss:[bp-2],AX
+    MOV AX,0
+    MOV ss:[bp-4],AX
+    CALL read
+    MOV ss:[bp-6],AX
+    MOV AX,ss:[bp-6]
+    MOV ss:[bp-8],AX
+    CALL read
+    MOV ss:[bp-10],AX
+    MOV AX,ss:[bp-10]
+    MOV ss:[bp-4],AX
+    MOV AX,ss:[bp-4]
+    CMP AX,1
+    JE _9
+    JMP far ptr _22
+_9:
+    MOV AX,1
+    MOV ss:[bp-12],AX
+_10:
+    MOV AX,ss:[bp-12]
+    CMP AX,ss:[bp-8]
+    JLE _15
+    JMP far ptr _21
+_12:
+    MOV AX,ss:[bp-12]
+    ADD AX,1
+    MOV ss:[bp-14],AX
+    MOV AX,ss:[bp-14]
+    MOV ss:[bp-12],AX
+    JMP far ptr _10
+_15:
+    MOV AX,ss:[bp-12]
+    MOV BX,2
+    CWD
+    IDIV BX
+    MOV AX,DX
+    MOV ss:[bp-16],AX
+    MOV AX,ss:[bp-16]
+    CMP AX,1
+    JE _18
+    JMP far ptr _20
+_18:
+    MOV AX,ss:[bp-2]
+    ADD AX,ss:[bp-12]
+    MOV ss:[bp-18],AX
+    MOV AX,ss:[bp-18]
+    MOV ss:[bp-2],AX
+_20:
+    JMP far ptr _12
+_21:
+    JMP far ptr _32
+_22:
+    MOV AX,ss:[bp-4]
+    CMP AX,2
+    JE _24
+    JMP far ptr _32
+_24:
+    MOV AX,0
+    MOV ss:[bp-12],AX
+_25:
+    MOV AX,ss:[bp-12]
+    CMP AX,ss:[bp-8]
+    JL _27
+    JMP far ptr _32
+_27:
+    MOV AX,ss:[bp-2]
+    ADD AX,ss:[bp-12]
+    MOV ss:[bp-20],AX
+    MOV AX,ss:[bp-20]
+    MOV ss:[bp-2],AX
+    MOV AX,ss:[bp-12]
+    ADD AX,2
+    MOV ss:[bp-22],AX
+    MOV AX,ss:[bp-22]
+    MOV ss:[bp-12],AX
+    JMP far ptr _25
+_32:
+    MOV AX,ss:[bp-2]
+    PUSH AX
+    CALL write
+    MOV ss:[bp-24],AX
+    MOV AX,0
+    mov ah,4ch
+    int 21h
+
+
+read proc near
+    push bp
+    mov bp, sp
+    mov bx,offset _msg_s
+    call _print
+    push bx
+    push cx
+    push dx
+proc_pre_start:
+    xor ax, ax
+    xor bx, bx
+    xor cx, cx
+    xor dx, dx
+proc_judge_sign:
+    mov ah, 1
+    int 21h
+    cmp al, '-'
+    jne proc_next
+    mov dx, 0ffffh
+    jmp proc_digit_in
+proc_next:
+    cmp al, 30h
+    jb proc_unexpected
+    cmp al, 39h
+    ja proc_unexpected
+    sub al, 30h
+    shl bx, 1
+    mov cx, bx
+    shl bx, 1
+    shl bx, 1
+    add bx, cx
+    add bl, al
+    adc bh, 0
+proc_digit_in:
+    mov ah, 1
+    int 21h
+    jmp proc_next
+proc_save:
+    cmp dx, 0ffffh
+    jne proc_result_save
+    neg bx
+proc_result_save:
+    mov ax, bx
+    jmp proc_input_done
+proc_unexpected:
+    cmp al, 0dh
+    je proc_save
+    dispmsg next_row
+    dispmsg error
+    jmp proc_pre_start
+proc_input_done:
+    pop dx
+    pop cx
+    pop bx
+    pop bp
+    ret
+read endp
+
+write proc near
+    push bp
+    mov bp, sp
+    push ax
+    push bx
+    push cx
+    push dx
+    mov bx,offset _msg_p
+    call _print
+    xor cx, cx
+    mov bx, [bp+4]
+    test bx, 8000h
+    jz proc_nonneg
+    neg bx
+    mov dl,'-'
+    mov ah, 2
+    int 21h
+proc_nonneg:
+    mov ax, bx
+    cwd
+    mov bx, 10
+proc_div_again:
+    xor dx, dx
+    div bx
+    add dl, 30h
+    push dx
+    inc cx
+    cmp ax, 0
+    jne proc_div_again
+proc_digit_out:
+    pop dx
+    mov ah, 2
+    int 21h
+    loop proc_digit_out
+proc_output_done:
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+    pop bp
+    ret 2
+write endp
+
+_print:
+    mov si,0
+    mov di,offset _buff_p
+_p_lp_1:
+    mov al,ds:[bx+si]
+    cmp al,0
+    je _p_brk_1
+    mov ds:[di],al
+    inc si
+    inc di
+    jmp short _p_lp_1
+_p_brk_1:
+    mov dx,offset _buff_p
+    mov ah,09h
+    int 21h
+    mov cx,si
+    mov di,offset _buff_p
+_p_lp_2:
+    mov al,24h
+    mov ds:[di],al
+    inc di
+    loop _p_lp_2
+    ret
+code ends
+end start
+
+========== 编译诊断 ==========
+No diagnostics

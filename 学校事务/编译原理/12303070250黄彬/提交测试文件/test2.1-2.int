@@ -1,0 +1,597 @@
+========== 测试用例 ==========
+test2.1-2
+
+========== 源程序 ==========
+//while和if嵌套测试，求最大值、最小值和平均值
+void main()
+{
+	int a=0;
+	int max = 0;
+	int min = 0;
+	int sum = 0;
+	int i = 0;
+	while(i<5)
+	{
+		a = read();
+		if(i==0){
+			max = a;
+			min = a;}
+		else
+		{
+			if(a>max){max=a;}
+			if(a<min){min=a;}
+		}
+		sum = sum+a;
+		i = i+1;
+	}
+	write('最大 最小 平均值：');
+	write('\n');
+	write(max);
+	write('\n');
+	write(min);
+	write('\n');
+	sum = sum/5;
+	write(sum);
+	write('\n');
+}
+
+========== TOKEN 序列 ==========
+void 104 2
+main 700 2
+( 303 2
+) 304 2
+{ 305 3
+int 101 4
+a 700 4
+= 207 4
+0 401 4
+; 301 4
+int 101 5
+max 700 5
+= 207 5
+0 401 5
+; 301 5
+int 101 6
+min 700 6
+= 207 6
+0 401 6
+; 301 6
+int 101 7
+sum 700 7
+= 207 7
+0 401 7
+; 301 7
+int 101 8
+i 700 8
+= 207 8
+0 401 8
+; 301 8
+while 108 9
+( 303 9
+i 700 9
+< 209 9
+5 401 9
+) 304 9
+{ 305 10
+a 700 11
+= 207 11
+read 700 11
+( 303 11
+) 304 11
+; 301 11
+if 106 12
+( 303 12
+i 700 12
+== 201 12
+0 401 12
+) 304 12
+{ 305 12
+max 700 13
+= 207 13
+a 700 13
+; 301 13
+min 700 14
+= 207 14
+a 700 14
+; 301 14
+} 306 14
+else 107 15
+{ 305 16
+if 106 17
+( 303 17
+a 700 17
+> 208 17
+max 700 17
+) 304 17
+{ 305 17
+max 700 17
+= 207 17
+a 700 17
+; 301 17
+} 306 17
+if 106 18
+( 303 18
+a 700 18
+< 209 18
+min 700 18
+) 304 18
+{ 305 18
+min 700 18
+= 207 18
+a 700 18
+; 301 18
+} 306 18
+} 306 19
+sum 700 20
+= 207 20
+sum 700 20
++ 210 20
+a 700 20
+; 301 20
+i 700 21
+= 207 21
+i 700 21
++ 210 21
+1 401 21
+; 301 21
+} 306 22
+write 700 23
+( 303 23
+'最大 最小 平均值：' 403 23
+) 304 23
+; 301 23
+write 700 24
+( 303 24
+'\n' 403 24
+) 304 24
+; 301 24
+write 700 25
+( 303 25
+max 700 25
+) 304 25
+; 301 25
+write 700 26
+( 303 26
+'\n' 403 26
+) 304 26
+; 301 26
+write 700 27
+( 303 27
+min 700 27
+) 304 27
+; 301 27
+write 700 28
+( 303 28
+'\n' 403 28
+) 304 28
+; 301 28
+sum 700 29
+= 207 29
+sum 700 29
+/ 213 29
+5 401 29
+; 301 29
+write 700 30
+( 303 30
+sum 700 30
+) 304 30
+; 301 30
+write 700 31
+( 303 31
+'\n' 403 31
+) 304 31
+; 301 31
+} 306 32
+
+========== AST ==========
+Program
+  FunctionDef(void main)[2]
+    Compound
+      VarDecl(int a)[4]
+        0[4]
+      VarDecl(int max)[5]
+        0[5]
+      VarDecl(int min)[6]
+        0[6]
+      VarDecl(int sum)[7]
+        0[7]
+      VarDecl(int i)[8]
+        0[8]
+      WhileStmt
+        <
+          i[9]
+          5[9]
+        Compound
+          ExprStmt
+            =
+              a[11]
+              Call(read)[11]
+          IfStmt
+            ==
+              i[12]
+              0[12]
+            Compound
+              ExprStmt
+                =
+                  max[13]
+                  a[13]
+              ExprStmt
+                =
+                  min[14]
+                  a[14]
+            Compound
+              IfStmt
+                >
+                  a[17]
+                  max[17]
+                Compound
+                  ExprStmt
+                    =
+                      max[17]
+                      a[17]
+              IfStmt
+                <
+                  a[18]
+                  min[18]
+                Compound
+                  ExprStmt
+                    =
+                      min[18]
+                      a[18]
+          ExprStmt
+            =
+              sum[20]
+              +
+                sum[20]
+                a[20]
+          ExprStmt
+            =
+              i[21]
+              +
+                i[21]
+                1[21]
+      ExprStmt
+        Call(write)[23]
+          '最大 最小 平均值：'[23]
+      ExprStmt
+        Call(write)[24]
+          '\n'[24]
+      ExprStmt
+        Call(write)[25]
+          max[25]
+      ExprStmt
+        Call(write)[26]
+          '\n'[26]
+      ExprStmt
+        Call(write)[27]
+          min[27]
+      ExprStmt
+        Call(write)[28]
+          '\n'[28]
+      ExprStmt
+        =
+          sum[29]
+          /
+            sum[29]
+            5[29]
+      ExprStmt
+        Call(write)[30]
+          sum[30]
+      ExprStmt
+        Call(write)[31]
+          '\n'[31]
+
+========== 中间代码（四元式） ==========
+0: ('main', '_', '_', '_')
+1: ('=', '0', '_', 'a')
+2: ('=', '0', '_', 'max')
+3: ('=', '0', '_', 'min')
+4: ('=', '0', '_', 'sum')
+5: ('=', '0', '_', 'i')
+6: ('J<', 'i', '5', 8)
+7: ('J', '_', '_', 26)
+8: ('call', 'read', '_', 't1')
+9: ('=', 't1', '_', 'a')
+10: ('J==', 'i', '0', 12)
+11: ('J', '_', '_', 15)
+12: ('=', 'a', '_', 'max')
+13: ('=', 'a', '_', 'min')
+14: ('J', '_', '_', 21)
+15: ('J>', 'a', 'max', 17)
+16: ('J', '_', '_', 18)
+17: ('=', 'a', '_', 'max')
+18: ('J<', 'a', 'min', 20)
+19: ('J', '_', '_', 21)
+20: ('=', 'a', '_', 'min')
+21: ('+', 'sum', 'a', 't2')
+22: ('=', 't2', '_', 'sum')
+23: ('+', 'i', '1', 't3')
+24: ('=', 't3', '_', 'i')
+25: ('J', '_', '_', 6)
+26: ('para', '最大 最小 平均值：', '_', '_')
+27: ('call', 'write', '_', 't4')
+28: ('para', '\n', '_', '_')
+29: ('call', 'write', '_', 't5')
+30: ('para', 'max', '_', '_')
+31: ('call', 'write', '_', 't6')
+32: ('para', '\n', '_', '_')
+33: ('call', 'write', '_', 't7')
+34: ('para', 'min', '_', '_')
+35: ('call', 'write', '_', 't8')
+36: ('para', '\n', '_', '_')
+37: ('call', 'write', '_', 't9')
+38: ('/', 'sum', '5', 't10')
+39: ('=', 't10', '_', 'sum')
+40: ('para', 'sum', '_', '_')
+41: ('call', 'write', '_', 't11')
+42: ('para', '\n', '_', '_')
+43: ('call', 'write', '_', 't12')
+44: ('sys', '_', '_', '_')
+
+========== MASM16 汇编程序代码 ==========
+assume cs:code,ds:data,ss:stack,es:extended
+extended segment
+  db 1024 dup (0)
+extended ends
+stack segment
+  db 1024 dup (0)
+stack ends
+dispmsg macro message
+  lea dx, message
+  mov ah, 9
+  int 21h
+endm
+data segment
+  _buff_p db 256 dup (24h)
+  _buff_s db 256 dup (0)
+  _msg_p db 0ah,'Output:',0
+  _msg_s db 0ah,'Input:',0
+  next_row db 0dh,0ah,'$'
+  error db 'input error, please re-enter: ','$'
+data ends
+code segment
+start:
+    mov ax,extended
+    mov es,ax
+    mov ax,stack
+    mov ss,ax
+    mov sp,1024
+    mov bp,sp
+    mov ax,data
+    mov ds,ax
+
+main:
+    PUSH BP
+    MOV BP,SP
+    SUB SP,36
+    MOV AX,0
+    MOV ss:[bp-2],AX
+    MOV AX,0
+    MOV ss:[bp-4],AX
+    MOV AX,0
+    MOV ss:[bp-6],AX
+    MOV AX,0
+    MOV ss:[bp-8],AX
+    MOV AX,0
+    MOV ss:[bp-10],AX
+_6:
+    MOV AX,ss:[bp-10]
+    CMP AX,5
+    JL _8
+    JMP far ptr _26
+_8:
+    CALL read
+    MOV ss:[bp-12],AX
+    MOV AX,ss:[bp-12]
+    MOV ss:[bp-2],AX
+    MOV AX,ss:[bp-10]
+    CMP AX,0
+    JE _12
+    JMP far ptr _15
+_12:
+    MOV AX,ss:[bp-2]
+    MOV ss:[bp-4],AX
+    MOV AX,ss:[bp-2]
+    MOV ss:[bp-6],AX
+    JMP far ptr _21
+_15:
+    MOV AX,ss:[bp-2]
+    CMP AX,ss:[bp-4]
+    JG _17
+    JMP far ptr _18
+_17:
+    MOV AX,ss:[bp-2]
+    MOV ss:[bp-4],AX
+_18:
+    MOV AX,ss:[bp-2]
+    CMP AX,ss:[bp-6]
+    JL _20
+    JMP far ptr _21
+_20:
+    MOV AX,ss:[bp-2]
+    MOV ss:[bp-6],AX
+_21:
+    MOV AX,ss:[bp-8]
+    ADD AX,ss:[bp-2]
+    MOV ss:[bp-14],AX
+    MOV AX,ss:[bp-14]
+    MOV ss:[bp-8],AX
+    MOV AX,ss:[bp-10]
+    ADD AX,1
+    MOV ss:[bp-16],AX
+    MOV AX,ss:[bp-16]
+    MOV ss:[bp-10],AX
+    JMP far ptr _6
+_26:
+    ; builtin write(): string '最大 最小 平均值：'
+    CALL write
+    MOV ss:[bp-18],AX
+    MOV AX,ss:[bp-20]
+    PUSH AX
+    CALL write
+    MOV ss:[bp-22],AX
+    MOV AX,ss:[bp-4]
+    PUSH AX
+    CALL write
+    MOV ss:[bp-24],AX
+    MOV AX,ss:[bp-20]
+    PUSH AX
+    CALL write
+    MOV ss:[bp-26],AX
+    MOV AX,ss:[bp-6]
+    PUSH AX
+    CALL write
+    MOV ss:[bp-28],AX
+    MOV AX,ss:[bp-20]
+    PUSH AX
+    CALL write
+    MOV ss:[bp-30],AX
+    MOV AX,ss:[bp-8]
+    MOV BX,5
+    CWD
+    IDIV BX
+    MOV ss:[bp-32],AX
+    MOV AX,ss:[bp-32]
+    MOV ss:[bp-8],AX
+    MOV AX,ss:[bp-8]
+    PUSH AX
+    CALL write
+    MOV ss:[bp-34],AX
+    MOV AX,ss:[bp-20]
+    PUSH AX
+    CALL write
+    MOV ss:[bp-36],AX
+    MOV AX,0
+    mov ah,4ch
+    int 21h
+
+
+read proc near
+    push bp
+    mov bp, sp
+    mov bx,offset _msg_s
+    call _print
+    push bx
+    push cx
+    push dx
+proc_pre_start:
+    xor ax, ax
+    xor bx, bx
+    xor cx, cx
+    xor dx, dx
+proc_judge_sign:
+    mov ah, 1
+    int 21h
+    cmp al, '-'
+    jne proc_next
+    mov dx, 0ffffh
+    jmp proc_digit_in
+proc_next:
+    cmp al, 30h
+    jb proc_unexpected
+    cmp al, 39h
+    ja proc_unexpected
+    sub al, 30h
+    shl bx, 1
+    mov cx, bx
+    shl bx, 1
+    shl bx, 1
+    add bx, cx
+    add bl, al
+    adc bh, 0
+proc_digit_in:
+    mov ah, 1
+    int 21h
+    jmp proc_next
+proc_save:
+    cmp dx, 0ffffh
+    jne proc_result_save
+    neg bx
+proc_result_save:
+    mov ax, bx
+    jmp proc_input_done
+proc_unexpected:
+    cmp al, 0dh
+    je proc_save
+    dispmsg next_row
+    dispmsg error
+    jmp proc_pre_start
+proc_input_done:
+    pop dx
+    pop cx
+    pop bx
+    pop bp
+    ret
+read endp
+
+write proc near
+    push bp
+    mov bp, sp
+    push ax
+    push bx
+    push cx
+    push dx
+    mov bx,offset _msg_p
+    call _print
+    xor cx, cx
+    mov bx, [bp+4]
+    test bx, 8000h
+    jz proc_nonneg
+    neg bx
+    mov dl,'-'
+    mov ah, 2
+    int 21h
+proc_nonneg:
+    mov ax, bx
+    cwd
+    mov bx, 10
+proc_div_again:
+    xor dx, dx
+    div bx
+    add dl, 30h
+    push dx
+    inc cx
+    cmp ax, 0
+    jne proc_div_again
+proc_digit_out:
+    pop dx
+    mov ah, 2
+    int 21h
+    loop proc_digit_out
+proc_output_done:
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+    pop bp
+    ret 2
+write endp
+
+_print:
+    mov si,0
+    mov di,offset _buff_p
+_p_lp_1:
+    mov al,ds:[bx+si]
+    cmp al,0
+    je _p_brk_1
+    mov ds:[di],al
+    inc si
+    inc di
+    jmp short _p_lp_1
+_p_brk_1:
+    mov dx,offset _buff_p
+    mov ah,09h
+    int 21h
+    mov cx,si
+    mov di,offset _buff_p
+_p_lp_2:
+    mov al,24h
+    mov ds:[di],al
+    inc di
+    loop _p_lp_2
+    ret
+code ends
+end start
+
+========== 编译诊断 ==========
+No diagnostics

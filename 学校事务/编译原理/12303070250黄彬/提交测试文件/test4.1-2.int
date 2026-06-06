@@ -1,0 +1,386 @@
+========== 测试用例 ==========
+test4.1-2
+
+========== 源程序 ==========
+//单递归测试2：求n内所有数的和
+int seq(int);
+main()
+{
+   int n;
+   n=read();
+   write(seq(n));
+}
+
+int seq(int m) {
+  int i,fa;
+  i=0;
+  if(m<=1)
+    {
+	fa=1;
+     }
+   else{
+         fa=m+seq(m-1);
+     }
+   return fa;
+}
+
+========== TOKEN 序列 ==========
+int 101 2
+seq 700 2
+( 303 2
+int 101 2
+) 304 2
+; 301 2
+main 700 3
+( 303 3
+) 304 3
+{ 305 4
+int 101 5
+n 700 5
+; 301 5
+n 700 6
+= 207 6
+read 700 6
+( 303 6
+) 304 6
+; 301 6
+write 700 7
+( 303 7
+seq 700 7
+( 303 7
+n 700 7
+) 304 7
+) 304 7
+; 301 7
+} 306 8
+int 101 10
+seq 700 10
+( 303 10
+int 101 10
+m 700 10
+) 304 10
+{ 305 10
+int 101 11
+i 700 11
+, 302 11
+fa 700 11
+; 301 11
+i 700 12
+= 207 12
+0 401 12
+; 301 12
+if 106 13
+( 303 13
+m 700 13
+<= 203 13
+1 401 13
+) 304 13
+{ 305 14
+fa 700 15
+= 207 15
+1 401 15
+; 301 15
+} 306 16
+else 107 17
+{ 305 17
+fa 700 18
+= 207 18
+m 700 18
++ 210 18
+seq 700 18
+( 303 18
+m 700 18
+- 211 18
+1 401 18
+) 304 18
+; 301 18
+} 306 19
+return 105 20
+fa 700 20
+; 301 20
+} 306 21
+
+========== AST ==========
+Program
+  FunctionDecl(int seq)[2]
+    Param(int)[2]
+  FunctionDef(int main)[3]
+    Compound
+      VarDecl(int n)[5]
+      ExprStmt
+        =
+          n[6]
+          Call(read)[6]
+      ExprStmt
+        Call(write)[7]
+          Call(seq)[7]
+            n[7]
+  FunctionDef(int seq)[10]
+    Param(int m)[10]
+    Compound
+      VarDecl(int i)[11]
+      VarDecl(int fa)[11]
+      ExprStmt
+        =
+          i[12]
+          0[12]
+      IfStmt
+        <=
+          m[13]
+          1[13]
+        Compound
+          ExprStmt
+            =
+              fa[15]
+              1[15]
+        Compound
+          ExprStmt
+            =
+              fa[18]
+              +
+                m[18]
+                Call(seq)[18]
+                  -
+                    m[18]
+                    1[18]
+      ReturnStmt[20]
+        fa[20]
+
+========== 中间代码（四元式） ==========
+0: ('main', '_', '_', '_')
+1: ('call', 'read', '_', 't1')
+2: ('=', 't1', '_', 'n')
+3: ('para', 'n', '_', '_')
+4: ('call', 'seq', '_', 't2')
+5: ('para', 't2', '_', '_')
+6: ('call', 'write', '_', 't3')
+7: ('sys', '_', '_', '_')
+8: ('seq', '_', '_', '_')
+9: ('=', '0', '_', 'i')
+10: ('J<=', 'm', '1', 12)
+11: ('J', '_', '_', 14)
+12: ('=', '1', '_', 'fa')
+13: ('J', '_', '_', 19)
+14: ('-', 'm', '1', 't4')
+15: ('para', 't4', '_', '_')
+16: ('call', 'seq', '_', 't5')
+17: ('+', 'm', 't5', 't6')
+18: ('=', 't6', '_', 'fa')
+19: ('ret', '_', '_', 'fa')
+20: ('ret', '_', '_', '_')
+
+========== MASM16 汇编程序代码 ==========
+assume cs:code,ds:data,ss:stack,es:extended
+extended segment
+  db 1024 dup (0)
+extended ends
+stack segment
+  db 1024 dup (0)
+stack ends
+dispmsg macro message
+  lea dx, message
+  mov ah, 9
+  int 21h
+endm
+data segment
+  _buff_p db 256 dup (24h)
+  _buff_s db 256 dup (0)
+  _msg_p db 0ah,'Output:',0
+  _msg_s db 0ah,'Input:',0
+  next_row db 0dh,0ah,'$'
+  error db 'input error, please re-enter: ','$'
+data ends
+code segment
+start:
+    mov ax,extended
+    mov es,ax
+    mov ax,stack
+    mov ss,ax
+    mov sp,1024
+    mov bp,sp
+    mov ax,data
+    mov ds,ax
+
+main:
+    PUSH BP
+    MOV BP,SP
+    SUB SP,8
+    CALL read
+    MOV ss:[bp-2],AX
+    MOV AX,ss:[bp-2]
+    MOV ss:[bp-4],AX
+    MOV AX,ss:[bp-4]
+    PUSH AX
+    CALL fn_seq
+    MOV ss:[bp-6],AX
+    MOV AX,ss:[bp-6]
+    PUSH AX
+    CALL write
+    MOV ss:[bp-8],AX
+    MOV AX,0
+    mov ah,4ch
+    int 21h
+
+fn_seq:
+    PUSH BP
+    MOV BP,SP
+    SUB SP,10
+    MOV AX,0
+    MOV ss:[bp-2],AX
+    MOV AX,ss:[bp+4]
+    CMP AX,1
+    JLE _12
+    JMP far ptr _14
+_12:
+    MOV AX,1
+    MOV ss:[bp-4],AX
+    JMP far ptr _19
+_14:
+    MOV AX,ss:[bp+4]
+    SUB AX,1
+    MOV ss:[bp-6],AX
+    MOV AX,ss:[bp-6]
+    PUSH AX
+    CALL fn_seq
+    MOV ss:[bp-8],AX
+    MOV AX,ss:[bp+4]
+    ADD AX,ss:[bp-8]
+    MOV ss:[bp-10],AX
+    MOV AX,ss:[bp-10]
+    MOV ss:[bp-4],AX
+_19:
+    MOV AX,ss:[bp-4]
+    MOV SP,BP
+    POP BP
+    RET
+
+
+read proc near
+    push bp
+    mov bp, sp
+    mov bx,offset _msg_s
+    call _print
+    push bx
+    push cx
+    push dx
+proc_pre_start:
+    xor ax, ax
+    xor bx, bx
+    xor cx, cx
+    xor dx, dx
+proc_judge_sign:
+    mov ah, 1
+    int 21h
+    cmp al, '-'
+    jne proc_next
+    mov dx, 0ffffh
+    jmp proc_digit_in
+proc_next:
+    cmp al, 30h
+    jb proc_unexpected
+    cmp al, 39h
+    ja proc_unexpected
+    sub al, 30h
+    shl bx, 1
+    mov cx, bx
+    shl bx, 1
+    shl bx, 1
+    add bx, cx
+    add bl, al
+    adc bh, 0
+proc_digit_in:
+    mov ah, 1
+    int 21h
+    jmp proc_next
+proc_save:
+    cmp dx, 0ffffh
+    jne proc_result_save
+    neg bx
+proc_result_save:
+    mov ax, bx
+    jmp proc_input_done
+proc_unexpected:
+    cmp al, 0dh
+    je proc_save
+    dispmsg next_row
+    dispmsg error
+    jmp proc_pre_start
+proc_input_done:
+    pop dx
+    pop cx
+    pop bx
+    pop bp
+    ret
+read endp
+
+write proc near
+    push bp
+    mov bp, sp
+    push ax
+    push bx
+    push cx
+    push dx
+    mov bx,offset _msg_p
+    call _print
+    xor cx, cx
+    mov bx, [bp+4]
+    test bx, 8000h
+    jz proc_nonneg
+    neg bx
+    mov dl,'-'
+    mov ah, 2
+    int 21h
+proc_nonneg:
+    mov ax, bx
+    cwd
+    mov bx, 10
+proc_div_again:
+    xor dx, dx
+    div bx
+    add dl, 30h
+    push dx
+    inc cx
+    cmp ax, 0
+    jne proc_div_again
+proc_digit_out:
+    pop dx
+    mov ah, 2
+    int 21h
+    loop proc_digit_out
+proc_output_done:
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+    pop bp
+    ret 2
+write endp
+
+_print:
+    mov si,0
+    mov di,offset _buff_p
+_p_lp_1:
+    mov al,ds:[bx+si]
+    cmp al,0
+    je _p_brk_1
+    mov ds:[di],al
+    inc si
+    inc di
+    jmp short _p_lp_1
+_p_brk_1:
+    mov dx,offset _buff_p
+    mov ah,09h
+    int 21h
+    mov cx,si
+    mov di,offset _buff_p
+_p_lp_2:
+    mov al,24h
+    mov ds:[di],al
+    inc di
+    loop _p_lp_2
+    ret
+code ends
+end start
+
+========== 编译诊断 ==========
+No diagnostics

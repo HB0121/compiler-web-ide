@@ -1,0 +1,393 @@
+========== 测试用例 ==========
+test5.1
+
+========== 源程序 ==========
+//双递归函数调用测试2：求菲波拉契数列
+//结果：1  1  2  3  5  8  13   21   34...
+int seq(int);
+main()
+{
+   int n;
+   n=read();
+   write(seq(n));
+}
+
+int seq(int m) 
+{
+      int s,a,b;
+      if(m<=2)
+          s=1;
+      else{
+     s=seq(m-1)+seq(m-2);//这种写法运行结果可能不正确，中间代码翻译没有问题，需再进一步测试目标代码翻译
+      }
+      return s;
+
+}
+
+========== TOKEN 序列 ==========
+int 101 3
+seq 700 3
+( 303 3
+int 101 3
+) 304 3
+; 301 3
+main 700 4
+( 303 4
+) 304 4
+{ 305 5
+int 101 6
+n 700 6
+; 301 6
+n 700 7
+= 207 7
+read 700 7
+( 303 7
+) 304 7
+; 301 7
+write 700 8
+( 303 8
+seq 700 8
+( 303 8
+n 700 8
+) 304 8
+) 304 8
+; 301 8
+} 306 9
+int 101 11
+seq 700 11
+( 303 11
+int 101 11
+m 700 11
+) 304 11
+{ 305 12
+int 101 13
+s 700 13
+, 302 13
+a 700 13
+, 302 13
+b 700 13
+; 301 13
+if 106 14
+( 303 14
+m 700 14
+<= 203 14
+2 401 14
+) 304 14
+s 700 15
+= 207 15
+1 401 15
+; 301 15
+else 107 16
+{ 305 16
+s 700 17
+= 207 17
+seq 700 17
+( 303 17
+m 700 17
+- 211 17
+1 401 17
+) 304 17
++ 210 17
+seq 700 17
+( 303 17
+m 700 17
+- 211 17
+2 401 17
+) 304 17
+; 301 17
+} 306 18
+return 105 19
+s 700 19
+; 301 19
+} 306 21
+
+========== AST ==========
+Program
+  FunctionDecl(int seq)[3]
+    Param(int)[3]
+  FunctionDef(int main)[4]
+    Compound
+      VarDecl(int n)[6]
+      ExprStmt
+        =
+          n[7]
+          Call(read)[7]
+      ExprStmt
+        Call(write)[8]
+          Call(seq)[8]
+            n[8]
+  FunctionDef(int seq)[11]
+    Param(int m)[11]
+    Compound
+      VarDecl(int s)[13]
+      VarDecl(int a)[13]
+      VarDecl(int b)[13]
+      IfStmt
+        <=
+          m[14]
+          2[14]
+        ExprStmt
+          =
+            s[15]
+            1[15]
+        Compound
+          ExprStmt
+            =
+              s[17]
+              +
+                Call(seq)[17]
+                  -
+                    m[17]
+                    1[17]
+                Call(seq)[17]
+                  -
+                    m[17]
+                    2[17]
+      ReturnStmt[19]
+        s[19]
+
+========== 中间代码（四元式） ==========
+0: ('main', '_', '_', '_')
+1: ('call', 'read', '_', 't1')
+2: ('=', 't1', '_', 'n')
+3: ('para', 'n', '_', '_')
+4: ('call', 'seq', '_', 't2')
+5: ('para', 't2', '_', '_')
+6: ('call', 'write', '_', 't3')
+7: ('sys', '_', '_', '_')
+8: ('seq', '_', '_', '_')
+9: ('J<=', 'm', '2', 11)
+10: ('J', '_', '_', 13)
+11: ('=', '1', '_', 's')
+12: ('J', '_', '_', 21)
+13: ('-', 'm', '1', 't4')
+14: ('para', 't4', '_', '_')
+15: ('call', 'seq', '_', 't5')
+16: ('-', 'm', '2', 't6')
+17: ('para', 't6', '_', '_')
+18: ('call', 'seq', '_', 't7')
+19: ('+', 't5', 't7', 't8')
+20: ('=', 't8', '_', 's')
+21: ('ret', '_', '_', 's')
+22: ('ret', '_', '_', '_')
+
+========== MASM16 汇编程序代码 ==========
+assume cs:code,ds:data,ss:stack,es:extended
+extended segment
+  db 1024 dup (0)
+extended ends
+stack segment
+  db 1024 dup (0)
+stack ends
+dispmsg macro message
+  lea dx, message
+  mov ah, 9
+  int 21h
+endm
+data segment
+  _buff_p db 256 dup (24h)
+  _buff_s db 256 dup (0)
+  _msg_p db 0ah,'Output:',0
+  _msg_s db 0ah,'Input:',0
+  next_row db 0dh,0ah,'$'
+  error db 'input error, please re-enter: ','$'
+data ends
+code segment
+start:
+    mov ax,extended
+    mov es,ax
+    mov ax,stack
+    mov ss,ax
+    mov sp,1024
+    mov bp,sp
+    mov ax,data
+    mov ds,ax
+
+main:
+    PUSH BP
+    MOV BP,SP
+    SUB SP,8
+    CALL read
+    MOV ss:[bp-2],AX
+    MOV AX,ss:[bp-2]
+    MOV ss:[bp-4],AX
+    MOV AX,ss:[bp-4]
+    PUSH AX
+    CALL fn_seq
+    MOV ss:[bp-6],AX
+    MOV AX,ss:[bp-6]
+    PUSH AX
+    CALL write
+    MOV ss:[bp-8],AX
+    MOV AX,0
+    mov ah,4ch
+    int 21h
+
+fn_seq:
+    PUSH BP
+    MOV BP,SP
+    SUB SP,12
+    MOV AX,ss:[bp+4]
+    CMP AX,2
+    JLE _11
+    JMP far ptr _13
+_11:
+    MOV AX,1
+    MOV ss:[bp-2],AX
+    JMP far ptr _21
+_13:
+    MOV AX,ss:[bp+4]
+    SUB AX,1
+    MOV ss:[bp-4],AX
+    MOV AX,ss:[bp-4]
+    PUSH AX
+    CALL fn_seq
+    MOV ss:[bp-6],AX
+    MOV AX,ss:[bp+4]
+    SUB AX,2
+    MOV ss:[bp-8],AX
+    MOV AX,ss:[bp-8]
+    PUSH AX
+    CALL fn_seq
+    MOV ss:[bp-10],AX
+    MOV AX,ss:[bp-6]
+    ADD AX,ss:[bp-10]
+    MOV ss:[bp-12],AX
+    MOV AX,ss:[bp-12]
+    MOV ss:[bp-2],AX
+_21:
+    MOV AX,ss:[bp-2]
+    MOV SP,BP
+    POP BP
+    RET
+
+
+read proc near
+    push bp
+    mov bp, sp
+    mov bx,offset _msg_s
+    call _print
+    push bx
+    push cx
+    push dx
+proc_pre_start:
+    xor ax, ax
+    xor bx, bx
+    xor cx, cx
+    xor dx, dx
+proc_judge_sign:
+    mov ah, 1
+    int 21h
+    cmp al, '-'
+    jne proc_next
+    mov dx, 0ffffh
+    jmp proc_digit_in
+proc_next:
+    cmp al, 30h
+    jb proc_unexpected
+    cmp al, 39h
+    ja proc_unexpected
+    sub al, 30h
+    shl bx, 1
+    mov cx, bx
+    shl bx, 1
+    shl bx, 1
+    add bx, cx
+    add bl, al
+    adc bh, 0
+proc_digit_in:
+    mov ah, 1
+    int 21h
+    jmp proc_next
+proc_save:
+    cmp dx, 0ffffh
+    jne proc_result_save
+    neg bx
+proc_result_save:
+    mov ax, bx
+    jmp proc_input_done
+proc_unexpected:
+    cmp al, 0dh
+    je proc_save
+    dispmsg next_row
+    dispmsg error
+    jmp proc_pre_start
+proc_input_done:
+    pop dx
+    pop cx
+    pop bx
+    pop bp
+    ret
+read endp
+
+write proc near
+    push bp
+    mov bp, sp
+    push ax
+    push bx
+    push cx
+    push dx
+    mov bx,offset _msg_p
+    call _print
+    xor cx, cx
+    mov bx, [bp+4]
+    test bx, 8000h
+    jz proc_nonneg
+    neg bx
+    mov dl,'-'
+    mov ah, 2
+    int 21h
+proc_nonneg:
+    mov ax, bx
+    cwd
+    mov bx, 10
+proc_div_again:
+    xor dx, dx
+    div bx
+    add dl, 30h
+    push dx
+    inc cx
+    cmp ax, 0
+    jne proc_div_again
+proc_digit_out:
+    pop dx
+    mov ah, 2
+    int 21h
+    loop proc_digit_out
+proc_output_done:
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+    pop bp
+    ret 2
+write endp
+
+_print:
+    mov si,0
+    mov di,offset _buff_p
+_p_lp_1:
+    mov al,ds:[bx+si]
+    cmp al,0
+    je _p_brk_1
+    mov ds:[di],al
+    inc si
+    inc di
+    jmp short _p_lp_1
+_p_brk_1:
+    mov dx,offset _buff_p
+    mov ah,09h
+    int 21h
+    mov cx,si
+    mov di,offset _buff_p
+_p_lp_2:
+    mov al,24h
+    mov ds:[di],al
+    inc di
+    loop _p_lp_2
+    ret
+code ends
+end start
+
+========== 编译诊断 ==========
+No diagnostics

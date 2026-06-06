@@ -1,0 +1,15 @@
+NFA Graph for regex
+Regex: \d{4}-\d{2}-\d{2}
+States: q0, q1, q2, q3, q4, q5
+Start: q0
+Accept: q5
+Transitions:
+  q0 -- \d{4} --> q1
+  q1 -- - --> q2
+  q2 -- \d{2} --> q3
+  q3 -- - --> q4
+  q4 -- \d{2} --> q5
+Construction:
+  1. Parse user regular expression into fragments.
+  2. Build fragment NFA with Thompson construction.
+  3. Link fragment accept state to the next fragment start state.

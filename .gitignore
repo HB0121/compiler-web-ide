@@ -1,2 +1,5 @@
 .obsidian/workspace.json
 .obsidian/workspace-mobile.json
+# 忽略特定的视频和压缩包
+*.mp4
+*.zip

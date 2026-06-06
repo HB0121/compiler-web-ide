@@ -1,0 +1,14 @@
+{\rtf1\ansi\deff0
+\pard\b test5.4 \u-28720?\u-30644?\u32467?\u26524?\u-28781?\u20986?\b0\par
+\pard \u27979?\u-29739?\u29992?\u20363?\u-230?test5.4\par
+\pard Token \u25968?\u-28209?\u-230?104\par
+\pard \u-29750?\u26029?\u25968?\u-28209?\u-230?0\par
+\pard \u22235?\u20803?\u24335?\u25968?\u-28209?\u-230?28\par
+\pard \u-28720?\u-30644?\u30028?\u-26782?\u-29708?\u26126?\u-230?\u22312? GUI \u24038?\u20391?\u25171?\u24320?\u28304?\u31243?\u24207?\u21518?\u28857?\u20987?\u8220?\u-28720?\u-30644?\u8221?\u-244?\u21491?\u20391? Results \u21306?\u22495?\u23637?\u31034? Tokens\u12289?AST\u12289?\u20013?\u-27148?\u20195?\u30721?\u12289?Interpreter\u12289?Assembly \u31561?\u32467?\u26524?\u-229?\u19979?\u26041? Diagnostics \u21306?\u22495?\u23637?\u31034?\u-27367?\u-29713?\u25552?\u31034?\u12290?\par
+\pard\b \u28304?\u31243?\u24207?\b0\par
+\pard\f1 // \u27979?\u-29739?\u25968?\u32452?\par // \u-28781?\u20837?\u25968?\u23383?n\u-244?\u-28781?\u20986?\u20174?\u31532?1\u20010?\u21040?\u31532?n\u20010?\u30340?\u26000?\u27874?\u-28509?\u22865?\u25968?\u21015?\par int a[50];\par int main(void)\par \{\par     int i;\par     int n;\par     read(n);\par     a[0] = 0;\par     a[1] = 1;\par \par     i = 2;\par     while(i <= n)\par     \{\par         a[i] = a[i-1] + a[i-2];\par         i = i + 1;\par     \}\par     i = 1;\par     while(i <= n)\par     \{\par       write(a[i]);\par         i = i + 1;\par     \}\par     return 0;\par \}\par
+\pard\b \u25191?\u-30644?\u32467?\u26524?\u25688?\u-30335?\b0\par
+\pard\f1 Execution Result\par Item | Value | Meaning\par --- | --- | ---\par return_value | 0 | \u31243?\u24207?\u26368?\u32456?\u-28716?\u22238?\u20540?\par \par Variables\par Name | Value\par --- | ---\par a[0] | 0\par a[1] | 1\par i | 1\par n | 0\par t1 | 0\par \par Execution Trace\par Step | Quad / Event | Meaning\par --- | --- | ---\par 1 | 1: (call, read, _, t1) | \u-29693?\u29992?\u20989?\u25968? read\u-244?\u32467?\u26524?\u20445?\u23384?\u21040? t1\par 2 | builtin read() -> 0 | \u27169?\u25311?\u20869?\u32622?\u-28781?\u20837?\u20989?\u25968? read\u-244?\u-24872?\u-29788?\u-29701?\u20837? 0\par 3 | 2: (=, t1, _, n) | n = t1\par 4 | 3: ([]=, 0, 0, a) | a[0] = 0\par 5 | 4: ([]=, 1, 1, a) | a[1] = 1\par 6 | 5: (=, 2, _, i) | i = 2\par 7 | 6: (J<=, i, n, 8) | \u26465?\u20214?\u25104?\u31435?\u26102?\u-29197?\u-28820?\u21040?\u22235?\u20803?\u24335? 8\par 8 | 7: (J, _, _, 17) | \u26080?\u26465?\u20214?\u-29197?\u-28820?\u21040?\u22235?\u20803?\u24335? 17\par 9 | 17: (=, 1, _, i) | i = 1\par 10 | 18: (J<=, i, n, 20) | \u26465?\u20214?\u25104?\u31435?\u26102?\u-29197?\u-28820?\u21040?\u22235?\u20803?\u24335? 20\par 11 | 19: (J, _, _, 26) | \u26080?\u26465?\u20214?\u-29197?\u-28820?\u21040?\u22235?\u20803?\u24335? 26\par 12 | 26: (ret, _, _, 0) | \u-28716?\u22238? 0\par \par Runtime Warnings\par Warning\par ---\par None\par
+\pard\b \u-29750?\u26029?\u20449?\u24687?\b0\par
+\pard\f1 No diagnostics\par
+}

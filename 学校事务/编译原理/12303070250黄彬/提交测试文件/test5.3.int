@@ -1,0 +1,483 @@
+========== 测试用例 ==========
+test5.3
+
+========== 源程序 ==========
+// 三递归函数调用测试3：花式上楼梯，比如已知总共有15级台阶
+//一个人从地面开始可以一次上一级台阶，也可以一次上两级台阶
+//最多可以一次上三级台阶，请问，上到15级有多少中上楼梯的方法
+//程序可以使用倒推的方法来写
+//结果：1，2，4，7，13，24，44，81，149......
+int f(int);
+main()
+{
+   int m;
+   m = read();
+   write(f(m));
+
+}
+
+int f(int n) {
+   int a;
+   if(n==1) {
+		return 1;
+	}
+   else if(n==2) {
+		return 2;
+	}
+   else if(n==3) {
+		return 4;
+	}
+    a = f(n - 1)+ f(n - 2)+ f(n - 3);
+    return a ;
+ }
+
+========== TOKEN 序列 ==========
+int 101 6
+f 700 6
+( 303 6
+int 101 6
+) 304 6
+; 301 6
+main 700 7
+( 303 7
+) 304 7
+{ 305 8
+int 101 9
+m 700 9
+; 301 9
+m 700 10
+= 207 10
+read 700 10
+( 303 10
+) 304 10
+; 301 10
+write 700 11
+( 303 11
+f 700 11
+( 303 11
+m 700 11
+) 304 11
+) 304 11
+; 301 11
+} 306 13
+int 101 15
+f 700 15
+( 303 15
+int 101 15
+n 700 15
+) 304 15
+{ 305 15
+int 101 16
+a 700 16
+; 301 16
+if 106 17
+( 303 17
+n 700 17
+== 201 17
+1 401 17
+) 304 17
+{ 305 17
+return 105 18
+1 401 18
+; 301 18
+} 306 19
+else 107 20
+if 106 20
+( 303 20
+n 700 20
+== 201 20
+2 401 20
+) 304 20
+{ 305 20
+return 105 21
+2 401 21
+; 301 21
+} 306 22
+else 107 23
+if 106 23
+( 303 23
+n 700 23
+== 201 23
+3 401 23
+) 304 23
+{ 305 23
+return 105 24
+4 401 24
+; 301 24
+} 306 25
+a 700 26
+= 207 26
+f 700 26
+( 303 26
+n 700 26
+- 211 26
+1 401 26
+) 304 26
++ 210 26
+f 700 26
+( 303 26
+n 700 26
+- 211 26
+2 401 26
+) 304 26
++ 210 26
+f 700 26
+( 303 26
+n 700 26
+- 211 26
+3 401 26
+) 304 26
+; 301 26
+return 105 27
+a 700 27
+; 301 27
+} 306 28
+
+========== AST ==========
+Program
+  FunctionDecl(int f)[6]
+    Param(int)[6]
+  FunctionDef(int main)[7]
+    Compound
+      VarDecl(int m)[9]
+      ExprStmt
+        =
+          m[10]
+          Call(read)[10]
+      ExprStmt
+        Call(write)[11]
+          Call(f)[11]
+            m[11]
+  FunctionDef(int f)[15]
+    Param(int n)[15]
+    Compound
+      VarDecl(int a)[16]
+      IfStmt
+        ==
+          n[17]
+          1[17]
+        Compound
+          ReturnStmt[18]
+            1[18]
+        IfStmt
+          ==
+            n[20]
+            2[20]
+          Compound
+            ReturnStmt[21]
+              2[21]
+          IfStmt
+            ==
+              n[23]
+              3[23]
+            Compound
+              ReturnStmt[24]
+                4[24]
+      ExprStmt
+        =
+          a[26]
+          +
+            +
+              Call(f)[26]
+                -
+                  n[26]
+                  1[26]
+              Call(f)[26]
+                -
+                  n[26]
+                  2[26]
+            Call(f)[26]
+              -
+                n[26]
+                3[26]
+      ReturnStmt[27]
+        a[27]
+
+========== 中间代码（四元式） ==========
+0: ('main', '_', '_', '_')
+1: ('call', 'read', '_', 't1')
+2: ('=', 't1', '_', 'm')
+3: ('para', 'm', '_', '_')
+4: ('call', 'f', '_', 't2')
+5: ('para', 't2', '_', '_')
+6: ('call', 'write', '_', 't3')
+7: ('sys', '_', '_', '_')
+8: ('f', '_', '_', '_')
+9: ('J==', 'n', '1', 11)
+10: ('J', '_', '_', 13)
+11: ('ret', '_', '_', '1')
+12: ('J', '_', '_', 20)
+13: ('J==', 'n', '2', 15)
+14: ('J', '_', '_', 17)
+15: ('ret', '_', '_', '2')
+16: ('J', '_', '_', 20)
+17: ('J==', 'n', '3', 19)
+18: ('J', '_', '_', 20)
+19: ('ret', '_', '_', '4')
+20: ('-', 'n', '1', 't4')
+21: ('para', 't4', '_', '_')
+22: ('call', 'f', '_', 't5')
+23: ('-', 'n', '2', 't6')
+24: ('para', 't6', '_', '_')
+25: ('call', 'f', '_', 't7')
+26: ('+', 't5', 't7', 't8')
+27: ('-', 'n', '3', 't9')
+28: ('para', 't9', '_', '_')
+29: ('call', 'f', '_', 't10')
+30: ('+', 't8', 't10', 't11')
+31: ('=', 't11', '_', 'a')
+32: ('ret', '_', '_', 'a')
+33: ('ret', '_', '_', '_')
+
+========== MASM16 汇编程序代码 ==========
+assume cs:code,ds:data,ss:stack,es:extended
+extended segment
+  db 1024 dup (0)
+extended ends
+stack segment
+  db 1024 dup (0)
+stack ends
+dispmsg macro message
+  lea dx, message
+  mov ah, 9
+  int 21h
+endm
+data segment
+  _buff_p db 256 dup (24h)
+  _buff_s db 256 dup (0)
+  _msg_p db 0ah,'Output:',0
+  _msg_s db 0ah,'Input:',0
+  next_row db 0dh,0ah,'$'
+  error db 'input error, please re-enter: ','$'
+data ends
+code segment
+start:
+    mov ax,extended
+    mov es,ax
+    mov ax,stack
+    mov ss,ax
+    mov sp,1024
+    mov bp,sp
+    mov ax,data
+    mov ds,ax
+
+main:
+    PUSH BP
+    MOV BP,SP
+    SUB SP,8
+    CALL read
+    MOV ss:[bp-2],AX
+    MOV AX,ss:[bp-2]
+    MOV ss:[bp-4],AX
+    MOV AX,ss:[bp-4]
+    PUSH AX
+    CALL fn_f
+    MOV ss:[bp-6],AX
+    MOV AX,ss:[bp-6]
+    PUSH AX
+    CALL write
+    MOV ss:[bp-8],AX
+    MOV AX,0
+    mov ah,4ch
+    int 21h
+
+fn_f:
+    PUSH BP
+    MOV BP,SP
+    SUB SP,18
+    MOV AX,ss:[bp+4]
+    CMP AX,1
+    JE _11
+    JMP far ptr _13
+_11:
+    MOV AX,1
+    MOV SP,BP
+    POP BP
+    RET
+    JMP far ptr _20
+_13:
+    MOV AX,ss:[bp+4]
+    CMP AX,2
+    JE _15
+    JMP far ptr _17
+_15:
+    MOV AX,2
+    MOV SP,BP
+    POP BP
+    RET
+    JMP far ptr _20
+_17:
+    MOV AX,ss:[bp+4]
+    CMP AX,3
+    JE _19
+    JMP far ptr _20
+_19:
+    MOV AX,4
+    MOV SP,BP
+    POP BP
+    RET
+_20:
+    MOV AX,ss:[bp+4]
+    SUB AX,1
+    MOV ss:[bp-2],AX
+    MOV AX,ss:[bp-2]
+    PUSH AX
+    CALL fn_f
+    MOV ss:[bp-4],AX
+    MOV AX,ss:[bp+4]
+    SUB AX,2
+    MOV ss:[bp-6],AX
+    MOV AX,ss:[bp-6]
+    PUSH AX
+    CALL fn_f
+    MOV ss:[bp-8],AX
+    MOV AX,ss:[bp-4]
+    ADD AX,ss:[bp-8]
+    MOV ss:[bp-10],AX
+    MOV AX,ss:[bp+4]
+    SUB AX,3
+    MOV ss:[bp-12],AX
+    MOV AX,ss:[bp-12]
+    PUSH AX
+    CALL fn_f
+    MOV ss:[bp-14],AX
+    MOV AX,ss:[bp-10]
+    ADD AX,ss:[bp-14]
+    MOV ss:[bp-16],AX
+    MOV AX,ss:[bp-16]
+    MOV ss:[bp-18],AX
+    MOV AX,ss:[bp-18]
+    MOV SP,BP
+    POP BP
+    RET
+
+
+read proc near
+    push bp
+    mov bp, sp
+    mov bx,offset _msg_s
+    call _print
+    push bx
+    push cx
+    push dx
+proc_pre_start:
+    xor ax, ax
+    xor bx, bx
+    xor cx, cx
+    xor dx, dx
+proc_judge_sign:
+    mov ah, 1
+    int 21h
+    cmp al, '-'
+    jne proc_next
+    mov dx, 0ffffh
+    jmp proc_digit_in
+proc_next:
+    cmp al, 30h
+    jb proc_unexpected
+    cmp al, 39h
+    ja proc_unexpected
+    sub al, 30h
+    shl bx, 1
+    mov cx, bx
+    shl bx, 1
+    shl bx, 1
+    add bx, cx
+    add bl, al
+    adc bh, 0
+proc_digit_in:
+    mov ah, 1
+    int 21h
+    jmp proc_next
+proc_save:
+    cmp dx, 0ffffh
+    jne proc_result_save
+    neg bx
+proc_result_save:
+    mov ax, bx
+    jmp proc_input_done
+proc_unexpected:
+    cmp al, 0dh
+    je proc_save
+    dispmsg next_row
+    dispmsg error
+    jmp proc_pre_start
+proc_input_done:
+    pop dx
+    pop cx
+    pop bx
+    pop bp
+    ret
+read endp
+
+write proc near
+    push bp
+    mov bp, sp
+    push ax
+    push bx
+    push cx
+    push dx
+    mov bx,offset _msg_p
+    call _print
+    xor cx, cx
+    mov bx, [bp+4]
+    test bx, 8000h
+    jz proc_nonneg
+    neg bx
+    mov dl,'-'
+    mov ah, 2
+    int 21h
+proc_nonneg:
+    mov ax, bx
+    cwd
+    mov bx, 10
+proc_div_again:
+    xor dx, dx
+    div bx
+    add dl, 30h
+    push dx
+    inc cx
+    cmp ax, 0
+    jne proc_div_again
+proc_digit_out:
+    pop dx
+    mov ah, 2
+    int 21h
+    loop proc_digit_out
+proc_output_done:
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+    pop bp
+    ret 2
+write endp
+
+_print:
+    mov si,0
+    mov di,offset _buff_p
+_p_lp_1:
+    mov al,ds:[bx+si]
+    cmp al,0
+    je _p_brk_1
+    mov ds:[di],al
+    inc si
+    inc di
+    jmp short _p_lp_1
+_p_brk_1:
+    mov dx,offset _buff_p
+    mov ah,09h
+    int 21h
+    mov cx,si
+    mov di,offset _buff_p
+_p_lp_2:
+    mov al,24h
+    mov ds:[di],al
+    inc di
+    loop _p_lp_2
+    ret
+code ends
+end start
+
+========== 编译诊断 ==========
+No diagnostics
