@@ -1,0 +1,31 @@
+erDiagram
+    OPS_AREA ||--o{ OPS_AREA : parent_child
+    OPS_AREA ||--o{ OPS_DEVICE : contains
+    OPS_AREA ||--o{ OPS_INSPECTION_PLAN : covers
+
+    OPS_DEVICE_CATEGORY ||--o{ OPS_DEVICE_CATEGORY : parent_child
+    OPS_DEVICE_CATEGORY ||--o{ OPS_DEVICE : classifies
+    OPS_DEVICE_CATEGORY ||--o{ OPS_INSPECTION_PLAN : targets
+    OPS_DEVICE_CATEGORY ||--o{ OPS_INSPECTION_PLAN_ITEM : defines_template
+    OPS_DEVICE_CATEGORY ||--o{ OPS_KNOWLEDGE_ARTICLE : references
+
+    OPS_SUPPLIER ||--o{ OPS_DEVICE : supplies
+    OPS_SUPPLIER ||--o{ OPS_SPARE_PART : supplies
+
+    OPS_DEVICE ||--o{ OPS_WORK_ORDER : has
+    OPS_DEVICE ||--o{ OPS_INSPECTION_TASK : inspected_by
+
+    OPS_WORK_ORDER ||--o{ OPS_WORK_ORDER_TIMELINE : tracks
+    OPS_WORK_ORDER ||--o{ OPS_INVENTORY_RECORD : consumes_parts
+
+    OPS_INSPECTION_PLAN ||--o{ OPS_INSPECTION_TASK : generates
+    OPS_INSPECTION_PLAN_ITEM ||--o{ OPS_INSPECTION_ITEM : copied_to_task
+    OPS_INSPECTION_TASK ||--o{ OPS_INSPECTION_ITEM : contains
+    OPS_INSPECTION_ITEM }o--o| OPS_WORK_ORDER : creates_when_abnormal
+
+    OPS_SPARE_PART ||--o{ OPS_INVENTORY_RECORD : changes_stock
+
+    OPS_WORK_ORDER ||--o{ OPS_ATTACHMENT : has_files
+    OPS_INSPECTION_TASK ||--o{ OPS_ATTACHMENT : has_files
+    OPS_INSPECTION_ITEM ||--o{ OPS_ATTACHMENT : has_files
+    OPS_KNOWLEDGE_ARTICLE ||--o{ OPS_ATTACHMENT : has_files
